@@ -11,6 +11,7 @@
   };
 
   console.log(data.array);
+  console.log(data.expected_comparison.value);
 </script>
 
 <Embed>
@@ -45,7 +46,28 @@
       {/if}
     </Card>
     <Card title="Comparison to expected deaths">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      <p class="ons-u-fs-xxxl">{Math.abs(data.expected_comparison.percent_difference.toLocaleString("en-GB")).toFixed(1)}% 
+        {#if data.expected_comparison.percent_difference === 0}
+          difference
+        {:else}
+          {#if data.expected_comparison.percent_difference > 0}
+            higher
+          {:else}
+            lower
+          {/if}  
+        {/if}  
+      </p>
+      <p class="ons-u-fs-r">
+        {#if data.expected_comparison.value === 0}
+          As many as expected
+        {:else}
+          {#if data.expected_comparison.value > 0}
+            {Math.abs(data.expected_comparison.value).toLocaleString("en-GB")} more than expected
+          {:else}
+            {Math.abs(data.expected_comparison.value).toLocaleString("en-GB")} fewer than expected
+          {/if}  
+        {/if}  
+      </p>
     </Card>
   </Cards>
 
