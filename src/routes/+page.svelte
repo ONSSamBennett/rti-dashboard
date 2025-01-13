@@ -1,5 +1,4 @@
 <script>
-  // This is a pointless comment to delete
   import { Embed, Notice, Section, Cards, Card, Twisty, Grid } from "@onsvisual/svelte-components";
 
   export let data;
