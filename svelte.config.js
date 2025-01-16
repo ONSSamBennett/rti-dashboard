@@ -14,7 +14,7 @@ const config = {
 			pages: 'build',
 			assets: 'build',
 			strict: false,
-			fallback: preview ? '404.html' : undefined
+			fallback: 'index.html'
 		}),
 		prerender: {
 			handleHttpError: 'warn',
