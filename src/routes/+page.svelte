@@ -1,5 +1,6 @@
 <script>
   import { Embed, Notice, Section, Cards, Card, Twisty, Grid } from "@onsvisual/svelte-components";
+  import BarChart from "$lib/BarChart.svelte";
 
   export let data;
 
@@ -85,7 +86,7 @@
   <Section width="wide">
     <h3>Trend since January 2023</h3>
     <p>Deaths registered and expected deaths</p>
-    <div class="placeholder">Weekly deaths chart</div>
+    <BarChart data={data.array}/>
   </Section>
 
   <Section title="Deaths by selected causes" width="medium">
