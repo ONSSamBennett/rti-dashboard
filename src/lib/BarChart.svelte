@@ -1,4 +1,6 @@
 <script>
+	import { Button } from "@onsvisual/svelte-components";
+	import { csvFormatBody } from "d3-dsv";
 	import { scaleLinear, scaleBand } from "d3-scale";
 	import { line, curveStepAfter } from "d3-shape";
 
@@ -8,6 +10,32 @@
 	export let xKey = "date";
 	export let yKey1 = "number_of_deaths";
 	export let yKey2 = "expected_deaths";
+	export let yKey3 = "bank_holiday";
+
+	const dateOptions = {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	};
+
+	function makeDataBlob() {
+		let csv = `Deaths registered and expected deaths, week ending ${data[0][xKey].toLocaleDateString("en-GB", dateOptions)} to ${data[data.length - 1][xKey].toLocaleDateString("en-GB", dateOptions)}
+Source: Office for National Statistics
+
+Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
+
+Date,Deaths registered,Expected deaths,Bank holiday week
+`;
+		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
+return new Blob([csv], { type: "text/csv" });;
+	}
+
+	function makeHref(blob) {
+		const url = window.URL || window.webkitURL || window;
+		return url.createObjectURL(blob);
+	}
+
+	$: console.log(makeDataBlob())
 	
 	let width;
     $: height = +width < 400 ? 250 : 350;
@@ -32,6 +60,8 @@
 	// 	.curve(curveStepAfter)
     //     .x(d => x(d[xKey]))
     //     .y(d => y(d[yKey])))(data);
+
+	$: blob = makeDataBlob(data);
 </script>
 
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
@@ -47,7 +77,7 @@
 			</g>
 			<g class="plot">
 				{#each data as d (d[xKey])}
-                    {#if d.bank_holiday}
+                    {#if d[yKey3]}
                         <rect class="bar-holiday" width={x.bandwidth()} height={height - (margin.bottom || 0) - (margin.top || 0)} x={x(d[xKey])} y={margin.top || 0}/>
                     {/if}
 					<rect class="bar" width={x.bandwidth()} height={y(0) - y(d[yKey1])} x={x(d[xKey])} y={y(d[yKey1])}/>
@@ -60,6 +90,7 @@
 		</svg>
 	{/if}
 </div>
+<Button href={makeHref(blob)} variant="secondary" small>Download chart data (CSV, {Math.round(blob?.size / 1000)}KB)</Button>
 
 <style>
 	.chart-container {
