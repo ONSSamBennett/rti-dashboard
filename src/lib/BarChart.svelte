@@ -18,7 +18,7 @@
 		day: 'numeric'
 	};
 
-	function makeDataBlob() {
+	function makeDataFile() {
 		let csv = `Deaths registered and expected deaths, week ending ${data[0][xKey].toLocaleDateString("en-GB", dateOptions)} to ${data[data.length - 1][xKey].toLocaleDateString("en-GB", dateOptions)}
 Source: Office for National Statistics
 
@@ -27,18 +27,14 @@ Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 Date,Deaths registered,Expected deaths,Bank holiday week
 `;
 		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
-return new Blob([csv], { type: "text/csv" });;
+		return {
+			blob: new Blob([csv], { type: "text/csv" }),
+			href: `data:text/csv;charset=UTF-8,${encodeURIComponent(csv)}`
+		};
 	}
-
-	function makeHref(blob) {
-		const url = window.URL || window.webkitURL || window;
-		return url.createObjectURL(blob);
-	}
-
-	$: console.log(makeDataBlob())
 	
 	let width;
-    $: height = +width < 400 ? 250 : 350;
+    $: height = +width < 400 ? 300 : 400;
 
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [
@@ -61,7 +57,7 @@ return new Blob([csv], { type: "text/csv" });;
     //     .x(d => x(d[xKey]))
     //     .y(d => y(d[yKey])))(data);
 
-	$: blob = makeDataBlob(data);
+	$: dataFile = makeDataFile(data);
 </script>
 
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
@@ -90,7 +86,7 @@ return new Blob([csv], { type: "text/csv" });;
 		</svg>
 	{/if}
 </div>
-<Button href={makeHref(blob)} variant="secondary" small>Download chart data (CSV, {Math.round(blob?.size / 1000)}KB)</Button>
+<Button href={dataFile?.href} variant="secondary" download="test-file-name.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
 
 <style>
 	.chart-container {
