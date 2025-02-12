@@ -2,11 +2,23 @@ import { base } from "$app/paths";
 import { csvParse, autoType } from "d3-dsv";
 
 const dataUrl = `${base}/data/data.csv`;
+const holidaysUrl = `${base}/data/bank-holiday.json`;
+
+function nextFriday(date) {
+    const offset = (7 + 5 - date.getDay()) % 7;
+    return +date + (offset * 1000 * 60 * 60 * 24);
+}
 
 export async function load({ fetch }) {
-    const res = await fetch(dataUrl);
-    const str = await res.text();
+    const str = await (await fetch(dataUrl)).text();
     const array = csvParse(str, autoType);
+
+    const json = await (await fetch(holidaysUrl)).json();
+    const holidays = json["england-and-wales"].events
+        .map(d => nextFriday(new Date(d.date)))
+        .filter(d => d >= +array[0].date && d <= +array[array.length - 1].date);
+    
+    for (const d of array) d.bank_holiday = holidays.includes(+d.date);
 
     const current = array[array.length - 1];
     const previous = array[array.length - 2];
