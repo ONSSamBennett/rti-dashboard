@@ -88,7 +88,14 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 </div>
 <Button href={dataFile?.href} variant="secondary" download="weekly-deaths-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
 
+<!-- 
+England and Wales, week ending {data.current.date.toLocaleDateString(
+	"en-GB",
+	dateOptions
+  )} -->
+
 <style>
+
 	.chart-container {
 		display: block;
 		/* background: #f5f5f5; */
@@ -109,7 +116,9 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 	.line {
 		fill: none;
 		stroke: black;
-		stroke-width: 2;
+		stroke-width: 2.5px;
+		stroke-linejoin: round;
+		stroke-linecap: round;
 	}
 	.tick-line {
 		stroke: #ccc;

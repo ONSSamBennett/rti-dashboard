@@ -6,11 +6,16 @@
     Cards,
     Card,
     Twisty,
+    Titleblock,
+    Divider,
     Grid,
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
-
+  import LineChart1 from "$lib/LineChart1.svelte";
   export let data;
+  export let selectedYKey1; 
+  export let selectedYKey2; 
+
 
   const dateOptions = {
     weekday: "long",
@@ -27,6 +32,9 @@
 </script>
 
 <Embed>
+  <Titleblock theme=lightblue title="Page title">
+test
+  </Titleblock>
   <Section width="medium">
     <Notice mode="warning" important>
       <p>
@@ -109,6 +117,7 @@
 
         <!-- </p> -->
       {/if}
+      
     </Card>
     <Card title="Comparison to expected deaths">
       <p class="ons-u-fs-xxxl">
@@ -156,11 +165,11 @@
   </Section>
 
   <Section width="wide">
-    <h3>Trend since January 2023</h3>
+    <h3>Past two years trend</h3>
     <p>Deaths registered and expected deaths</p>
     <BarChart data={data.array} />
   </Section>
-
+  <Divider hr="full"/>
   <Section title="Deaths by selected causes" width="medium">
     <p>
       Percentage of deaths due to or involving selected cause, England and
@@ -192,6 +201,11 @@
           {Math.abs(data.flu.value_involving).toLocaleString("en-GB")} deaths
         </div>
       </div>
+    <p>
+    <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
+ 
+    <LineChart1 yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} />
+    
     </Card>
     <Card title="Coronavirus">
       <div class="causes-container">
@@ -213,7 +227,10 @@
           {Math.abs(data.covid.value_involving).toLocaleString("en-GB")} deaths
         </div>
       </div>
-      <BarChart data={data.array} />
+      <p>
+        <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
+ 
+      <LineChart1 yKey1={"covid_with"} yKey2={"covid_due_to"} data={data.array} />
     </Card>
   </Cards>
 
@@ -231,7 +248,7 @@
       </p>
     </Twisty>
   </Section>
-
+  <Divider hr="full"/>
   <Section title="Deaths by country" width="medium">
     <p>
       Week ending {data.current.date.toLocaleDateString("en-GB", dateOptions)}
@@ -311,6 +328,7 @@
   <Section width="medium">
     The figures for England and Wales exclude non-residents.
   </Section>
+  <Divider hr="full"/>
 </Embed>
 
 <style>
