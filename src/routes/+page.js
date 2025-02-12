@@ -18,7 +18,13 @@ export async function load({ fetch }) {
         .map(d => nextFriday(new Date(d.date)))
         .filter(d => d >= +array[0].date && d <= +array[array.length - 1].date);
     
-    for (const d of array) d.bank_holiday = holidays.includes(+d.date);
+    for (const d of array) {
+        d.bank_holiday = holidays.includes(+d.date);
+        d.flu_due_to_percent = 100 * (d.flu_due_to / d.number_of_deaths);
+        d.flu_with_percent = 100 * (d.flu_with / d.number_of_deaths);
+        d.covid_due_to_percent = 100 * (d.covid_due_to / d.number_of_deaths);
+        d.covid_with_percent = 100 * (d.covid_with / d.number_of_deaths);
+    }
 
     const current = array[array.length - 1];
     const previous = array[array.length - 2];
@@ -50,6 +56,13 @@ const flu = {
  
 }
 
+const flu_covid_max = Math.max(...[
+    ...array.map(d => d.flu_due_to),
+    ...array.map(d => d.flu_with),
+    ...array.map(d => d.covid_due_to),
+    ...array.map(d => d.covid_with)
+]);
+
 
     const deaths_registered_wales = {
         value: current.num_wales,
@@ -72,5 +85,5 @@ const flu = {
         percent_difference: 100 * ((current.number_of_deaths - current.expected_deaths) / current.expected_deaths)
     };
 
-    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid};
+    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max};
 }
