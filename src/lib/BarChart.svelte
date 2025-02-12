@@ -86,7 +86,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 		</svg>
 	{/if}
 </div>
-<Button href={dataFile?.href} variant="secondary" download="test-file-name.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
+<Button href={dataFile?.href} variant="secondary" download="weekly-deaths-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
 
 <style>
 	.chart-container {
