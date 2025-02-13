@@ -2,7 +2,7 @@ import { base } from "$app/paths";
 import { csvParse, autoType } from "d3-dsv";
 
 const dataUrl = `${base}/data/data.csv`;
-const holidaysUrl = `${base}/data/bank-holiday.json`;
+const holidaysUrl = "https://www.gov.uk/bank-holidays.json";
 
 function nextFriday(date) {
     const offset = (7 + 5 - date.getDay()) % 7;
