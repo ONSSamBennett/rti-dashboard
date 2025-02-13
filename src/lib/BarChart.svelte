@@ -6,7 +6,7 @@
 
 	export let data;
 	// export let height = 300;
-	export let margin = {left: 50, top: 20, bottom: 45};
+	export let margin = {left: 80, top: 20, bottom: 45};
 	export let xKey = "date";
 	export let yKey1 = "number_of_deaths";
 	export let yKey2 = "expected_deaths";
@@ -17,11 +17,19 @@
         return Math.floor(date.getMonth() / 3) + 1;
     }
 
+
+    function isQ3Start(date) {
+        return date.getMonth() === 6; // July is month 6 (0-based)
+    }
+
     function getDateChanges(data, xKey) {
         const changes = {
             years: [],
-            quarters: []
+            quarters: [],
+            yearLabels: [] // New array for year labels at Q3
         };
+
+
         
         // Check first date
         const firstDate = data[0][xKey];
@@ -53,6 +61,13 @@
             // Check quarter changes within the same year
             else if (getQuarterFromDate(prevDate) !== getQuarterFromDate(currentDate)) {
                 changes.quarters.push(currentDate);
+                // If this is Q3 start, add to yearLabels
+                if (isQ3Start(currentDate)) {
+                    changes.yearLabels.push({
+                        date: currentDate,
+                        year: currentDate.getFullYear()
+                    });
+                }
             }
         }
 
@@ -80,11 +95,14 @@
 		
     }
 
+
     // Calculate date changes
     $: dateChanges = getDateChanges(data, xKey);
 
-
-
+    // Function to check if position is too close to edges
+    function isTooCloseToEdge(xPos, width) {
+        return xPos < 10 || (width - xPos) < 10;
+    }
 
 	const dateOptions = {
 		year: 'numeric',
@@ -140,23 +158,23 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 			<g class="y-ticks">
 				{#each yTicks as tick (tick)}
 					<g class="y-tick" transform="translate(0 {y(tick)})">
-						<line class="tick-line" class:tick-line-0={tick === 0} x1={0} x2={width}/>
-						<text x="0" y="-4" class="small">{tick.toLocaleString("en-GB")}</text>
+						<line class="tick-line" class:tick-line-0={tick === 0} x1={margin.left-5} x2={width}/>
+						<text x={margin.left-10} y="6" style="text-anchor: end" class="small">{tick.toLocaleString("en-GB")}</text>
 					</g>
 				{/each}
 			</g>
-		
-			<g class="date-dividers">
+	  
+            <g class="date-dividers">
                 <!-- Quarter dividers -->
                 {#each dateChanges.quarters as date}
                     <line 
                         class="quarter-divider"
                         x1={date === data[0][xKey] ? x(date) : 
                             date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                                y1={height - (margin.bottom || 0)}
+                        y1={height - (margin.bottom || 0)}
                         x2={date === data[0][xKey] ? x(date) : 
                             date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                                 y2={height - (margin.bottom || 0)+10}
+                        y2={height - (margin.bottom || 0)+10}
                     />
                 {/each}
                 
@@ -166,13 +184,29 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                         class="year-divider"
                         x1={date === data[0][xKey] ? x(date) : 
                             date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                       y1={height - (margin.bottom || 0)}
+                        y1={height - (margin.bottom || 0)}
                         x2={date === data[0][xKey] ? x(date) : 
                             date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                        y2={height - (margin.bottom || 0)+25}
+                        y2={height - (margin.bottom || 0)+22}
                     />
                 {/each}
+
+                <!-- Year labels at Q3 -->
+                {#each dateChanges.yearLabels as {date, year}}
+                    {@const xPos = x(date)}
+                    {#if !isTooCloseToEdge(xPos, width)}
+                        <text 
+                            class="year-label"
+                            x={xPos}
+                            y={height - margin.bottom + 34}
+                            text-anchor="middle"
+                        >
+                            {year}
+                        </text>
+                    {/if}
+                {/each}
             </g>
+
 
 
 
@@ -180,6 +214,8 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 				{#each data as d (d[xKey])}
                     {#if d[yKey3]}
                         <rect class="bar-holiday" width={x.bandwidth()} height={height - (margin.bottom || 0) - (margin.top || 0)} x={x(d[xKey])} y={margin.top || 0}/>
+						<rect class="bar-holiday2" width={x.bandwidth()} height=3px x={x(d[xKey])} y={margin.top || 0}/>
+                  
                     {/if}
 					<rect class="bar" width={x.bandwidth()} height={y(0) - y(d[yKey1])} x={x(d[xKey])} y={y(d[yKey1])}/>
 				{/each}
@@ -213,29 +249,34 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
 	}
 	.bar {
 		fill: #27a0cc;
-		mix-blend-mode: multiply;
+		/* mix-blend-mode: multiply; */
 	}
     .bar-holiday {
-        fill: #ccc;
+        fill: #D9D9D9
+		;
+    }
+	.bar-holiday2 {
+        fill: #949494
+				;
     }
 	.line {
 		fill: none;
-		stroke: black;
+		stroke: #222;
 		stroke-width: 2.5px;
 		stroke-linejoin: round;
 		stroke-linecap: round;
 	}
 	.tick-line {
 		stroke: #ccc;
-		stroke-weight: 1;
+		stroke-width: 1px;
 	}
 	.tick-line-0 {
 		stroke: #555;
 	}
 
-	
+	text{font-size: 16px}
     .year-divider {
-        stroke: red;
+        stroke:#222;
         stroke-width: 1.5px;
         /* stroke-dasharray: 4 4; */
     }
