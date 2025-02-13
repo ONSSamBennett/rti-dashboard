@@ -6,11 +6,85 @@
 
 	export let data;
 	// export let height = 300;
-	export let margin = {left: 50, top: 20, bottom: 20};
+	export let margin = {left: 50, top: 20, bottom: 45};
 	export let xKey = "date";
 	export let yKey1 = "number_of_deaths";
 	export let yKey2 = "expected_deaths";
 	export let yKey3 = "bank_holiday";
+
+	
+	function getQuarterFromDate(date) {
+        return Math.floor(date.getMonth() / 3) + 1;
+    }
+
+    function getDateChanges(data, xKey) {
+        const changes = {
+            years: [],
+            quarters: []
+        };
+        
+        // Check first date
+        const firstDate = data[0][xKey];
+        const firstYearStart = new Date(firstDate.getFullYear(), 0, 1);
+        const daysSinceYearStart = (firstDate - firstYearStart) / (1000 * 60 * 60 * 24);
+        if (daysSinceYearStart < 7) {
+            changes.years.push(firstDate);
+        }
+
+        // Check first date for quarter
+        for (let q = 1; q <= 4; q++) {
+            const quarterStart = new Date(firstDate.getFullYear(), (q-1)*3, 1);
+            const daysSinceQuarterStart = (firstDate - quarterStart) / (1000 * 60 * 60 * 24);
+            if (daysSinceQuarterStart >= 0 && daysSinceQuarterStart < 7) {
+                changes.quarters.push(firstDate);
+                break;
+            }
+        }
+
+        // Check changes between dates
+        for (let i = 1; i < data.length; i++) {
+            const prevDate = data[i-1][xKey];
+            const currentDate = data[i][xKey];
+            
+            // Check year changes
+            if (prevDate.getFullYear() !== currentDate.getFullYear()) {
+                changes.years.push(currentDate);
+            }
+            // Check quarter changes within the same year
+            else if (getQuarterFromDate(prevDate) !== getQuarterFromDate(currentDate)) {
+                changes.quarters.push(currentDate);
+            }
+        }
+
+        // Check last date
+        const lastDate = data[data.length - 1][xKey];
+        const nextYearStart = new Date(lastDate.getFullYear() + 1, 0, 1);
+        const daysUntilNextYear = (nextYearStart - lastDate) / (1000 * 60 * 60 * 24);
+        if (daysUntilNextYear <= 7) {
+            changes.years.push(nextYearStart);
+        }
+
+        // Check last date for next quarter
+        const lastQuarter = getQuarterFromDate(lastDate);
+        if (lastQuarter < 4) {
+            const nextQuarterStart = new Date(lastDate.getFullYear(), lastQuarter * 3, 1);
+            const daysUntilNextQuarter = (nextQuarterStart - lastDate) / (1000 * 60 * 60 * 24);
+            if (daysUntilNextQuarter <= 7) {
+                changes.quarters.push(nextQuarterStart);
+            }
+        }
+
+        return changes;
+
+
+		
+    }
+
+    // Calculate date changes
+    $: dateChanges = getDateChanges(data, xKey);
+
+
+
 
 	const dateOptions = {
 		year: 'numeric',
@@ -71,6 +145,37 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 					</g>
 				{/each}
 			</g>
+		
+			<g class="date-dividers">
+                <!-- Quarter dividers -->
+                {#each dateChanges.quarters as date}
+                    <line 
+                        class="quarter-divider"
+                        x1={date === data[0][xKey] ? x(date) : 
+                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
+                                y1={height - (margin.bottom || 0)}
+                        x2={date === data[0][xKey] ? x(date) : 
+                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
+                                 y2={height - (margin.bottom || 0)+10}
+                    />
+                {/each}
+                
+                <!-- Year dividers -->
+                {#each dateChanges.years as date}
+                    <line 
+                        class="year-divider"
+                        x1={date === data[0][xKey] ? x(date) : 
+                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
+                       y1={height - (margin.bottom || 0)}
+                        x2={date === data[0][xKey] ? x(date) : 
+                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
+                        y2={height - (margin.bottom || 0)+25}
+                    />
+                {/each}
+            </g>
+
+
+
 			<g class="plot">
 				{#each data as d (d[xKey])}
                     {#if d[yKey3]}
@@ -127,4 +232,17 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
 	.tick-line-0 {
 		stroke: #555;
 	}
+
+	
+    .year-divider {
+        stroke: red;
+        stroke-width: 1.5px;
+        /* stroke-dasharray: 4 4; */
+    }
+
+    .quarter-divider {
+        stroke: #999;
+        stroke-width: 1px;
+        }
+
 </style>
