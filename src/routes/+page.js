@@ -85,5 +85,8 @@ const flu_covid_max = Math.max(...[
         percent_difference: 100 * ((current.number_of_deaths - current.expected_deaths) / current.expected_deaths)
     };
 
-    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max};
+    // Add this right before the return statement
+const had_bank_holiday = current.bank_holiday;
+
+    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, had_bank_holiday};
 }

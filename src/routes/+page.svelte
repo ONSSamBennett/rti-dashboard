@@ -12,10 +12,12 @@
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
   import LineChart1 from "$lib/LineChart1.svelte";
+  export let current;
   export let data;
-  export let selectedYKey1; 
-  export let selectedYKey2; 
-
+  
+ 
+const { had_bank_holiday } = data;
+console.log(had_bank_holiday)
 
   const dateOptions = {
     weekday: "long",
@@ -25,6 +27,8 @@
   };
 
   // console.log(data.array);
+console.log(data.array)
+  console.log("test ");
   console.log(data.flu.value_involving);
   console.log(data.flu.percent_involving);
   console.log(data.flu.value_due_to);
@@ -35,7 +39,7 @@
   <Titleblock theme=lightblue title="Page title">
 test
   </Titleblock>
-  <Section width="medium">
+  <Section width="wide">
     <Notice mode="warning" important>
       <p>
         The figures displayed on this page are the provisional estimates. This
@@ -53,6 +57,14 @@ test
       )}
     </p>
   </Section>
+
+  {#if had_bank_holiday}
+  <Section width="wide">
+      <Notice>
+          The latest week included a bank holiday which may affect registrations
+      </Notice>
+  </Section>
+{/if}
 
   <Cards>
     <Card title="Deaths registered">
@@ -204,7 +216,7 @@ test
     <p>
     <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-    <LineChart1 yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} />
+    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} />
     
     </Card>
     <Card title="Coronavirus">

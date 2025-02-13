@@ -3,10 +3,10 @@
 	import { csvFormatBody } from "d3-dsv";
 	import { scaleLinear, scaleBand } from "d3-scale";
 	import { line, curveStepAfter, curveLinear } from "d3-shape";
-
+    
 	
 	export let data;
-	
+	export let line_chart_max;
 	// export let height = 300;
 	export let margin = {left:50, top: 20, bottom: 20};
 	export let xKey = "date";
@@ -44,7 +44,8 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [
 		0,
-			1000
+		1500
+		// {line_chart_max}
 		// Math.max(
 		// 	...data.map(d => d[yKey1]),
 		// 	...data.map(d => d[yKey2]),
@@ -107,14 +108,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 	transform="rotate(45, {x(data[data.length - 1][xKey])}, {y(data[data.length - 1][yKey2])})"
 fill=#8D2865
 	/>
-<!-- 			
-<circle
-class="line-point2"
-cx="{x(data[data.length - 1][xKey])}"
-cy="{y(data[data.length - 1][yKey2])}"
-r="5"
-fill=white
-/> -->
+
 					
 					<path
 					class="line2"
