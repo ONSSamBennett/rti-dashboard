@@ -16,8 +16,8 @@
   export let data;
   
  
-const { had_bank_holiday } = data;
-console.log(had_bank_holiday)
+const { current_bank_holiday } = data;
+const { previous_bank_holiday } = data;
 
   const dateOptions = {
     weekday: "long",
@@ -57,11 +57,16 @@ test
       )}
     </p>
   </Section>
-
-  {#if had_bank_holiday}
+  {#if current_bank_holiday || previous_bank_holiday}
   <Section width="wide">
       <Notice>
-          The latest week included a bank holiday which may affect registrations
+          {#if current_bank_holiday && previous_bank_holiday}
+              Both the latest week and previous week included bank holidays which may affect registrations
+          {:else if current_bank_holiday}
+              The latest week included a bank holiday which may affect registrations
+          {:else}
+              The previous week included a bank holiday which may affect registrations
+          {/if}
       </Notice>
   </Section>
 {/if}

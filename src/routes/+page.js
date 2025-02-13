@@ -86,7 +86,10 @@ const flu_covid_max = Math.max(...[
     };
 
     // Add this right before the return statement
-const had_bank_holiday = current.bank_holiday;
 
-    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, had_bank_holiday};
+    
+const current_bank_holiday = current.bank_holiday;
+const previous_bank_holiday = previous.bank_holiday;
+
+    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, current_bank_holiday, previous_bank_holiday};
 }
