@@ -12,7 +12,7 @@
 	export let yKey2 = "expected_deaths";
 	export let yKey3 = "bank_holiday";
 
-	
+	//works out the x date ranges
 	function getQuarterFromDate(date) {
         return Math.floor(date.getMonth() / 3) + 1;
     }
@@ -151,7 +151,24 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 
 	$: dataFile = makeDataFile(data);
 </script>
-
+<div class="legend-container">
+    <svg width="360" height="18" viewBox="0 360 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- <rect width="225" height="18" fill="#E5E5E5"/> -->
+    <!-- <rect width="317" height="18" fill="white"/> -->
+    <text fill="#414042" xml:space="preserve" style="white-space: pre" font-family="Open Sans" font-size="14" letter-spacing="0em"><tspan x="202" y="14.4312">Expected deaths&#10;</tspan></text>
+    <line x1="174.25" y1="7.75" x2="192.75" y2="7.75" stroke="#222222" stroke-width="2.5" stroke-linecap="round"/>
+    <text fill="#414042" xml:space="preserve" style="white-space: pre" font-family="Open Sans" font-size="14" letter-spacing="0em"><tspan x="25" y="14.4312">Deaths registered</tspan></text>
+    <circle cx="11" cy="9" r="6" fill="#27A0CC"/>
+    </svg>
+    <svg width="317" height="18" viewBox="0 0 317 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="317" height="18" fill="#E5E5E5"/>
+        <rect width="317" height="18" fill="white"/>
+        <text fill="#414042" xml:space="preserve" style="white-space: pre" font-family="Open Sans" font-size="14" letter-spacing="0em"><tspan x="25" y="14.4312">Week containing bank holiday</tspan></text>
+        <rect x="6" y="5" width="10" height="10" fill="#C5C5C5"/>
+        <line x1="6" y1="4.5" x2="16" y2="4.5" stroke="#949494" stroke-width="3"/>
+        </svg>
+        
+    </div>
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
 	{#if width}
 		<svg {width} {height} class="chart">
@@ -187,7 +204,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                         y1={height - (margin.bottom || 0)}
                         x2={date === data[0][xKey] ? x(date) : 
                             date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                        y2={height - (margin.bottom || 0)+22}
+                        y2={height - (margin.bottom || 0)+25}
                     />
                 {/each}
 
@@ -276,14 +293,14 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
 
 	text{font-size: 16px}
     .year-divider {
-        stroke:#222;
-        stroke-width: 1.5px;
+        stroke:#a0a0a0;;
+        stroke-width: 2px;
         /* stroke-dasharray: 4 4; */
     }
 
     .quarter-divider {
-        stroke: #999;
-        stroke-width: 1px;
+        stroke: #a0a0a0;;
+        stroke-width: 2px;
         }
 
 </style>
