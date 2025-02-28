@@ -6,9 +6,7 @@
     Cards,
     Card,
     Twisty,
-    Titleblock,
     Divider,
-    Grid,
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
   import LineChart1 from "$lib/LineChart1.svelte";
@@ -36,9 +34,6 @@ console.log(data.array)
 </script>
 
 <Embed>
-  <Titleblock theme=lightblue title="Page title">
-test
-  </Titleblock>
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
