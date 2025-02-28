@@ -216,7 +216,7 @@ console.log(data.array)
     <p>
     <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} />
+    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} filename="deaths-flu" />
     
     </Card>
     <Card title="Coronavirus">
@@ -242,7 +242,7 @@ console.log(data.array)
       <p>
         <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-      <LineChart1 yKey1={"covid_with"} yKey2={"covid_due_to"} data={data.array} />
+      <LineChart1 yKey1={"covid_with"} yKey2={"covid_due_to"} data={data.array} filename="deaths-covid" />
     </Card>
   </Cards>
 
@@ -276,7 +276,7 @@ console.log(data.array)
 
 
       Comparison to expected
-      <p class="ons-u-fs-xxl" style="margin-bottom:0">
+      <p class="ons-u-fs-xl" style="margin-bottom:0">
         {Math.abs(
           data.expected_comparison_england.percent_difference.toLocaleString(
             "en-GB"
@@ -305,7 +305,7 @@ console.log(data.array)
 
    
       Comparison to expected
-      <p class="ons-u-fs-xxl" style="margin-bottom:0">
+      <p class="ons-u-fs-xl" style="margin-bottom:0">
         {Math.abs(
           data.expected_comparison_wales.percent_difference.toLocaleString(
             "en-GB"
@@ -344,20 +344,11 @@ console.log(data.array)
 </Embed>
 
 <style>
-  .placeholder {
-    display: block;
-    height: 300px;
-    background: #eee;
-    color: grey;
-    padding: 24px;
+  .causes-child {
+    flex: 50%;
   }
-
-  .causes-child{
-flex: 50%;
+  .causes-container {
+    display:flex;
+    margin-top:16.8px
   }
-.causes-container{
-  display:flex;
-   margin-top:16.8px
-}
-
 </style>

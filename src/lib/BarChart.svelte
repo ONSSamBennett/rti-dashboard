@@ -151,24 +151,11 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 
 	$: dataFile = makeDataFile(data);
 </script>
-<div class="legend-container">
-    <svg width="360" height="18" viewBox="0 360 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- <rect width="225" height="18" fill="#E5E5E5"/> -->
-    <!-- <rect width="317" height="18" fill="white"/> -->
-    <text fill="#414042" xml:space="preserve" style="white-space: pre" font-size="14" letter-spacing="0em"><tspan x="202" y="14.4312">Expected deaths&#10;</tspan></text>
-    <line x1="174.25" y1="7.75" x2="192.75" y2="7.75" stroke="#222222" stroke-width="2.5" stroke-linecap="round"/>
-    <text fill="#414042" xml:space="preserve" style="white-space: pre" font-size="14" letter-spacing="0em"><tspan x="25" y="14.4312">Deaths registered</tspan></text>
-    <circle cx="11" cy="9" r="6" fill="#27A0CC"/>
-    </svg>
-    <svg width="317" height="18" viewBox="0 0 317 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="317" height="18" fill="#E5E5E5"/>
-        <rect width="317" height="18" fill="white"/>
-        <text fill="#414042" xml:space="preserve" style="white-space: pre" font-size="14" letter-spacing="0em"><tspan x="25" y="14.4312">Week containing bank holiday</tspan></text>
-        <rect x="6" y="5" width="10" height="10" fill="#C5C5C5"/>
-        <line x1="6" y1="4.5" x2="16" y2="4.5" stroke="#949494" stroke-width="3"/>
-        </svg>
-        
-    </div>
+<ul class="legend-container">
+    <li><span class="legend-circle"></span>Deaths registered</li>
+    <li><span class="legend-line"></span>Expected deaths</li>
+    <li><span class="legend-square"></span>Week containing bank holiday</li>
+</ul>
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
 	{#if width}
 		<svg {width} {height} class="chart">
@@ -244,7 +231,8 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 		</svg>
 	{/if}
 </div>
-<Button href={dataFile?.href} variant="secondary" download="weekly-deaths-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
+<strong>Download chart data</strong><br/>
+<a href={dataFile?.href} download="weekly-deaths-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv">CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>
 
 <!-- 
 England and Wales, week ending {data.current.date.toLocaleDateString(
@@ -303,4 +291,39 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
         stroke-width: 2px;
         }
 
+        .legend-container {
+            padding: 0;
+            font-size: 16px;
+            margin: 0;
+        }
+        .legend-container > li {
+            display: inline-block;
+            margin: 0 16px 0 0;
+            white-space: nowrap;
+        }
+        .legend-container > li > span {
+            margin-right: 8px;
+        }
+        .legend-circle {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #27a0cc;
+        }
+        .legend-line {
+            display: inline-block;
+            width: 20px;
+            height: 3px;
+            border-radius: 1.5px;
+            background: var(--ons-color-text, #222);
+            transform: translateY(-4px);
+        }
+        .legend-square {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #D9D9D9;
+            border-top: 3px solid #949494;
+        }
 </style>

@@ -1,4 +1,19 @@
-/* Use this file for app specific CSS and overrides */
-.grid-cell {
-  background: #e0e0e0;
+body {
+  font-size: 1rem;
+}
+.tile {
+  box-shadow: none !important;
+}
+.ons-collapsible + .ons-collapsible {
+  margin-top: 18px;
+}
+h2, h3 {
+  margin-bottom: 8px;
+}
+.ons-spacer {
+  height: 32px;
+}
+.hr-full {
+  border-top: 1px solid var(--ons-color-text, #222) !important;
+  margin-top: 6px !important;
 }

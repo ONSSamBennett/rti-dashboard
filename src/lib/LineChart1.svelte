@@ -16,6 +16,7 @@
 	export let yKey3 = "bank_holiday";
 	export let yKey4 = "flu_due_to";
 	export let yKey5 = "flu_with";
+    export let filename = "deaths-flu";
 
 
 	function getQuarterFromDate(date) {
@@ -166,7 +167,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 
 	$: dataFile = makeDataFile(data);
 </script>
-<div style="background:white; padding:10px; margin-top:0px; margin-bottom:10px" >
+<div style="padding:10px; margin-top:0px; margin-bottom:10px" >
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
 	{#if width}
 		<svg {width} {height} class="chart">
@@ -267,7 +268,8 @@ fill=#8D2865
 	{/if}
 </div>
 </div>
-<Button href={dataFile?.href} variant="secondary" download="test-file-name.csv" small>Download chart data (CSV, {Math.round((dataFile?.blob?.size || 0) / 1000)}KB)</Button>
+<strong>Download chart data</strong><br/>
+<a href={dataFile?.href} download="{filename}-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>
 
 <style>
 	.chart-container {
