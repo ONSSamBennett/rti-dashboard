@@ -137,7 +137,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [
 		0,
-		1500
+	3030
 		// {line_chart_max}
 		// Math.max(
 		// 	...data.map(d => d[yKey1]),
