@@ -265,7 +265,7 @@ console.log(data.array)
     <p>
     <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_with"} yKey2={"flu_due_to"} data={data.array} filename="deaths-flu" />
+    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_due_perc"} yKey2={"flu_with_perc"} data={data.array} filename="deaths-flu" />
     
     </Card>
     <Card title="Coronavirus">
@@ -291,7 +291,7 @@ console.log(data.array)
       <p>
         <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-      <LineChart1 yKey1={"covid_with"} yKey2={"covid_due_to"} data={data.array} filename="deaths-covid" />
+      <LineChart1 yKey1={"covid_with_perc"} yKey2={"covid_due_perc"} data={data.array} filename="deaths-covid" />
     </Card>
   </Cards>
 

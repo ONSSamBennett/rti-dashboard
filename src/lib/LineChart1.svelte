@@ -3,8 +3,8 @@
 	import { csvFormatBody } from "d3-dsv";
 	import { scaleLinear, scaleBand } from "d3-scale";
 	import { line, curveStepAfter, curveLinear } from "d3-shape";
+	import { format } from "d3-format"; // Import d3-format for number formatting
     
-	
 	export let data;
 	export let line_chart_max;
 	// export let height = 300;
@@ -13,16 +13,17 @@
 	export let yKey0 = "number_of_deaths";
 	export let yKey1;
 	export let yKey2;
-	export let yKey3 = "bank_holiday";
+	export let yKey3 ="";
 	export let yKey4 = "flu_due_to";
 	export let yKey5 = "flu_with";
     export let filename = "deaths-flu";
 
+	// Create a percentage format
+    	const formatPercent = format(".0%"); // Format as percentage with 0 decimal places
 
 	function getQuarterFromDate(date) {
         return Math.floor(date.getMonth() / 3) + 1;
     }
-
 
     function isQ3Start(date) {
         return date.getMonth() === 6; // July is month 6 (0-based)
@@ -34,8 +35,6 @@
             quarters: [],
             yearLabels: [] // New array for year labels at Q3
         };
-
-
         
         // Check first date
         const firstDate = data[0][xKey];
@@ -96,11 +95,7 @@
         }
 
         return changes;
-
-
-		
     }
-
 
     // Calculate date changes
     $: dateChanges = getDateChanges(data, xKey);
@@ -122,7 +117,7 @@ Source: Office for National Statistics
 
 Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 
-Date,Deaths registered,Expected deaths,Bank holiday week
+Date,Flu test,Expected deaths,Bank holiday week
 `;
 		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
 		return {
@@ -137,33 +132,21 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [
 		0,
-	3030
-		// {line_chart_max}
-		// Math.max(
-		// 	...data.map(d => d[yKey1]),
-		// 	...data.map(d => d[yKey2]),
-		// 	...data.map(d => d[yKey4]),
-		// 	...data.map(d => d[yKey5])
-		// )
+		0.2 // Changed from 20 to 1 for percentage scale (0-100%)
 	];
 
 	$: x = scaleBand().padding(0.1).domain(xDomain).range([(margin.left || 0), width - (margin.right || 0)]);
 	$: y = scaleLinear().domain(yDomain).range([height - (margin.bottom || 0), (margin.top || 0)]);
-	$: yTicks = y.ticks(4);
+	$: yTicks = y.ticks(5); // 5 ticks for 0%, 25%, 50%, 75%, 100%
 	$: lineFn = line()
 		.curve(curveLinear)
         .x(d => x(d[xKey]))
         .y(d => y(d[yKey2]));
 		
-		$: lineFn2 = line()
+	$: lineFn2 = line()
 		.curve(curveLinear)
         .x(d => x(d[xKey]))
         .y(d => y(d[yKey1]));
-		
-	// $: lineFn = (data, yKey) => (line()
-	// 	.curve(curveStepAfter)
-    //     .x(d => x(d[xKey]))
-    //     .y(d => y(d[yKey])))(data);
 
 	$: dataFile = makeDataFile(data);
 </script>
@@ -175,26 +158,12 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 				{#each yTicks as tick (tick)}
 					<g class="y-tick" transform="translate(0 {y(tick)})">
 						<line class="tick-line" class:tick-line-0={tick === 0} x1={margin.left} x2={width}/>
-						<text style="text-anchor:end;" x={margin.left-5} y=6 class="small">{tick.toLocaleString("en-GB")}</text>
+						<text style="text-anchor:end;" x={margin.left-5} y=6 class="small">{formatPercent(tick)}</text>
 					</g>
 				{/each}
 			</g>
 
-
 			<g class="date-dividers">
-                <!-- Quarter dividers -->
-                <!-- {#each dateChanges.quarters as date}
-                    <line 
-                        class="quarter-divider"
-                        x1={date === data[0][xKey] ? x(date) : 
-                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                        y1={height - (margin.bottom || 0)}
-                        x2={date === data[0][xKey] ? x(date) : 
-                            date > data[data.length-1][xKey] ? x.range()[1] : x(date)}
-                        y2={height - (margin.bottom || 0)+10}
-                    />
-                {/each} -->
-                
                 <!-- Year dividers -->
                 {#each dateChanges.years as date}
                     <line 
@@ -224,45 +193,35 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                 {/each}
             </g>
 
-
-
 			<g class="plot">
-				
-				<!-- {#each data as d (d[xKey])}
-                    {#if d[yKey3]}
-                        <rect class="bar-holiday" width={x.bandwidth()} height={height - (margin.bottom || 0) - (margin.top || 0)} x={x(d[xKey])} y={margin.top || 0}/>
-                    {/if}
-		{/each} -->
 				<path
 					class="line"
 					d="{lineFn(data)}L{width - (margin.right || 0)},{y(data[data.length - 1][yKey2])}"
 					transform="translate(-{x.bandwidth() * 0.05},0)"/>
 
-			
 				<rect
-	class="line-point"
-	x="{x(data[data.length - 1][xKey]) - 4.5}" 
-	y="{y(data[data.length - 1][yKey2]) - 4.5}" 
-	width="9"
-	height="9"
-	transform="rotate(45, {x(data[data.length - 1][xKey])}, {y(data[data.length - 1][yKey2])})"
-fill=#8D2865
-	/>
-
+					class="line-point"
+					x="{x(data[data.length - 1][xKey]) - 4.5}" 
+					y="{y(data[data.length - 1][yKey2]) - 4.5}" 
+					width="9"
+					height="9"
+					transform="rotate(45, {x(data[data.length - 1][xKey])}, {y(data[data.length - 1][yKey2])})"
+					fill=#8D2865
+				/>
 					
-					<path
+				<path
 					class="line2"
 					d="{lineFn2(data)}L{width - (margin.right || 0)},{y(data[data.length - 1][yKey1])}"
 					transform="translate(-{x.bandwidth() * 0.05},0)"/>
 
-						<!-- Circle for the last point of lineFn2 (yKey1) -->
+				<!-- Circle for the last point of lineFn2 (yKey1) -->
 				<circle
-				class="line-point2"
-				cx="{x(data[data.length - 1][xKey])}"
-				cy="{y(data[data.length - 1][yKey1])}"
-				r="5"
-				fill=#27a0cc
-			/>
+					class="line-point2"
+					cx="{x(data[data.length - 1][xKey])}"
+					cy="{y(data[data.length - 1][yKey1])}"
+					r="5"
+					fill=#27a0cc
+				/>
 			</g>
 		</svg>
 	{/if}
@@ -312,15 +271,14 @@ fill=#8D2865
 	}
 
 	.year-divider {
-        stroke:#a0a0a0;;
+        stroke:#a0a0a0;
         stroke-width: 2px;
-        /* stroke-dasharray: 4 4; */
     }
 
 	text{font-size: 16px}
 
     .quarter-divider {
-        stroke: #d9d9d9;;
+        stroke: #d9d9d9;
         stroke-width: 1px;
-        }
+    }
 </style>
