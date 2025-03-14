@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import {
     Embed,
     Notice,
@@ -12,7 +13,7 @@
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
   import LineChart1 from "$lib/LineChart1.svelte";
-  export let current;
+  import insertHeader from "$lib/insert-header.js";
   export let data;
   
  
@@ -26,63 +27,18 @@ const { previous_bank_holiday } = data;
     day: "numeric",
   };
 
+  onMount(() => insertHeader("latest", "next"));
+
   // console.log(data.array);
-console.log(data.array)
-  console.log("test ");
-  console.log(data.flu.value_involving);
-  console.log(data.flu.percent_involving);
-  console.log(data.flu.value_due_to);
-  console.log(data.flu.percent_due_to);
+  // console.log(data.array)
+  // console.log("test ");
+  // console.log(data.flu.value_involving);
+  // console.log(data.flu.percent_involving);
+  // console.log(data.flu.value_due_to);
+  // console.log(data.flu.percent_due_to);
 </script>
 
 <Embed>
- 
- 
-  <Header />
- 
-
-  <Breadcrumb links="{[
-    // {label: 'Home', href: '/'},
-    {label: 'Home', href: '/parent'},
-    {label: 'People, population and community', href: '/parent2'},
-    {label: 'Births, deaths and marriages', href: '/parent2'},
-    {label: 'Deaths ', href: '/parent2'},
-    {label: 'Dashboard: Weekly deaths', href: '/parent2'},
-  ]}" />
-
-
-  <Section width="wide"><div style="background-color:#eaeaea">
-    <h1 class="ons-u-fs-xxxl">Dashboard: Weekly deaths</h1>
-  <p class="ons-u-fs-l"  style="font-weight:400; padding-bottom:20px" >Our new interactive tracks the latest trends in deaths registered</p>
-  </div></Section>
-  <Section width="wide">
-
-    <div class="container">
-      <!-- Content Divs -->
-      <div class="content">
-          <div class="box"><h3>Data from week ending {data.current.date.toLocaleDateString(
-            "en-GB",
-            dateOptions
-          )}
-          </h3>
-        </div>
-         
-          <!-- <div class="box"><span style="font-weight:bold"> </span> </div> -->
-          <div class="row-2">
-    <div class="box"><span style="font-weight:bold"> Last updated:</span> Wednesday 28 August 2025 </div>
-          <div class="box"><span style="font-weight:bold"> Next update:</span> Wednesday 4 September 2025</div>
-    
-      </div>
-    </div>
-      <!-- Image Div -->
-      <div class="image-container">
-        <img src="/img/Official-Statistics-Concept-RGB-v2-00_Accredited-Official-Statistics-Logo-English.svg" alt="Accredited Official Statistics Logo" width="100" height="600">
-      </div>
-  </div>
-
-  </Section>
-<div style="height:10px"></div>
-
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
