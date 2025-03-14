@@ -27,7 +27,7 @@ const { previous_bank_holiday } = data;
     day: "numeric",
   };
 
-  onMount(() => insertHeader("latest", "next"));
+  onMount(() => insertHeader(data.dates.current, data.dates.next));
 
   // console.log(data.array);
   // console.log(data.array)

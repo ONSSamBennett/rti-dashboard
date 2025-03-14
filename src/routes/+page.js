@@ -2,6 +2,7 @@ import { base } from "$app/paths";
 import { csvParse, autoType } from "d3-dsv";
 
 const dataUrl = `${base}/data/data.csv`;
+const datesUrl = `${base}/data/dates.json`;
 const holidaysUrl = "https://www.gov.uk/bank-holidays.json";
 
 function nextFriday(date) {
@@ -10,6 +11,8 @@ function nextFriday(date) {
 }
 
 export async function load({ fetch }) {
+    const dates = await (await fetch(datesUrl)).json();
+
     const str = await (await fetch(dataUrl)).text();
     const array = csvParse(str, autoType);
 
@@ -17,7 +20,7 @@ export async function load({ fetch }) {
     const holidays = json["england-and-wales"].events
         .map(d => nextFriday(new Date(d.date)))
         .filter(d => d >= +array[0].date && d <= +array[array.length - 1].date);
-    
+
     for (const d of array) {
         d.bank_holiday = holidays.includes(+d.date);
         d.flu_due_to_percent = 100 * (d.flu_due_to / d.number_of_deaths);
@@ -41,27 +44,27 @@ export async function load({ fetch }) {
         percent_change: 100 * ((current.num_england - previous.num_england) / previous.num_england)
     };
 
-const covid = {
-    value_due_to: current.covid_due_to,
-    value_involving: current.covid_with,
-    percent_due_to: 100 * (current.covid_due_to / current.number_of_deaths),
-    percent_involving: 100 * (current.covid_with / current.number_of_deaths)
- 
-}
-const flu = {
-    value_due_to: current.flu_due_to,
-    value_involving: current.flu_with,
-    percent_due_to: 100 * (current.flu_due_to / current.number_of_deaths),
-    percent_involving: 100 * (current.flu_with / current.number_of_deaths)
- 
-}
+    const covid = {
+        value_due_to: current.covid_due_to,
+        value_involving: current.covid_with,
+        percent_due_to: 100 * (current.covid_due_to / current.number_of_deaths),
+        percent_involving: 100 * (current.covid_with / current.number_of_deaths)
 
-const flu_covid_max = Math.max(...[
-    ...array.map(d => d.flu_due_to),
-    ...array.map(d => d.flu_with),
-    ...array.map(d => d.covid_due_to),
-    ...array.map(d => d.covid_with)
-]);
+    }
+    const flu = {
+        value_due_to: current.flu_due_to,
+        value_involving: current.flu_with,
+        percent_due_to: 100 * (current.flu_due_to / current.number_of_deaths),
+        percent_involving: 100 * (current.flu_with / current.number_of_deaths)
+
+    }
+
+    const flu_covid_max = Math.max(...[
+        ...array.map(d => d.flu_due_to),
+        ...array.map(d => d.flu_with),
+        ...array.map(d => d.covid_due_to),
+        ...array.map(d => d.covid_with)
+    ]);
 
 
     const deaths_registered_wales = {
@@ -87,9 +90,9 @@ const flu_covid_max = Math.max(...[
 
     // Add this right before the return statement
 
-    
-const current_bank_holiday = current.bank_holiday;
-const previous_bank_holiday = previous.bank_holiday;
 
-    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england,expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, current_bank_holiday, previous_bank_holiday};
+    const current_bank_holiday = current.bank_holiday;
+    const previous_bank_holiday = previous.bank_holiday;
+
+    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england, expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, current_bank_holiday, previous_bank_holiday, dates };
 }
