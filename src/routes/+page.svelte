@@ -13,7 +13,7 @@
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
   import BarChartAlt from "$lib/BarChartAlt.svelte";
-  import LineChart1 from "$lib/LineChart1.svelte";
+  import LineChart from "$lib/LineChart.svelte";
   import insertHeader from "$lib/insert-header.js";
   export let data;
   
@@ -34,7 +34,15 @@ const { previous_bank_holiday } = data;
     day: "numeric",
   };
 
-  onMount(() => insertHeader(data.dates.current, data.dates.next));
+  
+  const currentWeek = data.current.date.toLocaleDateString(
+        "en-GB",
+        dateOptions
+      )
+
+console.log(currentWeek)
+  //get header dates from 
+  onMount(() => insertHeader(data.dates.current, data.dates.next, currentWeek));
 
 function toggleEvent(e,title){
   if(e?.detail?.open)
@@ -237,7 +245,7 @@ function toggleEvent(e,title){
     <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
     
-    <LineChart1 line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
+    <LineChart line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
     dataTitle="influenza and pneumonia" 
     data={data.array} filename="deaths-flu" />
     
@@ -265,7 +273,7 @@ function toggleEvent(e,title){
       <p>
         <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-        <LineChart1 line_chart_max={data.flu_covid_max} yKey1={"covid_with_percent"} yKey2={"covid_due_to_percent"} yKey3={"covid_with"} yKey4={"covid_due_to"} 
+        <LineChart line_chart_max={data.flu_covid_max} yKey1={"covid_with_percent"} yKey2={"covid_due_to_percent"} yKey3={"covid_with"} yKey4={"covid_due_to"} 
         dataTitle="coronavirus" data={data.array} filename="deaths-covid" />
     </Card>
   </Cards>

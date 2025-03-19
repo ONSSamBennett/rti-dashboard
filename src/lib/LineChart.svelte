@@ -19,6 +19,9 @@
 	export let dataTitle;
     export let filename = "deaths-flu";
 
+	$: margin = +width < 400 
+  ? { left: 27, top: 20, bottom: 45 } 
+  : { left: 27, top: 20, bottom: 45 };
 
 	console.log(line_chart_max)
 console.log(dataTitle)
@@ -145,7 +148,7 @@ Date,Percentage due to,Percentage involving,Number due to,Number involving,Bank 
 	}
 	
 	let width;
-    $: height = +width < 450 ? 315 : 300;
+    $: height = +width < 500 ? width*0.8 : width*0.8;
 
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [

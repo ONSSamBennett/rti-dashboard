@@ -6,11 +6,16 @@
 
     export let data;
     // export let height = 300;
-    export let margin = { left: 80, top: 20, bottom: 45 };
+    export let margin = { left: 55, top: 20, bottom: 45 };
     export let xKey = "date";
     export let yKey1 = "num_england_wales";
     export let yKey2 = "exp_england_wales";
     export let yKey3 = "bank_holiday";
+
+    $: margin =
+        +width < 400
+            ? { left: 50, top: 20, bottom: 45 }
+            : { left: 60, top: 20, bottom: 45 };
 
     //works out the x date ranges
     function getQuarterFromDate(date) {
@@ -143,7 +148,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
     }
 
     let width;
-    $: height = +width < 400 ? 300 : 400;
+    $: height = +width < 450 ? width * 0.75 : width * 0.5;
 
     $: xDomain = data.map((d) => d[xKey]);
     $: yDomain = [
@@ -214,7 +219,9 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                             : date > data[data.length - 1][xKey]
                             ? x.range()[1]
                             : x(date)}
-                        y2={height - (margin.bottom || 0) + 10}
+                        y2={height -
+                            (margin.bottom || 0) +
+                            (width < 450 ? 0 : 10)}
                     />
                 {/each}
 
@@ -233,7 +240,9 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                             : date > data[data.length - 1][xKey]
                             ? x.range()[1]
                             : x(date)}
-                        y2={height - (margin.bottom || 0) + 25}
+                        y2={height - (margin.bottom || 0) + 
+                         (width < 450 ? 18 : 25)
+                        }
                     />
                 {/each}
 
@@ -244,7 +253,7 @@ Date,Deaths registered,Expected deaths,Bank holiday week
                         <text
                             class="year-label"
                             x={xPos}
-                            y={height - margin.bottom + 34}
+                            y={height - margin.bottom + (width < 450 ? 23 : 34)}
                             text-anchor="middle"
                         >
                             {year}
@@ -335,7 +344,7 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     }
     .line {
         fill: none;
-        stroke: #222;
+        stroke: #414042;
         stroke-width: 2.5px;
         stroke-linejoin: round;
         stroke-linecap: round;
@@ -351,6 +360,16 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     text {
         font-size: 16px;
     }
+
+    @media (max-width: 450px) {
+        text {
+            font-size: 14px;
+        }
+        .line {
+            stroke-width: 1.5px;
+        }
+    }
+
     .year-divider {
         stroke: #a0a0a0;
         stroke-width: 2px;

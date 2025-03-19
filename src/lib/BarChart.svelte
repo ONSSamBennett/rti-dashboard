@@ -6,7 +6,7 @@
 
 	export let data;
 	// export let height = 300;
-	export let margin = {left: 80, top: 20, bottom: 45};
+	export let margin = {left: 25, top: 20, bottom: 45};
 	export let xKey = "date";
 	export let yKey1 = "num_england_wales";
 	export let yKey2 = "exp_england_wales";
