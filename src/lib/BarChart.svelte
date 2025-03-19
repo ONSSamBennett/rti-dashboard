@@ -8,8 +8,8 @@
 	// export let height = 300;
 	export let margin = {left: 80, top: 20, bottom: 45};
 	export let xKey = "date";
-	export let yKey1 = "number_of_deaths";
-	export let yKey2 = "expected_deaths";
+	export let yKey1 = "num_england_wales";
+	export let yKey2 = "exp_england_wales";
 	export let yKey3 = "bank_holiday";
 
 	//works out the x date ranges

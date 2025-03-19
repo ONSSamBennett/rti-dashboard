@@ -23,19 +23,19 @@ export async function load({ fetch }) {
 
     for (const d of array) {
         d.bank_holiday = holidays.includes(+d.date);
-        d.flu_due_to_percent = d.flu_due_to / d.number_of_deaths;
-        d.flu_with_percent = d.flu_with / d.number_of_deaths;
-        d.covid_due_to_percent =  d.covid_due_to / d.number_of_deaths;
-        d.covid_with_percent = d.covid_with / d.number_of_deaths;
+        d.flu_due_to_percent = d.flu_due_to / d.num_england_wales;
+        d.flu_with_percent = d.flu_with / d.num_england_wales;
+        d.covid_due_to_percent =  d.covid_due_to / d.num_england_wales;
+        d.covid_with_percent = d.covid_with / d.num_england_wales;
     }
 
     const current = array[array.length - 1];
     const previous = array[array.length - 2];
 
     const deaths_registered = {
-        value: current.number_of_deaths,
-        change: current.number_of_deaths - previous.number_of_deaths,
-        percent_change: 100 * ((current.number_of_deaths - previous.number_of_deaths) / previous.number_of_deaths)
+        value: current.num_england_wales,
+        change: current.num_england_wales - previous.num_england_wales,
+        percent_change: 100 * ((current.num_england_wales - previous.num_england_wales) / previous.num_england_wales)
     };
 
     const deaths_registered_england = {
@@ -47,15 +47,15 @@ export async function load({ fetch }) {
     const covid = {
         value_due_to: current.covid_due_to,
         value_involving: current.covid_with,
-        percent_due_to: 100 * (current.covid_due_to / current.number_of_deaths),
-        percent_involving: 100 * (current.covid_with / current.number_of_deaths)
+        percent_due_to: 100 * (current.covid_due_to / current.num_england_wales),
+        percent_involving: 100 * (current.covid_with / current.num_england_wales)
 
     }
     const flu = {
         value_due_to: current.flu_due_to,
         value_involving: current.flu_with,
-        percent_due_to: 100 * (current.flu_due_to / current.number_of_deaths),
-        percent_involving: 100 * (current.flu_with / current.number_of_deaths)
+        percent_due_to: 100 * (current.flu_due_to / current.num_england_wales),
+        percent_involving: 100 * (current.flu_with / current.num_england_wales)
 
     }
 
@@ -82,8 +82,8 @@ export async function load({ fetch }) {
     };
 
     const expected_comparison = {
-        value: current.number_of_deaths - current.expected_deaths,
-        percent_difference: 100 * ((current.number_of_deaths - current.expected_deaths) / current.expected_deaths)
+        value: current.num_england_wales - current.exp_england_wales,
+        percent_difference: 100 * ((current.num_england_wales - current.exp_england_wales) / current.exp_england_wales)
     };
 
     const expected_comparison_england = {
@@ -92,8 +92,8 @@ export async function load({ fetch }) {
     };
 
     const expected_comparison_wales = {
-        value: current.number_of_deaths - current.expected_deaths,
-        percent_difference: 100 * ((current.number_of_deaths - current.expected_deaths) / current.expected_deaths)
+        value: current.num_england_wales - current.exp_england_wales,
+        percent_difference: 100 * ((current.num_england_wales - current.exp_england_wales) / current.exp_england_wales)
     };
 
     // Add this right before the return statement

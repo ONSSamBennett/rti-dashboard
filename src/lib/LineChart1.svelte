@@ -1,6 +1,6 @@
 <script>
-	import { Button } from "@onsvisual/svelte-components";
-	import { csvFormatBody } from "d3-dsv";
+	import { analyticsEvent } from "@onsvisual/svelte-components";
+	import { csvFormatRows } from "d3-dsv";
 	import { scaleLinear, scaleBand } from "d3-scale";
 	import { line, curveStepAfter, curveLinear } from "d3-shape";
 	import { format } from "d3-format"; // Import d3-format for number formatting
@@ -10,7 +10,7 @@
 	// export let height = 300;
 	export let margin = {left:25, top: 20, bottom: 35};
 	export let xKey = "date";
-	export let yKey0 = "number_of_deaths";
+	export let yKey0 = "num_england_wales";
 	export let yKey1;
 	export let yKey2;
 	export let yKey3;
@@ -115,7 +115,10 @@ console.log(dataTitle)
 		day: 'numeric'
 	};
 
-	function makeDataFile() {
+	function makeDataFile() { 
+
+		const formatPercentDownload = (val) => (val * 100).toFixed(1); // Format as percentage with 0 decimal places
+
 		let csv = `"Deaths due to and involving ${dataTitle}, week ending ${data[0][xKey].toLocaleDateString("en-GB", dateOptions)} to ${data[data.length - 1][xKey].toLocaleDateString("en-GB", dateOptions)}"
 Source: Office for National Statistics
 
@@ -123,7 +126,18 @@ Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 
 Date,Percentage due to,Percentage involving,Number due to,Number involving,Bank holiday week
 `;
-		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3, yKey4,yKey5]);
+		csv += 
+		// csvFormatBody(data, [xKey, yKey1, yKey2, yKey3, yKey4,yKey5]);
+		csvFormatRows(data.map((d,i) => {
+						return [ 
+							d[xKey],
+							formatPercentDownload(d[yKey1]),
+							formatPercentDownload(d[yKey2]),
+				d[yKey3],
+				d[yKey4],
+				d[yKey5] ? "Yes" : ""
+			]
+		}))
 		return {
 			blob: new Blob([csv], { type: "text/csv" }),
 			href: `data:text/csv;charset=UTF-8,${encodeURIComponent(csv)}`
@@ -233,7 +247,14 @@ Date,Percentage due to,Percentage involving,Number due to,Number involving,Bank 
 </div>
 </div>
 <strong>Download chart data</strong><br/>
-<a href={dataFile?.href} download="{filename}-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>
+<a href={dataFile?.href} 
+on:click={() =>
+	analyticsEvent({
+		event: "fileDownload",
+		extension: "csv",
+		fileName: filename,
+	})}
+download="{filename}-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>
 
 <style>
 	.chart-container {

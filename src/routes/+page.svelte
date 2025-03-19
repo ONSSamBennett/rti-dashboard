@@ -8,8 +8,8 @@
     Card,
     Twisty,
     Divider,
-    Header,
- Breadcrumb
+   AnalyticsBanner,
+   analyticsEvent
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
   import BarChartAlt from "$lib/BarChartAlt.svelte";
@@ -17,7 +17,13 @@
   import insertHeader from "$lib/insert-header.js";
   export let data;
   
- 
+  const analyticsProps = {
+  contentTitle: "Weekly deaths dashboard",
+  releaseDate: "2025-03-26",
+  outputSeries: "weeklyprovisionalfiguresondeathsregisteredinenglandandwales",
+  contentType: "dashboard"
+}
+
 const { current_bank_holiday } = data;
 const { previous_bank_holiday } = data;
 
@@ -30,6 +36,13 @@ const { previous_bank_holiday } = data;
 
   onMount(() => insertHeader(data.dates.current, data.dates.next));
 
+function toggleEvent(e,title){
+  if(e?.detail?.open)
+  analyticsEvent({
+   event: "openTwisty",
+   twistyTitle: title
+    }) }
+
   // console.log(data.array);
   // console.log(data.array)
   // console.log("test ");
@@ -40,6 +53,7 @@ const { previous_bank_holiday } = data;
 </script>
 
 <Embed>
+  <AnalyticsBanner {analyticsProps} hideBanner />
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
@@ -165,7 +179,7 @@ const { previous_bank_holiday } = data;
   </Cards>
 
   <Section width="medium">
-    <Twisty title="What are death registrations?">
+    <Twisty title="What are death registrations?" on:toggle={(e) => toggleEvent(e,"What are death registrations?")}>
       <p>
         There can be delays between when a death occurs and the date it is
         registered. In the latest week, 48% of registered deaths also happened
