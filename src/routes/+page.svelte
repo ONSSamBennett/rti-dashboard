@@ -12,6 +12,7 @@
  Breadcrumb
   } from "@onsvisual/svelte-components";
   import BarChart from "$lib/BarChart.svelte";
+  import BarChartAlt from "$lib/BarChartAlt.svelte";
   import LineChart1 from "$lib/LineChart1.svelte";
   import insertHeader from "$lib/insert-header.js";
   export let data;
@@ -44,7 +45,7 @@ const { previous_bank_holiday } = data;
       <p>
         The figures displayed on this page are the provisional estimates. This
         means they are the earliest estimates available and will be revised in
-        the future. Read more in the <a>Data sources and quality page</a>
+        the future. Read more in the <a href="..." target="_top">Data sources and quality page</a>
       </p>
     </Notice>
   </Section>
@@ -170,21 +171,21 @@ const { previous_bank_holiday } = data;
         registered. In the latest week, 48% of registered deaths also happened
         that week.
       </p>
-      <p><a>Learn more about the death registration system</a></p>
+      <p><a href="..." target="_top">Learn more about the death registration system</a></p>
     </Twisty>
     <Twisty title="What are expected deaths?">
       <p>
         We use statistical modelling to estimate the number of deaths that we
         would expect to happen based on current population and mortality trends.
       </p>
-      <p><a>Learn more about expected deaths</a></p>
+      <p><a href="..." target="_top">Learn more about expected deaths</a></p>
     </Twisty>
   </Section>
 
   <Section width="wide">
     <h3>Past two years trend</h3>
     <p>Deaths registered and expected deaths</p>
-    <BarChart data={data.array} />
+    <BarChartAlt data={data.array} />
   </Section>
   <Divider hr="full"/>
   <Section title="Deaths by selected causes" width="medium">
@@ -221,7 +222,10 @@ const { previous_bank_holiday } = data;
     <p>
     <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-    <LineChart1 line_chart_max={"flu_covid_max"} yKey1={"flu_due_perc"} yKey2={"flu_with_perc"} data={data.array} filename="deaths-flu" />
+    
+    <LineChart1 line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
+    dataTitle="influenza and pneumonia" 
+    data={data.array} filename="deaths-flu" />
     
     </Card>
     <Card title="Coronavirus">
@@ -247,7 +251,8 @@ const { previous_bank_holiday } = data;
       <p>
         <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
  
-      <LineChart1 yKey1={"covid_with_perc"} yKey2={"covid_due_perc"} data={data.array} filename="deaths-covid" />
+        <LineChart1 line_chart_max={data.flu_covid_max} yKey1={"covid_with_percent"} yKey2={"covid_due_to_percent"} yKey3={"covid_with"} yKey4={"covid_due_to"} 
+        dataTitle="coronavirus" data={data.array} filename="deaths-covid" />
     </Card>
   </Cards>
 

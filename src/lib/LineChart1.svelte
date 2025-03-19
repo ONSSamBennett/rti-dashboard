@@ -8,16 +8,20 @@
 	export let data;
 	export let line_chart_max;
 	// export let height = 300;
-	export let margin = {left:50, top: 20, bottom: 35};
+	export let margin = {left:25, top: 20, bottom: 35};
 	export let xKey = "date";
 	export let yKey0 = "number_of_deaths";
 	export let yKey1;
 	export let yKey2;
-	export let yKey3 ="";
-	export let yKey4 = "flu_due_to";
-	export let yKey5 = "flu_with";
+	export let yKey3;
+	export let yKey4;
+	export let yKey5 = "bank_holiday";
+	export let dataTitle;
     export let filename = "deaths-flu";
 
+
+	console.log(line_chart_max)
+console.log(dataTitle)
 	// Create a percentage format
     	const formatPercent = format(".0%"); // Format as percentage with 0 decimal places
 
@@ -112,14 +116,14 @@
 	};
 
 	function makeDataFile() {
-		let csv = `Deaths registered and expected deaths, week ending ${data[0][xKey].toLocaleDateString("en-GB", dateOptions)} to ${data[data.length - 1][xKey].toLocaleDateString("en-GB", dateOptions)}
+		let csv = `"Deaths due to and involving ${dataTitle}, week ending ${data[0][xKey].toLocaleDateString("en-GB", dateOptions)} to ${data[data.length - 1][xKey].toLocaleDateString("en-GB", dateOptions)}"
 Source: Office for National Statistics
 
 Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 
-Date,Flu test,Expected deaths,Bank holiday week
+Date,Percentage due to,Percentage involving,Number due to,Number involving,Bank holiday week
 `;
-		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
+		csv += csvFormatBody(data, [xKey, yKey1, yKey2, yKey3, yKey4,yKey5]);
 		return {
 			blob: new Blob([csv], { type: "text/csv" }),
 			href: `data:text/csv;charset=UTF-8,${encodeURIComponent(csv)}`
@@ -132,7 +136,7 @@ Date,Flu test,Expected deaths,Bank holiday week
 	$: xDomain = data.map(d => d[xKey]);
 	$: yDomain = [
 		0,
-		0.2 // Changed from 20 to 1 for percentage scale (0-100%)
+		line_chart_max
 	];
 
 	$: x = scaleBand().padding(0.1).domain(xDomain).range([(margin.left || 0), width - (margin.right || 0)]);
@@ -194,20 +198,7 @@ Date,Flu test,Expected deaths,Bank holiday week
             </g>
 
 			<g class="plot">
-				<path
-					class="line"
-					d="{lineFn(data)}L{width - (margin.right || 0)},{y(data[data.length - 1][yKey2])}"
-					transform="translate(-{x.bandwidth() * 0.05},0)"/>
-
-				<rect
-					class="line-point"
-					x="{x(data[data.length - 1][xKey]) - 4.5}" 
-					y="{y(data[data.length - 1][yKey2]) - 4.5}" 
-					width="9"
-					height="9"
-					transform="rotate(45, {x(data[data.length - 1][xKey])}, {y(data[data.length - 1][yKey2])})"
-					fill=#8D2865
-				/>
+			
 					
 				<path
 					class="line2"
@@ -222,6 +213,20 @@ Date,Flu test,Expected deaths,Bank holiday week
 					r="5"
 					fill=#27a0cc
 				/>
+				<path
+				class="line"
+				d="{lineFn(data)}L{width - (margin.right || 0)},{y(data[data.length - 1][yKey2])}"
+				transform="translate(-{x.bandwidth() * 0.05},0)"/>
+
+			<rect
+				class="line-point"
+				x="{x(data[data.length - 1][xKey]) - 4.5}" 
+				y="{y(data[data.length - 1][yKey2]) - 4.5}" 
+				width="9"
+				height="9"
+				transform="rotate(45, {x(data[data.length - 1][xKey])}, {y(data[data.length - 1][yKey2])})"
+				fill=#8D2865
+			/>
 			</g>
 		</svg>
 	{/if}

@@ -23,10 +23,10 @@ export async function load({ fetch }) {
 
     for (const d of array) {
         d.bank_holiday = holidays.includes(+d.date);
-        d.flu_due_to_percent = 100 * (d.flu_due_to / d.number_of_deaths);
-        d.flu_with_percent = 100 * (d.flu_with / d.number_of_deaths);
-        d.covid_due_to_percent = 100 * (d.covid_due_to / d.number_of_deaths);
-        d.covid_with_percent = 100 * (d.covid_with / d.number_of_deaths);
+        d.flu_due_to_percent = d.flu_due_to / d.number_of_deaths;
+        d.flu_with_percent = d.flu_with / d.number_of_deaths;
+        d.covid_due_to_percent =  d.covid_due_to / d.number_of_deaths;
+        d.covid_with_percent = d.covid_with / d.number_of_deaths;
     }
 
     const current = array[array.length - 1];
@@ -59,13 +59,21 @@ export async function load({ fetch }) {
 
     }
 
-    const flu_covid_max = Math.max(...[
-        ...array.map(d => d.flu_due_to),
-        ...array.map(d => d.flu_with),
-        ...array.map(d => d.covid_due_to),
-        ...array.map(d => d.covid_with)
-    ]);
+    // const flu_covid_max = Math.max(...[
+    //     ...array.map(d => d.flu_due_to),
+    //     ...array.map(d => d.flu_with),
+    //     ...array.map(d => d.covid_due_to),
+    //     ...array.map(d => d.covid_with)
+    // ]);
 
+    const flu_covid_max = Math.max(...[
+        ...array.map(d => d.flu_due_to_percent),
+        ...array.map(d => d.flu_with_percent),
+        ...array.map(d => d.covid_due_to_percent),
+        ...array.map(d => d.covid_with_percent)
+    ])   // Convert to decimal if your chart expects 0.2 for 20%
+
+    console.log(flu_covid_max)
 
     const deaths_registered_wales = {
         value: current.num_wales,
