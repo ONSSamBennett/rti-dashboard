@@ -22,11 +22,11 @@ export default function insertHeader(updated, next, latest) {
 
     <p style="font-size:18px; margin-left:0px"
         class="col  col--md-one-third col--lg-one-third margin-bottom-sm--1 margin-bottom-md--3 margin-top--0 padding-bottom--0 padding-top--0">
-        <span class="font-weight-700" style="font-size:18px">Last updated: </span>${updated}<br>
+        <span class="font-weight-700" style="font-size:18px">This page last updated: </span>${updated}<br>
     </p>
     <p style="font-size:18px; margin-left:0px"
         class="col  col--md-one-third col--lg-one-third margin-bottom-sm--3 margin-bottom-md--3 margin-top--0 padding-bottom--0 padding-top--0">
-        <span class="font-weight-700">Next update: </span>${next}
+        <span class="font-weight-700">This page next updated: </span>${next}
     </p>
     <p style="font-size:18px; margin-left:0px"
     class="col  col--md-one-third col--lg-one-third margin-bottom-sm--3 margin-bottom-md--3 margin-top--0 padding-bottom--0 padding-top--0">

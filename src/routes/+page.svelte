@@ -11,7 +11,6 @@
    AnalyticsBanner,
    analyticsEvent
   } from "@onsvisual/svelte-components";
-  import BarChart from "$lib/BarChart.svelte";
   import BarChartAlt from "$lib/BarChartAlt.svelte";
   import LineChart from "$lib/LineChart.svelte";
   import insertHeader from "$lib/insert-header.js";
@@ -194,14 +193,14 @@ The previous week included a bank holiday which can mean fewer death registratio
       <p>
         There can be delays between when a death occurs and the date it is registered. The number of days between death occurrence and registration vary, and can be longer in certain cases, such as when a death is referred to a coroner. 
       </p>
-      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">Learn more about the death registration system</a></p>
+      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017#registrations" target="_top">Learn more about the death registration system</a></p>
     </Twisty>
     <Twisty title="What are expected deaths?">
       <p>
         We use statistical modelling to estimate the number of deaths that we
         would expect to happen based on current population and mortality trends.
       </p>
-      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">Learn more about expected deaths</a></p>
+      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017#expected" target="_top">Learn more about expected deaths</a></p>
     </Twisty>
   </Section>
 
