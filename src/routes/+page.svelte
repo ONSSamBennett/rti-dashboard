@@ -40,7 +40,7 @@ const { previous_bank_holiday } = data;
         dateOptions
       )
 
-console.log(currentWeek)
+
   //get header dates from 
   onMount(() => insertHeader(data.dates.current, data.dates.next, currentWeek));
 
@@ -51,13 +51,7 @@ function toggleEvent(e,title){
    twistyTitle: title
     }) }
 
-  // console.log(data.array);
-  // console.log(data.array)
-  // console.log("test ");
-  // console.log(data.flu.value_involving);
-  // console.log(data.flu.percent_involving);
-  // console.log(data.flu.value_due_to);
-  // console.log(data.flu.percent_due_to);
+
 </script>
 
 <Embed>
@@ -67,7 +61,8 @@ function toggleEvent(e,title){
       <p>
         The figures displayed on this page are the provisional estimates. This
         means they are the earliest estimates available and will be revised in
-        the future. Read more in the <a href="..." target="_top">Data sources and quality page</a>
+        the future. </p><p>The figures are based on the date a death was registered, which is not always the same as the date it occurred.</p><p>
+        Read more in the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">User guide to mortality statistics</a>
       </p>
     </Notice>
   </Section>
@@ -83,13 +78,21 @@ function toggleEvent(e,title){
   {#if current_bank_holiday || previous_bank_holiday}
   <Section width="wide">
       <Notice>
-          {#if current_bank_holiday && previous_bank_holiday}
-              Both the latest week and previous week included bank holidays which may affect registrations
-          {:else if current_bank_holiday}
-              The latest week included a bank holiday which may affect registrations
-          {:else}
-              The previous week included a bank holiday which may affect registrations
-          {/if}
+       
+        {#if current_bank_holiday && previous_bank_holiday}
+
+        Both the latest week and previous week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with other weeks and with expected deaths
+
+    {:else if current_bank_holiday}
+
+     The latest week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with the previous weeks and with expected deaths
+
+    {:else}
+
+The previous week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with the latest week and with expected deaths
+
+    {/if}
+
       </Notice>
   </Section>
 {/if}
@@ -189,18 +192,16 @@ function toggleEvent(e,title){
   <Section width="medium">
     <Twisty title="What are death registrations?" on:toggle={(e) => toggleEvent(e,"What are death registrations?")}>
       <p>
-        There can be delays between when a death occurs and the date it is
-        registered. In the latest week, 48% of registered deaths also happened
-        that week.
+        There can be delays between when a death occurs and the date it is registered. The number of days between death occurrence and registration vary, and can be longer in certain cases, such as when a death is referred to a coroner. 
       </p>
-      <p><a href="..." target="_top">Learn more about the death registration system</a></p>
+      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">Learn more about the death registration system</a></p>
     </Twisty>
     <Twisty title="What are expected deaths?">
       <p>
         We use statistical modelling to estimate the number of deaths that we
         would expect to happen based on current population and mortality trends.
       </p>
-      <p><a href="..." target="_top">Learn more about expected deaths</a></p>
+      <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">Learn more about expected deaths</a></p>
     </Twisty>
   </Section>
 

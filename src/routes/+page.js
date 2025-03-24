@@ -73,8 +73,7 @@ export async function load({ fetch }) {
         ...array.map(d => d.covid_with_percent)
     ])   // Convert to decimal if your chart expects 0.2 for 20%
 
-    console.log(flu_covid_max)
-
+    
     const deaths_registered_wales = {
         value: current.num_wales,
         change: current.num_wales - previous.num_wales,
@@ -92,8 +91,8 @@ export async function load({ fetch }) {
     };
 
     const expected_comparison_wales = {
-        value: current.num_england_wales - current.exp_england_wales,
-        percent_difference: 100 * ((current.num_england_wales - current.exp_england_wales) / current.exp_england_wales)
+        value: current.num_wales - current.exp_wales,
+        percent_difference: 100 * ((current.num_wales - current.exp_wales) / current.exp_wales)
     };
 
     // Add this right before the return statement

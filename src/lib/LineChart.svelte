@@ -23,8 +23,7 @@
   ? { left: 27, top: 20, bottom: 45 } 
   : { left: 27, top: 20, bottom: 45 };
 
-	console.log(line_chart_max)
-console.log(dataTitle)
+
 	// Create a percentage format
     	const formatPercent = format(".0%"); // Format as percentage with 0 decimal places
 
@@ -127,7 +126,7 @@ Source: Office for National Statistics
 
 Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 
-Date,Percentage due to,Percentage involving,Number due to,Number involving,Bank holiday week
+Week ending,Percentage due to,Percentage involving,Number due to,Number involving,Bank holiday week
 `;
 		csv += 
 		// csvFormatBody(data, [xKey, yKey1, yKey2, yKey3, yKey4,yKey5]);

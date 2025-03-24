@@ -132,7 +132,7 @@ Source: Office for National Statistics
 
 Data downloaded on ${new Date().toLocaleDateString("en-GB", dateOptions)}
 
-Date,Deaths registered,Expected deaths,Bank holiday week
+Week ending,Deaths registered,Expected deaths,Bank holiday week
 `;
         csv +=
             // csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
@@ -177,9 +177,10 @@ Date,Deaths registered,Expected deaths,Bank holiday week
 </script>
 
 <ul class="legend-container">
-    <li><span class="legend-circle" />Deaths registered</li>
-    <li><span class="legend-line" />Expected deaths</li>
-    <li><span class="legend-square" />Week containing bank holiday</li>
+    <!-- <li><span class="legend-circle" />Deaths registered</li> -->
+    <li><span class="legend-square" />Deaths registered</li>
+      <li><span class="legend-square-2" />Deaths registered, week containing bank holiday</li>
+      <li><span class="legend-line" />Expected deaths</li>
 </ul>
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
@@ -337,10 +338,11 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     }
 
     .bar-holiday {
-        fill: #c0c0c0;
+        fill: #b1cdd7;
+  
     }
     .bar-holiday2 {
-        fill: #949494;
+        fill: #27a0cc;
     }
     .line {
         fill: none;
@@ -409,11 +411,18 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
         background: var(--ons-color-text, #222);
         transform: translateY(-4px);
     }
+    .legend-square-2 {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background: #b1cdd7;
+        border-top: 3px solid #27a0cc;
+    }
     .legend-square {
         display: inline-block;
         width: 12px;
         height: 12px;
-        background: #d9d9d9;
-        border-top: 3px solid #949494;
+        background: #27a0cc;
+        border-top: 3px solid #27a0cc;
     }
 </style>
