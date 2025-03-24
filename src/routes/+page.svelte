@@ -58,10 +58,8 @@ function toggleEvent(e,title){
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
-        The figures displayed on this page are the provisional estimates. This
-        means they are the earliest estimates available and will be revised in
-        the future. </p><p>The figures are based on the date a death was registered, which is not always the same as the date it occurred.</p><p>
-        Read more in the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">User guide to mortality statistics</a>
+        These figures are provisional. This means they are the earliest estimates available and will be revised in the future. </p><p>The figures are based on the date a death was registered, which is not always the same as the date it occurred.</p><p>
+        Read more in our <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">User guide to mortality statistics</a>.
       </p>
     </Notice>
   </Section>
@@ -80,15 +78,15 @@ function toggleEvent(e,title){
        
         {#if current_bank_holiday && previous_bank_holiday}
 
-        Both the latest week and previous week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with other weeks and with expected deaths
+        Both the latest week and previous week included a bank holiday, which can mean fewer death registrations. This can lead to larger differences when comparing with other weeks and with expected deaths
 
     {:else if current_bank_holiday}
 
-     The latest week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with the previous weeks and with expected deaths
+     The latest week included a bank holiday, which can mean fewer death registrations. This can lead to larger differences when comparing with the previous weeks and with expected deaths
 
     {:else}
 
-The previous week included a bank holiday which can mean fewer death registrations. This can lead to larger differences when comparing with the latest week and with expected deaths
+The previous week included a bank holiday, which can mean fewer death registrations. This can lead to larger differences when comparing with the latest week and with expected deaths
 
     {/if}
 
@@ -178,10 +176,10 @@ The previous week included a bank holiday which can mean fewer death registratio
         {#if data.expected_comparison.value === 0}
           As many as expected
         {:else if data.expected_comparison.value > 0}
-          {Math.abs(data.expected_comparison.value).toLocaleString("en-GB")} more
+          {Math.round(Math.abs(data.expected_comparison.value).toLocaleString("en-GB"))} more
           than expected
         {:else}
-          {Math.abs(data.expected_comparison.value).toLocaleString("en-GB")} fewer
+          {Math.round(Math.abs(data.expected_comparison.value).toLocaleString("en-GB"))} fewer
           than expected
         {/if}
       </p>
@@ -205,14 +203,14 @@ The previous week included a bank holiday which can mean fewer death registratio
   </Section>
 
   <Section width="wide">
-    <h3>Past two years trend</h3>
+    <h3>Trend in the past two years</h3>
     <p>Deaths registered and expected deaths</p>
     <BarChartAlt data={data.array} />
   </Section>
   <Divider hr="full"/>
   <Section title="Deaths by selected causes" width="medium">
     <p>
-      Percentage of deaths due to or involving selected cause, England and
+      Percentage of deaths due to or involving selected causes, England and
       Wales, week ending {data.current.date.toLocaleDateString(
         "en-GB",
         dateOptions
@@ -242,7 +240,7 @@ The previous week included a bank holiday which can mean fewer death registratio
         </div>
       </div>
     <p>
-    <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
+    <h4 style="padding-top:10px; margin-bottom:10px">Trend in the past two years</h4>
  
     
     <LineChart line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
@@ -271,7 +269,7 @@ The previous week included a bank holiday which can mean fewer death registratio
         </div>
       </div>
       <p>
-        <h4 style="padding-top:10px; margin-bottom:10px">Past two years trend</h4>
+        <h4 style="padding-top:10px; margin-bottom:10px">Trend in the past two years</h4>
  
         <LineChart line_chart_max={data.flu_covid_max} yKey1={"covid_with_percent"} yKey2={"covid_due_to_percent"} yKey3={"covid_with"} yKey4={"covid_due_to"} 
         dataTitle="coronavirus" data={data.array} filename="deaths-covid" />
