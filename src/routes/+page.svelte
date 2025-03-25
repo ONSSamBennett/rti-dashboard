@@ -33,12 +33,28 @@ const { previous_bank_holiday } = data;
     day: "numeric",
   };
 
-  
+  const dateOptions2 = {
+       year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
   const currentWeek = data.current.date.toLocaleDateString(
         "en-GB",
         dateOptions
       )
 
+      const currentWeek2 = data.current.date.toLocaleDateString(
+        "en-GB",
+        dateOptions2
+      )
+
+
+      const earliestWeek = data.earliest.date.toLocaleDateString(
+        "en-GB",
+        dateOptions2
+      )
+
+    
 
   //get header dates from 
   onMount(() => insertHeader(data.dates.current, data.dates.next, currentWeek));
@@ -204,7 +220,8 @@ The previous week included a bank holiday, which can mean fewer death registrati
 
   <Section width="wide">
     <h3>Trend in the past two years</h3>
-    <p>Deaths registered and expected deaths</p>
+    <p>Week ending {earliestWeek} to {currentWeek2}
+</p>
     <BarChartAlt data={data.array} />
   </Section>
   <Divider hr="full"/>

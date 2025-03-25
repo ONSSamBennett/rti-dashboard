@@ -138,7 +138,7 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
             // csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
             csvFormatRows(
                 data.map((d, i) => {
-                    return [d[xKey], d[yKey1], d[yKey2], d[yKey3] ? "Yes" : ""];
+                    return [d[xKey], d[yKey1], Math.round(d[yKey2]), d[yKey3] ? "Yes" : ""];
                 })
             );
         return {
@@ -373,14 +373,14 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     }
 
     .year-divider {
-        stroke: #a0a0a0;
+        stroke: #b3b3b3;
         stroke-width: 2px;
         /* stroke-dasharray: 4 4; */
     }
 
     .quarter-divider {
-        stroke: #a0a0a0;
-        stroke-width: 2px;
+        stroke: #C6C6C6;
+        stroke-width: 1.5px;
     }
 
     .legend-container {

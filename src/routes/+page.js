@@ -29,6 +29,7 @@ export async function load({ fetch }) {
         d.covid_with_percent = d.covid_with / d.num_england_wales;
     }
 
+    const earliest = array[0];
     const current = array[array.length - 1];
     const previous = array[array.length - 2];
 
@@ -101,5 +102,5 @@ export async function load({ fetch }) {
     const current_bank_holiday = current.bank_holiday;
     const previous_bank_holiday = previous.bank_holiday;
 
-    return { array, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england, expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, current_bank_holiday, previous_bank_holiday, dates };
+    return { array, earliest, current, deaths_registered, expected_comparison, expected_comparison_england, deaths_registered_england, expected_comparison_wales, deaths_registered_wales, flu, covid, flu_covid_max, current_bank_holiday, previous_bank_holiday, dates };
 }
