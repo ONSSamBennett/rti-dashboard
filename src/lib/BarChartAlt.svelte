@@ -391,7 +391,7 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     .legend-container > li {
         display: inline-block;
         margin: 0 16px 0 0;
-        white-space: nowrap;
+        /* white-space: nowrap; */
     }
     .legend-container > li > span {
         margin-right: 8px;
