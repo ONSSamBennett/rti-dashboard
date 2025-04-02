@@ -236,7 +236,7 @@ The previous week included a bank holiday, which can mean fewer death registrati
   </Section>
 
   <Cards>
-    <Card title="Influenza and pneumonia">
+    <Card title="Influenza or pneumonia">
       <div class="causes-container">
         <div class="causes-child"> 
           <span style="color:#8D2865; font-weight:700"> Due to ⬥</span>
@@ -261,7 +261,7 @@ The previous week included a bank holiday, which can mean fewer death registrati
  
     
     <LineChart line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
-    dataTitle="influenza and pneumonia" 
+    dataTitle="influenza or pneumonia" 
     data={data.array} filename="deaths-flu" />
     
     </Card>
