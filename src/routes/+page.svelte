@@ -74,7 +74,8 @@ function toggleEvent(e,title){
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
-        These figures are provisional. This means they are the earliest estimates available and will be revised in the future. </p><p>The figures are based on the date a death was registered, which is not always the same as the date it occurred.</p><p>
+        These figures are provisional. This means they are the earliest estimates available and will be revised in the future. </p><p>
+          The figures are based on the date a death was registered, which is usually later than the date it occurred.</p><p>
         Read more in our <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">User guide to mortality statistics</a>.
       </p>
     </Notice>
@@ -205,14 +206,13 @@ The previous week included a bank holiday, which can mean fewer death registrati
   <Section width="medium">
     <Twisty title="What are death registrations?" on:toggle={(e) => toggleEvent(e,"What are death registrations?")}>
       <p>
-        There can be delays between when a death occurs and the date it is registered. The number of days between death occurrence and registration vary, and can be longer in certain cases, such as when a death is referred to a coroner. 
+        There is usually a delay between the date when a death occurs and the date it is registered. The number of days between death occurrence and registration vary, and can be longer in certain cases, such as when a death is referred to a coroner.
       </p>
       <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017#registrations" target="_top">Learn more about the death registration system</a></p>
     </Twisty>
     <Twisty title="What are expected deaths?">
       <p>
-        We use statistical modelling to estimate the number of deaths that we
-        would expect to happen based on current population and mortality trends.
+        We use statistical modelling to estimate the number of deaths that we would expect to happen based on current population and mortality trends.
       </p>
       <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017#expected" target="_top">Learn more about expected deaths</a></p>
     </Twisty>
