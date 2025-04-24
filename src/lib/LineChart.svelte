@@ -126,17 +126,17 @@ Source: Office for National Statistics
 
 Data downloaded on ${(new Date()).toLocaleDateString("en-GB", dateOptions)}
 
-Week ending,Percentage due to,Percentage involving,Number due to,Number involving,Bank holiday week
+Week ending,Number involving,Number due to,Percentage involving,Percentage due to,Bank holiday week
 `;
 		csv += 
 		// csvFormatBody(data, [xKey, yKey1, yKey2, yKey3, yKey4,yKey5]);
 		csvFormatRows(data.map((d,i) => {
 						return [ 
 							d[xKey],
-							formatPercentDownload(d[yKey1]),
-							formatPercentDownload(d[yKey2]),
 				d[yKey3],
 				d[yKey4],
+							formatPercentDownload(d[yKey1]),
+							formatPercentDownload(d[yKey2]),
 				d[yKey5] ? "Yes" : ""
 			]
 		}))
@@ -253,7 +253,7 @@ Week ending,Percentage due to,Percentage involving,Number due to,Number involvin
 on:click={() =>
 	analyticsEvent({
 		event: "fileDownload",
-		extension: "csv",
+		fileExtension: "csv",
 		fileName: filename,
 	})}
 download="{filename}-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>

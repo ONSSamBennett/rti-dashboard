@@ -306,7 +306,7 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
     on:click={() =>
         analyticsEvent({
             event: "fileDownload",
-            extension: "csv",
+            fileExtension: "csv",
             fileName: "weekly-deaths",
         })}
     download="weekly-deaths-{data[data.length - 1][xKey]
