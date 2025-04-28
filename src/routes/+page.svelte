@@ -66,7 +66,7 @@ function toggleEvent(e,title){
    twistyTitle: title
     }) }
 
-
+ 
 </script>
 
 <Embed>
@@ -171,7 +171,6 @@ The previous week included a bank holiday, which can mean fewer death registrati
             lower
           </div>
         {/if}
-
         <!-- </p> -->
       {/if}
       
@@ -193,10 +192,10 @@ The previous week included a bank holiday, which can mean fewer death registrati
         {#if data.expected_comparison.value === 0}
           As many as expected
         {:else if data.expected_comparison.value > 0}
-          {Math.round(Math.abs(data.expected_comparison.value).toLocaleString("en-GB"))} more
+          {Math.round(Math.abs(data.expected_comparison.value)).toLocaleString("en-GB")} more
           than expected
         {:else}
-          {Math.round(Math.abs(data.expected_comparison.value).toLocaleString("en-GB"))} fewer
+          {Math.round(Math.abs(data.expected_comparison.value)).toLocaleString("en-GB")} fewer
           than expected
         {/if}
       </p>
