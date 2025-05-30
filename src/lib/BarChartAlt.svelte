@@ -138,7 +138,12 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
             // csvFormatBody(data, [xKey, yKey1, yKey2, yKey3]);
             csvFormatRows(
                 data.map((d, i) => {
-                    return [d[xKey], d[yKey1], Math.round(d[yKey2]), d[yKey3] ? "Yes" : ""];
+                    return [
+                        d[xKey],
+                        d[yKey1],
+                        Math.round(d[yKey2]),
+                        d[yKey3] ? "Yes" : "",
+                    ];
                 })
             );
         return {
@@ -179,8 +184,11 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
 <ul class="legend-container">
     <!-- <li><span class="legend-circle" />Deaths registered</li> -->
     <li><span class="legend-square" />Deaths registered</li>
-      <li><span class="legend-square-2" />Deaths registered, week containing bank holiday</li>
-      <li><span class="legend-line" />Expected deaths</li>
+    <li>
+        <span class="legend-square-2" />Deaths registered, week containing bank
+        holiday
+    </li>
+    <li><span class="legend-line" />Expected deaths</li>
 </ul>
 <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
@@ -241,9 +249,9 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
                             : date > data[data.length - 1][xKey]
                             ? x.range()[1]
                             : x(date)}
-                        y2={height - (margin.bottom || 0) + 
-                         (width < 450 ? 18 : 25)
-                        }
+                        y2={height -
+                            (margin.bottom || 0) +
+                            (width < 450 ? 18 : 25)}
                     />
                 {/each}
 
@@ -304,16 +312,19 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
 <a
     href={dataFile?.href}
     on:click={() => {
-        const fileName = `weekly-deaths-${data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv`;
+        const fileName = `weekly-deaths-${data[data.length - 1][xKey]
+            .toISOString()
+            .slice(0, 10)}.csv`;
         analyticsEvent({
             event: "fileDownload",
             fileExtension: "csv",
             fileName,
             chartTitle: "Trend in the past two years",
-		    chartType: "bar",
+            chartType: "bar",
             sectionTitle: "Deaths registered and expected deaths",
-            sectionNumber: "1"
-        })}}
+            sectionNumber: "1",
+        });
+    }}
     download="weekly-deaths-{data[data.length - 1][xKey]
         .toISOString()
         .slice(0, 10)}.csv"
@@ -344,7 +355,6 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
 
     .bar-holiday {
         fill: #b1cdd7;
-  
     }
     .bar-holiday2 {
         fill: #27a0cc;
@@ -384,7 +394,7 @@ England and Wales, week ending {data.current.date.toLocaleDateString(
     }
 
     .quarter-divider {
-        stroke: #C6C6C6;
+        stroke: #c6c6c6;
         stroke-width: 1.5px;
     }
 

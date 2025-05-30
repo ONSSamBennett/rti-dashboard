@@ -25,7 +25,7 @@ export async function load({ fetch }) {
         d.bank_holiday = holidays.includes(+d.date);
         d.flu_due_to_percent = d.flu_due_to / d.num_england_wales;
         d.flu_with_percent = d.flu_with / d.num_england_wales;
-        d.covid_due_to_percent =  d.covid_due_to / d.num_england_wales;
+        d.covid_due_to_percent = d.covid_due_to / d.num_england_wales;
         d.covid_with_percent = d.covid_with / d.num_england_wales;
     }
 
@@ -74,7 +74,7 @@ export async function load({ fetch }) {
         ...array.map(d => d.covid_with_percent)
     ])   // Convert to decimal if your chart expects 0.2 for 20%
 
-    
+
     const deaths_registered_wales = {
         value: current.num_wales,
         change: current.num_wales - previous.num_wales,
