@@ -15,10 +15,14 @@
   import LineChart from "$lib/LineChart.svelte";
   import insertHeader from "$lib/insert-header.js";
   export let data;
+
+  const dateCurrent = new Date(data.dates.current);
+  const dateNext = new Date(data.dates.next);
   
   const analyticsProps = {
   contentTitle: "Weekly deaths dashboard",
-  releaseDate: "2025-03-26",
+  releaseDate: data.dates.current.replaceAll("-", ""),
+  nextReleaseDate: data.dates.next.replaceAll("-", ""),
   outputSeries: "weeklyprovisionalfiguresondeathsregisteredinenglandandwales",
   contentType: "dashboard"
 }
@@ -57,13 +61,16 @@ const { previous_bank_holiday } = data;
     
 
   //get header dates from 
-  onMount(() => insertHeader(data.dates.current, data.dates.next, currentWeek));
+  onMount(() => insertHeader(dateCurrent.toLocaleDateString("en-GB", dateOptions2), dateNext.toLocaleDateString("en-GB", dateOptions2), currentWeek));
 
-function toggleEvent(e,title){
-  if(e?.detail?.open)
+function toggleEvent(e,label,sectionTitle,sectionNumber){
   analyticsEvent({
-   event: "openTwisty",
-   twistyTitle: title
+      event: "interaction",
+      interactionType: 'accordion',
+      interactionValue: e?.detail?.open ? 'open' : 'close',
+      label,
+      sectionTitle,
+      sectionNumber
     }) }
 
  
@@ -74,8 +81,8 @@ function toggleEvent(e,title){
   <Section width="wide">
     <Notice mode="warning" important>
       <p>
-        These figures are provisional. This means they are the earliest estimates available and will be revised in the future. </p><p>
-          The figures are based on the date a death was registered, which is usually later than the date it occurred.</p><p>
+        These figures are provisional. This means they are the earliest estimates available and will be revised in the future.
+        The figures are based on the date a death was registered, which is usually later than the date it occurred.
         Read more in our <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017" target="_top">User guide to mortality statistics</a>.
       </p>
     </Notice>
@@ -203,13 +210,13 @@ The previous week included a bank holiday, which can mean fewer death registrati
   </Cards>
 
   <Section width="medium">
-    <Twisty title="What are death registrations?" on:toggle={(e) => toggleEvent(e,"What are death registrations?")}>
+    <Twisty title="What are death registrations?" on:toggle={(e) => toggleEvent(e, "What are death registrations?", "Deaths registered and expected deaths", "1")}>
       <p>
         There is usually a delay between the date when a death occurs and the date it is registered. The number of days between death occurrence and registration vary, and can be longer in certain cases, such as when a death is referred to a coroner.
       </p>
       <p><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/methodologies/userguidetomortalitystatisticsjuly2017#registrations" target="_top">Learn more about the death registration system</a></p>
     </Twisty>
-    <Twisty title="What are expected deaths?">
+    <Twisty title="What are expected deaths?" on:toggle={(e) => toggleEvent(e, "What are expected deaths?", "Deaths registered and expected deaths", "1")}>
       <p>
         We use statistical modelling to estimate the number of deaths that we would expect to happen based on current population and mortality trends.
       </p>
@@ -261,7 +268,7 @@ The previous week included a bank holiday, which can mean fewer death registrati
     
     <LineChart line_chart_max={data.flu_covid_max} yKey1={"flu_with_percent"} yKey2={"flu_due_to_percent"}  yKey3={"flu_with"} yKey4={"flu_due_to"} 
     dataTitle="influenza or pneumonia" 
-    data={data.array} filename="deaths-flu" />
+    data={data.array} filename="deaths-flu" chartTitle="Influenza or pneumonia"/>
     
     </Card>
     <Card title="Coronavirus">
@@ -288,13 +295,14 @@ The previous week included a bank holiday, which can mean fewer death registrati
         <h4 style="padding-top:10px; margin-bottom:10px">Trend in the past two years</h4>
  
         <LineChart line_chart_max={data.flu_covid_max} yKey1={"covid_with_percent"} yKey2={"covid_due_to_percent"} yKey3={"covid_with"} yKey4={"covid_due_to"} 
-        dataTitle="coronavirus" data={data.array} filename="deaths-covid" />
+        dataTitle="coronavirus" data={data.array} filename="deaths-covid"  chartTitle="Coronavirus"/>
     </Card>
   </Cards>
 
   <Section width="medium">
     <Twisty
-      title='What is the difference between deaths "due to" and deaths "involving"?'>
+      title='What is the difference between deaths "due to" and deaths "involving"?'
+       on:toggle={(e) => toggleEvent(e, 'What is the difference between deaths "due to" and deaths "involving"?', "Deaths by selected causes", "2")}>
       <p>
         <strong>Deaths due to a disease:</strong> those where the disease was the
         underlying cause of death (in other words, the person died from the disease).

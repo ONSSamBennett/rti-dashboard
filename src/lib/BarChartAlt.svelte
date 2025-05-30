@@ -303,12 +303,17 @@ Week ending,Deaths registered,Expected deaths,Bank holiday week
 <strong>Download chart data</strong><br />
 <a
     href={dataFile?.href}
-    on:click={() =>
+    on:click={() => {
+        const fileName = `weekly-deaths-${data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv`;
         analyticsEvent({
             event: "fileDownload",
             fileExtension: "csv",
-            fileName: "weekly-deaths",
-        })}
+            fileName,
+            chartTitle: "Trend in the past two years",
+		    chartType: "bar",
+            sectionTitle: "Deaths registered and expected deaths",
+            sectionNumber: "1"
+        })}}
     download="weekly-deaths-{data[data.length - 1][xKey]
         .toISOString()
         .slice(0, 10)}.csv"

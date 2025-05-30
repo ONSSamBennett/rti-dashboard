@@ -17,6 +17,7 @@
 	export let yKey4;
 	export let yKey5 = "bank_holiday";
 	export let dataTitle;
+	export let chartTitle = "";
     export let filename = "deaths-flu";
 
 	$: margin = +width < 400 
@@ -250,12 +251,17 @@ Week ending,Number involving,Number due to,Percentage involving,Percentage due t
 </div>
 <strong>Download chart data</strong><br/>
 <a href={dataFile?.href} 
-on:click={() =>
+on:click={() => {
+	const fileName = `${filename}-${data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv`;
 	analyticsEvent({
 		event: "fileDownload",
 		fileExtension: "csv",
-		fileName: filename,
-	})}
+		fileName,
+		chartTitle,
+		chartType: "line",
+		sectionTitle: "Death by selected causes",
+		sectionNumber: "2"
+	})}}
 download="{filename}-{data[data.length - 1][xKey].toISOString().slice(0, 10)}.csv" small>CSV format ({((dataFile?.blob?.size || 0) / 1000).toFixed(1)}KB)</a>
 
 <style>
