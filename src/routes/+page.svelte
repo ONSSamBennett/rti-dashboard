@@ -166,7 +166,7 @@
             <!-- <p class="ons-u-fs-r"> -->
 
             <svg width="14" height="16" viewBox="0 0 12 14">
-              <path
+              <pathrun 
                 d="M5.5 12.5L5.5 1.5M5.5 12.5L1.5 8.5M5.5 12.5L9.5 8.5"
                 fill="none"
                 stroke="#195000"
@@ -360,7 +360,7 @@
 
   <Section width="medium">
     <Twisty
-      title="What is the difference between deaths "due to" and deaths "involving"?"
+      title='What is the difference between deaths "due to" and deaths "involving"?'
       on:toggle={(e) =>
         toggleEvent(
           e,
