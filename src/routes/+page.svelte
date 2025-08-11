@@ -185,7 +185,7 @@
         <!-- </p> -->
       {/if}
     </Card>
-    <Card title="Comparison to expected deaths">
+    <Card title="Comparison with expected deaths">
       <p class="ons-u-fs-xxxl">
         {Math.abs(
           data.expected_comparison.percent_difference.toLocaleString("en-GB")
@@ -283,7 +283,7 @@
         <div class="causes-child">
           <span style="color:#8D2865; font-weight:700"> Due to ⬥</span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#8D2865">
-            {Math.abs(data.flu.percent_due_to.toLocaleString("en-GB")).toFixed(
+            {Math.abs(data.flu.percent_due_to).toFixed(
               1
             )}%
           </p>
@@ -294,8 +294,7 @@
           <span style="color:#27A0CC; font-weight:700"> Involving ● </span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#27A0CC">
             {Math.abs(
-              data.flu.percent_involving.toLocaleString("en-GB")
-            ).toFixed(1)}%
+              data.flu.percent_involving).toFixed(1)}%
           </p>
           {Math.abs(data.flu.value_involving).toLocaleString("en-GB")} deaths
         </div>
@@ -323,7 +322,7 @@
           <span style="color:#8D2865; font-weight:700"> Due to ⬥</span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#8D2865">
             {Math.abs(
-              data.covid.percent_due_to.toLocaleString("en-GB")
+              data.covid.percent_due_to
             ).toFixed(1)}%
           </p>
           {Math.abs(data.covid.value_due_to).toLocaleString("en-GB")} deaths
@@ -333,7 +332,7 @@
           <span style="color:#27A0CC; font-weight:700"> Involving ● </span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#27A0CC">
             {Math.abs(
-              data.covid.percent_involving.toLocaleString("en-GB")
+              data.covid.percent_involving
             ).toFixed(1)}%
           </p>
           {Math.abs(data.covid.value_involving).toLocaleString("en-GB")} deaths
@@ -394,7 +393,7 @@
         {Math.abs(data.current.num_england).toLocaleString("en-GB")}
       </p>
 
-      Comparison to expected
+      Comparison with expected
       <p class="ons-u-fs-xl" style="margin-bottom:0">
         {Math.abs(
           data.expected_comparison_england.percent_difference.toLocaleString(
@@ -422,7 +421,7 @@
         {Math.abs(data.current.num_wales).toLocaleString("en-GB")}
       </p>
 
-      Comparison to expected
+      Comparison with expected
       <p class="ons-u-fs-xl" style="margin-bottom:0">
         {Math.abs(
           data.expected_comparison_wales.percent_difference.toLocaleString(
