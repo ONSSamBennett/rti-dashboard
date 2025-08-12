@@ -10,6 +10,20 @@ function nextFriday(date) {
     return +date + (offset * 1000 * 60 * 60 * 24);
 }
 
+
+// Manually added bank holiday dates (ISO format)
+const manualHolidayDates = [
+    "2023-08-28", // Summer BH
+    "2023-12-25", // Boxing Day
+    "2023-12-26"  // New Year's Day
+  ];
+  
+  // Convert manual dates to timestamps using nextFriday logic
+  const manualHolidays = manualHolidayDates.map(dateStr =>
+    nextFriday(new Date(dateStr))
+  );
+  
+
 export async function load({ fetch }) {
     const dates = await (await fetch(datesUrl)).json();
 
@@ -17,10 +31,17 @@ export async function load({ fetch }) {
     const array = csvParse(str, autoType);
 
     const json = await (await fetch(holidaysUrl)).json();
-    const holidays = json["england-and-wales"].events
-        .map(d => nextFriday(new Date(d.date)))
-        .filter(d => d >= +array[0].date && d <= +array[array.length - 1].date);
+   
 
+
+        
+// Combine API holidays with manual ones
+const holidays = [
+    ...json["england-and-wales"].events.map(d => nextFriday(new Date(d.date))),
+    ...manualHolidays
+  ].filter(d => d >= +array[0].date && d <= +array[array.length - 1].date);
+  
+        
     for (const d of array) {
         d.bank_holiday = holidays.includes(+d.date);
         d.flu_due_to_percent = d.flu_due_to / d.num_england_wales;
