@@ -12,10 +12,14 @@
     analyticsEvent,
   } from "@onsvisual/svelte-components";
   import BarChartAlt from "$lib/BarChartAlt.svelte";
-  import LineChart from "$lib/LineChart.svelte";
+  import LineChartSimple from "$lib/LineChartSimple.svelte";
+  import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
   export let data;
+  export let data2;
 
+  const { metadataBySeries } = data;
+  const { latestBySeries } = data;
   const dateCurrent = new Date(data.dates.current);
   const dateNext = new Date(data.dates.next);
 
@@ -94,13 +98,8 @@
     </Notice>
   </Section>
 
-  <Section title="Deaths registered and expected deaths" width="medium">
-    <p>
-      England and Wales, week ending {data.current.date.toLocaleDateString(
-        "en-GB",
-        dateOptions
-      )}
-    </p>
+  <Section title="Transport" width="medium">
+    <p>Subtitle if needed</p>
   </Section>
   {#if current_bank_holiday || previous_bank_holiday}
     <Section width="wide">
@@ -123,7 +122,45 @@
   {/if}
 
   <Cards>
-    <Card title="Deaths registered">
+    {#each Object.entries(latestBySeries) as [seriesId, row]}
+      <div class="card-full-width">
+        <div class="layout-container">
+          <Card title={metadataBySeries[seriesId]?.title ?? seriesId}>
+            <p>{metadataBySeries[seriesId]?.description}</p>
+            <div chart-div>
+              <LineChartSimple
+                data={row.full_series}
+                yKey="num_uk"
+                lineColor="#206095"
+                title={metadataBySeries[seriesId]?.title}
+                description={metadataBySeries[seriesId]?.description}
+                units={metadataBySeries[seriesId]?.units}
+              />
+            </div>
+            <h4>Change in {metadataBySeries[seriesId]?.units}</h4>
+            <div class="causes-container">
+              <div class="causes-child">
+                <ChangeIndicator
+                  label="month"
+                  change={row.month_over_month_change}
+                  units={metadataBySeries[seriesId]?.units}
+                />
+              </div>
+              <div class="causes-child">
+                <ChangeIndicator
+                  label="year"
+                  change={row.year_over_year_change}
+                  units={metadataBySeries[seriesId]?.units}
+                />
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    {/each}
+  </Cards>
+  <Cards>
+    <Card title="Deaths registered test">
       <p class="ons-u-fs-xxxl">
         {data.deaths_registered.value.toLocaleString("en-GB")}
       </p>
@@ -269,7 +306,7 @@
   <Divider hr="full" />
   <Section title="Deaths by selected causes" width="medium">
     <p>
-      Percentage of deaths due to or involving selected causes, England and
+      test Percentage of deaths due to or involving selected causes, England and
       Wales, week ending {data.current.date.toLocaleDateString(
         "en-GB",
         dateOptions
@@ -283,9 +320,7 @@
         <div class="causes-child">
           <span style="color:#8D2865; font-weight:700"> Due to ⬥</span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#8D2865">
-            {Math.abs(data.flu.percent_due_to).toFixed(
-              1
-            )}%
+            {Math.abs(data.flu.percent_due_to).toFixed(1)}%
           </p>
           {Math.abs(data.flu.value_due_to).toLocaleString("en-GB")} deaths
         </div>
@@ -293,8 +328,7 @@
         <div class="causes-child">
           <span style="color:#27A0CC; font-weight:700"> Involving ● </span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#27A0CC">
-            {Math.abs(
-              data.flu.percent_involving).toFixed(1)}%
+            {Math.abs(data.flu.percent_involving).toFixed(1)}%
           </p>
           {Math.abs(data.flu.value_involving).toLocaleString("en-GB")} deaths
         </div>
@@ -303,27 +337,13 @@
       <h4 style="padding-top:10px; margin-bottom:10px">
         Trend in the past two years
       </h4>
-
-      <LineChart
-        line_chart_max={data.flu_covid_max}
-        yKey1={"flu_with_percent"}
-        yKey2={"flu_due_to_percent"}
-        yKey3={"flu_with"}
-        yKey4={"flu_due_to"}
-        dataTitle="influenza or pneumonia"
-        data={data.array}
-        filename="deaths-flu"
-        chartTitle="Influenza or pneumonia"
-      />
     </Card>
     <Card title="Coronavirus">
       <div class="causes-container">
         <div class="causes-child">
           <span style="color:#8D2865; font-weight:700"> Due to ⬥</span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#8D2865">
-            {Math.abs(
-              data.covid.percent_due_to
-            ).toFixed(1)}%
+            {Math.abs(data.covid.percent_due_to).toFixed(1)}%
           </p>
           {Math.abs(data.covid.value_due_to).toLocaleString("en-GB")} deaths
         </div>
@@ -331,9 +351,7 @@
         <div class="causes-child">
           <span style="color:#27A0CC; font-weight:700"> Involving ● </span>
           <p class="ons-u-fs-xxxl" style="margin-bottom:0; color:#27A0CC">
-            {Math.abs(
-              data.covid.percent_involving
-            ).toFixed(1)}%
+            {Math.abs(data.covid.percent_involving).toFixed(1)}%
           </p>
           {Math.abs(data.covid.value_involving).toLocaleString("en-GB")} deaths
         </div>
@@ -342,28 +360,16 @@
       <h4 style="padding-top:10px; margin-bottom:10px">
         Trend in the past two years
       </h4>
-
-      <LineChart
-        line_chart_max={data.flu_covid_max}
-        yKey1={"covid_with_percent"}
-        yKey2={"covid_due_to_percent"}
-        yKey3={"covid_with"}
-        yKey4={"covid_due_to"}
-        dataTitle="coronavirus"
-        data={data.array}
-        filename="deaths-covid"
-        chartTitle="Coronavirus"
-      />
     </Card>
   </Cards>
 
   <Section width="medium">
     <Twisty
-      title='What is the difference between deaths "due to" and deaths "involving"?'
+      title="What is the difference between deaths?"
       on:toggle={(e) =>
         toggleEvent(
           e,
-          'What is the difference between deaths "due to" and deaths "involving"?',
+          "What is the difference between deaths?",
           "Deaths by selected causes",
           "2"
         )}
@@ -458,14 +464,196 @@
     The figures for England and Wales exclude non-residents.
   </Section>
   <Divider hr="full" />
+
+  <!--
+  {#each Object.entries(latestBySeries) as [seriesId, row]}
+    <div class="card-full-width">
+      <div class="layout-container">
+        <div class="layout-header">
+          <p>{metadataBySeries[seriesId]?.title ?? seriesId}</p>
+          <p />
+          <p>{metadataBySeries[seriesId]?.description}</p>
+        </div>
+        <div class="chart">
+          <LineChartSimple
+            data={row.full_series}
+            yKey="num_uk"
+            lineColor="#206095"
+            title={metadataBySeries[seriesId]?.title}
+            description={metadataBySeries[seriesId]?.description}
+            units={metadataBySeries[seriesId]?.units}
+          />
+        </div>
+        <div class="causes-container">
+          <div class="causes-header">
+                <h4 style="padding-top:10px; margin-bottom:10px">          
+           {metadataBySeries[seriesId]?.units}</h4>
+          </div>
+          <div class="causes-row">
+            <div class="causes-child">
+              <ChangeIndicator
+                label="month"
+                change={row.month_over_month_change}
+                units={metadataBySeries[seriesId]?.units}
+              />
+            </div>
+            <div class="causes-child">
+              <ChangeIndicator
+                label="year"
+                change={row.year_over_year_change}
+                units={metadataBySeries[seriesId]?.units}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/each}
+
+  <div class="card-full-width">
+    <div class="layout-container">
+      <div class="layout-header">Main Header</div>
+      <div class="chart">Chart</div>
+      <div class="causes-container">
+        <div class="causes-header">Causes Header</div>
+        <div class="causes-row">
+          <div class="causes-child">Cause 1</div>
+          <div class="causes-child">Cause 2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  -->
+
+  <Cards>
+    {#each Object.entries(latestBySeries) as [seriesId, row]}
+      <Card title={metadataBySeries[seriesId]?.title ?? seriesId} colspan={3}>
+        <p>{metadataBySeries[seriesId]?.description}</p>
+        <div class="layout-container">
+          <div class="chart">
+            <LineChartSimple
+              data={row.full_series}
+              yKey="num_uk"
+              lineColor="#206095"
+              title={metadataBySeries[seriesId]?.title}
+              description={metadataBySeries[seriesId]?.description}
+              units={metadataBySeries[seriesId]?.units}
+            />
+          </div>
+          <div class="causes-container">
+            <div class="causes-header">
+              <h4 style="padding-top:10px; margin-bottom:10px">
+                Change in {metadataBySeries[seriesId]?.units}
+              </h4>
+            </div>
+            <div class="causes-row">
+              <div class="causes-child">
+                <ChangeIndicator
+                  label="month"
+                  change={row.month_over_month_change}
+                  units={metadataBySeries[seriesId]?.units}
+                />
+              </div>
+              <div class="causes-child">
+                <ChangeIndicator
+                  label="year"
+                  change={row.year_over_year_change}
+                  units={metadataBySeries[seriesId]?.units}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    {/each}
+  </Cards>
+
+  <Cards>
+    <Card title="Card one" colspan={3}
+      >test
+      <div class="layout-container">
+        <div class="chart">Chart</div>
+        <div class="causes-container">
+          <div class="causes-header">Causes Header</div>
+          <div class="causes-row">
+            <div class="causes-child">Cause 1</div>
+            <div class="causes-child">Cause 2</div>
+          </div>
+        </div>
+      </div>
+    </Card>
+    <Card title="Card two" colspan={3}>test</Card>
+    <Card title="Card three" colspan={3}>test</Card>
+  </Cards>
 </Embed>
 
 <style>
-  .causes-child {
-    flex: 50%;
+  .card-full-width {
+    width: 100% !important;
+    grid-column: 1 / -1;
   }
+
+  .layout-container {
+    display: flex;
+    flex-wrap: wrap; /* ✅ allow children to wrap */
+    gap: 16px;
+    margin-top: 16.8px;
+  }
+
+  .layout-header {
+    width: 100%; /* ✅ force full width */
+    font-size: 1.25rem;
+    font-weight: bold;
+    padding: 0px 0 0 0;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .chart {
+    padding: 0px;
+    flex: 1 1 100%; /* ✅ full width on mobile */
+  }
+
   .causes-container {
     display: flex;
-    margin-top: 16.8px;
+    flex-direction: column;
+    gap: 0px;
+    flex: 1 1 100%; /* ✅ full width on mobile */
+  }
+
+  .causes-header {
+    font-weight: bold;
+    padding: 8px 0 0 0;
+  }
+
+  .causes-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .causes-child {
+    flex: 1;
+    padding: 0px;
+  }
+  .layout-container,
+  .causes-header,
+  .causes-row,
+  .causes-child,
+  .chart {
+    border: 0px solid #666;
+  }
+
+  svg {
+    border: 1px solid #666;
+  }
+
+  @media screen and (min-width: 608px) {
+    .chart {
+      flex: 1 1 30%;
+    }
+
+    .causes-container {
+      flex: 2 1 0;
+    }
   }
 </style>
