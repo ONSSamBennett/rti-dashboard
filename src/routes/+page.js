@@ -73,10 +73,20 @@ export async function load({ fetch }) {
     const mom = prevMonth ? latest.num_uk - prevMonth.num_uk : null;
     const yoy = prevYear ? latest.num_uk - prevYear.num_uk : null;
 
+    const mom_percent = prevMonth
+      ? 100 * ((latest.num_uk - prevMonth.num_uk) / prevMonth.num_uk)
+      : null;
+
+    const yoy_percent = prevYear
+      ? 100 * ((latest.num_uk - prevYear.num_uk) / prevYear.num_uk)
+      : null;
+
     result[series_id] = {
       ...latest,
       month_over_month_change: mom,
+      month_over_month_percent: mom_percent,
       year_over_year_change: yoy,
+      year_over_year_percent: yoy_percent,
       full_series: entries, // 👈 include full series for chart
     };
   }
@@ -175,8 +185,6 @@ export async function load({ fetch }) {
     percent_difference:
       100 * ((current.num_wales - current.exp_wales) / current.exp_wales),
   };
-
-  console.log("Metadata loaded:", metadataBySeries);
 
   // Add this right before the return statement
 

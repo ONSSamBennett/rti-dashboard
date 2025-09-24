@@ -7,6 +7,8 @@
     Cards,
     Card,
     Twisty,
+    Accordion,
+    AccordionItem,
     Divider,
     AnalyticsBanner,
     analyticsEvent,
@@ -85,171 +87,244 @@
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
 
-  <Section title="Transport" width="medium">
-    <p>Subtitle if needed</p>
+  <Section width="wide">
+    <Accordion>
+      <AccordionItem title="Consumer behaviour">
+        <Cards>
+          {#each Object.entries(latestBySeries) as [seriesId, row]}
+            {#if metadataBySeries[seriesId]?.category === "consumer" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
+              <Card
+                title={metadataBySeries[seriesId]?.title ?? seriesId}
+                colspan={3}
+              >
+                <p>{metadataBySeries[seriesId]?.description}</p>
+                <div class="layout-container">
+                  <div class="chart">
+                    <LineChartSimple
+                      data={row.full_series}
+                      yKey="num_uk"
+                      lineColor="#206095"
+                      title={metadataBySeries[seriesId]?.title}
+                      description={metadataBySeries[seriesId]?.description}
+                      units={metadataBySeries[seriesId]?.units}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                      index={metadataBySeries[seriesId]?.index}
+                      thousands={metadataBySeries[seriesId]?.thousands}
+                    />
+                  </div>
+                  <div class="causes-container">
+                    <div class="causes-header">
+                      <h4
+                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                      >
+                        Change in {metadataBySeries[seriesId]?.units}
+                      </h4>
+                    </div>
+                    <div class="causes-row">
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="month"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.month_over_month_percent
+                            : row.month_over_month_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="year"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.year_over_year_percent
+                            : row.year_over_year_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            {/if}
+          {/each}
+        </Cards>
+      </AccordionItem>
+      <AccordionItem title="Business">
+        <Cards>
+          {#each Object.entries(latestBySeries) as [seriesId, row]}
+            {#if metadataBySeries[seriesId]?.category === "business" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
+              <Card
+                title={metadataBySeries[seriesId]?.title ?? seriesId}
+                colspan={3}
+              >
+                <p>{metadataBySeries[seriesId]?.description}</p>
+                <div class="layout-container">
+                  <div class="chart">
+                    <LineChartSimple
+                      data={row.full_series}
+                      yKey="num_uk"
+                      lineColor="#206095"
+                      title={metadataBySeries[seriesId]?.title}
+                      description={metadataBySeries[seriesId]?.description}
+                      units={metadataBySeries[seriesId]?.units}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                    />
+                  </div>
+                  <div class="causes-container">
+                    <div class="causes-header">
+                      <h4
+                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                      >
+                        Change in {metadataBySeries[seriesId]?.units}
+                      </h4>
+                    </div>
+                    <div class="causes-row">
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="month"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.month_over_month_percent
+                            : row.month_over_month_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="year"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.year_over_year_percent
+                            : row.year_over_year_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            {/if}
+          {/each}
+        </Cards>
+      </AccordionItem>
+      <AccordionItem title="Energy and housing">
+        <Cards>
+          {#each Object.entries(latestBySeries) as [seriesId, row]}
+            {#if metadataBySeries[seriesId]?.category === "energy" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
+              <Card
+                title={metadataBySeries[seriesId]?.title ?? seriesId}
+                colspan={3}
+              >
+                <p>{metadataBySeries[seriesId]?.description}</p>
+                <div class="layout-container">
+                  <div class="chart">
+                    <LineChartSimple
+                      data={row.full_series}
+                      yKey="num_uk"
+                      lineColor="#206095"
+                      title={metadataBySeries[seriesId]?.title}
+                      description={metadataBySeries[seriesId]?.description}
+                      units={metadataBySeries[seriesId]?.units}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                    />
+                  </div>
+                  <div class="causes-container">
+                    <div class="causes-header">
+                      <h4
+                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                      >
+                        Change in {metadataBySeries[seriesId]?.units}
+                      </h4>
+                    </div>
+                    <div class="causes-row">
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="month"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.month_over_month_percent
+                            : row.month_over_month_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="year"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.year_over_year_percent
+                            : row.year_over_year_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            {/if}
+          {/each}
+        </Cards>
+      </AccordionItem>
+      <AccordionItem title="Transport">
+        <Cards>
+          {#each Object.entries(latestBySeries) as [seriesId, row]}
+            {#if metadataBySeries[seriesId]?.category === "transport" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
+              <Card
+                title={metadataBySeries[seriesId]?.title ?? seriesId}
+                colspan={3}
+              >
+                <p>{metadataBySeries[seriesId]?.description}</p>
+                <div class="layout-container">
+                  <div class="chart">
+                    <LineChartSimple
+                      data={row.full_series}
+                      yKey="num_uk"
+                      lineColor="#206095"
+                      title={metadataBySeries[seriesId]?.title}
+                      description={metadataBySeries[seriesId]?.description}
+                      units={metadataBySeries[seriesId]?.units}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                    />
+                  </div>
+                  <div class="causes-container">
+                    <div class="causes-header">
+                      <h4
+                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                      >
+                        Change in {metadataBySeries[seriesId]?.units}
+                      </h4>
+                    </div>
+                    <div class="causes-row">
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="month"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.month_over_month_percent
+                            : row.month_over_month_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                      <div class="causes-child">
+                        <ChangeIndicator
+                          label="year"
+                          change={metadataBySeries[seriesId]?.units ===
+                          "percentage"
+                            ? row.year_over_year_percent
+                            : row.year_over_year_change}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            {/if}
+          {/each}
+        </Cards>
+      </AccordionItem>
+    </Accordion>
   </Section>
-  {#if current_bank_holiday || previous_bank_holiday}
-    <Section width="wide">
-      <Notice>
-        {#if current_bank_holiday && previous_bank_holiday}
-          Both the latest week and previous week included a bank holiday, which
-          can mean fewer death registrations. This can lead to larger
-          differences when comparing with other weeks and with expected deaths
-        {:else if current_bank_holiday}
-          The latest week included a bank holiday, which can mean fewer death
-          registrations. This can lead to larger differences when comparing with
-          the previous weeks and with expected deaths
-        {:else}
-          The previous week included a bank holiday, which can mean fewer death
-          registrations. This can lead to larger differences when comparing with
-          the latest week and with expected deaths
-        {/if}
-      </Notice>
-    </Section>
-  {/if}
-
-  <Cards>
-    {#each Object.entries(latestBySeries) as [seriesId, row]}
-      <div class="card-full-width">
-        <div class="layout-container">
-          <Card title={metadataBySeries[seriesId]?.title ?? seriesId}>
-            <p>{metadataBySeries[seriesId]?.description}</p>
-            <div chart-div>
-              <LineChartSimple
-                data={row.full_series}
-                yKey="num_uk"
-                lineColor="#206095"
-                title={metadataBySeries[seriesId]?.title}
-                description={metadataBySeries[seriesId]?.description}
-                units={metadataBySeries[seriesId]?.units}
-              />
-            </div>
-            <h4>Change in {metadataBySeries[seriesId]?.units}</h4>
-            <div class="causes-container">
-              <div class="causes-child">
-                <ChangeIndicator
-                  label="month"
-                  change={row.month_over_month_change}
-                  units={metadataBySeries[seriesId]?.units}
-                />
-              </div>
-              <div class="causes-child">
-                <ChangeIndicator
-                  label="year"
-                  change={row.year_over_year_change}
-                  units={metadataBySeries[seriesId]?.units}
-                />
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    {/each}
-  </Cards>
-
-  <!--
-  {#each Object.entries(latestBySeries) as [seriesId, row]}
-    <div class="card-full-width">
-      <div class="layout-container">
-        <div class="layout-header">
-          <p>{metadataBySeries[seriesId]?.title ?? seriesId}</p>
-          <p />
-          <p>{metadataBySeries[seriesId]?.description}</p>
-        </div>
-        <div class="chart">
-          <LineChartSimple
-            data={row.full_series}
-            yKey="num_uk"
-            lineColor="#206095"
-            title={metadataBySeries[seriesId]?.title}
-            description={metadataBySeries[seriesId]?.description}
-            units={metadataBySeries[seriesId]?.units}
-          />
-        </div>
-        <div class="causes-container">
-          <div class="causes-header">
-                <h4 style="padding-top:10px; margin-bottom:10px">          
-           {metadataBySeries[seriesId]?.units}</h4>
-          </div>
-          <div class="causes-row">
-            <div class="causes-child">
-              <ChangeIndicator
-                label="month"
-                change={row.month_over_month_change}
-                units={metadataBySeries[seriesId]?.units}
-              />
-            </div>
-            <div class="causes-child">
-              <ChangeIndicator
-                label="year"
-                change={row.year_over_year_change}
-                units={metadataBySeries[seriesId]?.units}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  {/each}
-
-  <div class="card-full-width">
-    <div class="layout-container">
-      <div class="layout-header">Main Header</div>
-      <div class="chart">Chart</div>
-      <div class="causes-container">
-        <div class="causes-header">Causes Header</div>
-        <div class="causes-row">
-          <div class="causes-child">Cause 1</div>
-          <div class="causes-child">Cause 2</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  -->
-
-  <Cards>
-    {#each Object.entries(latestBySeries) as [seriesId, row]}
-      <Card title={metadataBySeries[seriesId]?.title ?? seriesId} colspan={3}>
-        <p>{metadataBySeries[seriesId]?.description}</p>
-        <div class="layout-container">
-          <div class="chart">
-            <LineChartSimple
-              data={row.full_series}
-              yKey="num_uk"
-              lineColor="#206095"
-              title={metadataBySeries[seriesId]?.title}
-              description={metadataBySeries[seriesId]?.description}
-              units={metadataBySeries[seriesId]?.units}
-            />
-          </div>
-          <div class="causes-container">
-            <div class="causes-header">
-              <h4 style="padding-top:10px; margin-bottom:10px">
-                Change in {metadataBySeries[seriesId]?.units}
-              </h4>
-            </div>
-            <div class="causes-row">
-              <div class="causes-child">
-                <ChangeIndicator
-                  label="month"
-                  change={row.month_over_month_change}
-                  units={metadataBySeries[seriesId]?.units}
-                />
-              </div>
-              <div class="causes-child">
-                <ChangeIndicator
-                  label="year"
-                  change={row.year_over_year_change}
-                  units={metadataBySeries[seriesId]?.units}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    {/each}
-  </Cards>
 </Embed>
 
 <style>

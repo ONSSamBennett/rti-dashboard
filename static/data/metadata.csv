@@ -1,3 +1,16 @@
-series_id,title,description,units
-test_series_one,Ships,Honk honk honk,percentage
-test_series_two,Automotive fuel demand per transaction,Vroom vroom,percentage points
+series_id,title,category,description,units,units_chart,show,index,thousands
+debit_transactions,Debit card transactions,consumer,Index (2023 = 100),percentage,number,TRUE,TRUE,FALSE
+automotive_fuel_demand,Automotive fuel transaction size,consumer,"Year-on-year growth in estimated quantity per transaction (Index, year before = 100)",percentage points,number,TRUE,TRUE,FALSE
+debit_failure,Direct debit failures,consumer,"Failures due to insufficient funds, percentage of transactions",percentage,percentage,TRUE,FALSE,FALSE
+debit_transaction amount,Direct debit transaction size,consumer,"Average transaction amount, index (2023 average = 100)",percentage,number,TRUE,TRUE,FALSE
+vat_new,New businesses,business,"Number of new VAT reporters, seasonally adjusted",percentage,number,TRUE,FALSE,TRUE
+redundancies_potential,Potential redundancies,business,"From Insolvency Service HR1 forms, thousands",percentage,number,TRUE,FALSE,TRUE
+ship_visits,Ships visits,transport,"Total number of visits, seasonally adjusted, thousands",percentage,number,TRUE,FALSE,TRUE
+ship_visits_cargo,Cargo and tanker ship visits,transport,"Number of visits, seasonally adjusted, thousands",percentage,number,TRUE,FALSE,TRUE
+flights,UK flights,transport,"Number of flights, seasonally adjusted, thousands",percentage,number,TRUE,FALSE,TRUE
+gas_price,Gas price,energy,"Monthly average system average price, pence per kilowatt hour",percentage,number,TRUE,FALSE,FALSE
+electric_price,Electricity price,energy,"System price, pence per kilowatt hour",percentage,number,TRUE,FALSE,FALSE
+automotive_fuel_price,Automotive fuel price,energy,Year-on-year growth in average price (year before = 100),percentage points,number,TRUE,TRUE,FALSE
+epc_existing,EPCs for existing dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged, thousands",percentage,number,TRUE,FALSE,TRUE
+epc_new,EPCs for new dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged, thousands",percentage,number,TRUE,FALSE,TRUE
+renting,Rental affordability,energy,Percentage of gross income spent on rent,percentage points,percentage,TRUE,FALSE,FALSE
