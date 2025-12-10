@@ -168,6 +168,8 @@
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
                       units_chart={metadataBySeries[seriesId]?.units_chart}
+                      <LineChartSimple
+                      thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">
@@ -226,6 +228,7 @@
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
                       units_chart={metadataBySeries[seriesId]?.units_chart}
+                      thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">
@@ -284,6 +287,7 @@
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
                       units_chart={metadataBySeries[seriesId]?.units_chart}
+                      thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">

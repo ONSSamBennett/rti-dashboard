@@ -12,15 +12,15 @@
   export let units;
   export let units_chart;
   export let index = false;
-  export let thousands = false;
+  export let thousands;
 
   // Handle both boolean and string values for thousands
-  $: thousandsBoolean = thousands === true || thousands === "true";
+  $: thousandsBoolean = thousands === true || thousands === "TRUE";
 
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 60, top: 0, bottom: 30, right: 60 };
+  const margin = { left: 30, top: 0, bottom: 30, right: 60 };
   const xKey = "date";
 
   // Ensure data exists and is an array before transformation
@@ -30,16 +30,6 @@
         ? data.map((d) => ({ ...d, [yKey]: d[yKey] / 1000 }))
         : data
       : [];
-
-  // Debug logging - remove in production
-  $: {
-    if (thousandsBoolean) {
-      console.log("Thousands mode enabled");
-      console.log("Thousands prop value:", thousands);
-      console.log("Original data sample:", data?.[0]);
-      console.log("Transformed data sample:", transformedData?.[0]);
-    }
-  }
 
   $: dateChanges = getDateChanges(transformedData, xKey);
 
@@ -124,12 +114,6 @@
 </script>
 
 <div style="padding:10px; margin-top:0px; margin-bottom:10px">
-  {#if thousandsBoolean}
-    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-      Values shown in thousands
-    </div>
-  {/if}
-
   <div
     class="chart-container"
     bind:clientWidth={width}
