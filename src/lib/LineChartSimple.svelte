@@ -4,6 +4,7 @@
   import { line, curveLinear } from "d3-shape";
   import { format } from "d3-format";
   import { timeYear } from "d3-time";
+  import { timeFormat } from "d3-time-format"; // NEW: format last-point date
 
   // ----- Props -----
   export let data = [];
@@ -17,7 +18,7 @@
   export let index = false;
   export let thousands = false;
 
-  // NEW: shared fixed time window
+  // Fixed time window (shared across charts)
   export let startDate = null; // e.g., new Date(2022, 0, 1)
   export let endDate = null;   // e.g., new Date(2025, 11, 31)
 
@@ -85,6 +86,10 @@
     return format(hasDecimal ? ".1%" : ".0%");
   })();
 
+  // NEW: Date formatter for last point label (under the value)
+  const formatLastDate = timeFormat("%-d %B"); // e.g., "Jul 2024"
+  // If you prefer full day: const formatLastDate = timeFormat("%d %b %Y");
+
   // ---- Original-style helpers preserved ----
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
@@ -94,8 +99,7 @@
     return date.getMonth() === 6; // July
   }
 
-  // UPDATED: similar structure but computed from the fixed domain,
-  // not from data transitions—so every chart shows identical labels/dividers.
+  // Compute year dividers and mid-year labels from the fixed domain
   function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
       years: [],       // year boundary markers (Jan 1)
@@ -188,29 +192,43 @@
           <g class="plot">
             <path class="line" d={lineFn(transformedData)} stroke={lineColor} />
 
-            <!-- Last point marker/label -->
+            <!-- Last point marker/label: value (top) + date (bottom) -->
             {#if transformedData.length}
+              {@const lastPoint = transformedData[transformedData.length - 1]}
+              {@const lastX = x(lastPoint[xKey])}
+              {@const lastY = y(lastPoint[yKey])}
+              {@const lastDateStr = formatLastDate(lastPoint[xKey])}
+
               <circle
                 class="line-point"
-                cx={x(transformedData[transformedData.length - 1][xKey])}
-                cy={y(transformedData[transformedData.length - 1][yKey])}
+                cx={lastX}
+                cy={lastY}
                 r="4"
                 fill={lineColor}
               />
+
+              <!-- Two-line label placed to the right of the last point -->
               <text
-                x={x(transformedData[transformedData.length - 1][xKey]) + 8}
-                y={y(transformedData[transformedData.length - 1][yKey]) + 4}
+                x={lastX + 8}
+                y={lastY + 4}
                 style="fill: {lineColor}; font-weight: 600;"
               >
-                {#if units_chart === "percentage"}
-                  {transformedData[transformedData.length - 1][yKey] < 20
-                    ? format(".1%")(transformedData[transformedData.length - 1][yKey] / 100)
-                    : formatPercent(transformedData[transformedData.length - 1][yKey] / 100)}
-                {:else}
-                  {transformedData[transformedData.length - 1][yKey] < 20
-                    ? format(",.1f")(transformedData[transformedData.length - 1][yKey])
-                    : formatValue(transformedData[transformedData.length - 1][yKey])}
-                {/if}
+                <!-- top line: value -->
+                <tspan x={lastX + 8} dy="0">
+                  {#if units_chart === "percentage"}
+                    {lastPoint[yKey] < 20
+                      ? format(".1%")(lastPoint[yKey] / 100)
+                      : formatPercent(lastPoint[yKey] / 100)}
+                  {:else}
+                    {lastPoint[yKey] < 20
+                      ? format(",.1f")(lastPoint[yKey])
+                      : formatValue(lastPoint[yKey])}
+                  {/if}
+                </tspan>
+                <!-- bottom line: date -->
+                <tspan x={lastX + 8} dy="1.2em" style="fill:#666; font-weight: 400;">
+                  {lastDateStr}
+                </tspan>
               </text>
             {/if}
           </g>
