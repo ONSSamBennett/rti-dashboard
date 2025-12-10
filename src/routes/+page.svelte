@@ -104,6 +104,8 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
+                                     startDate={new Date(2022, 0, 1)}
+  endDate={new Date(2027, 11, 31)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
@@ -164,6 +166,8 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
+                        startDate={new Date(2022, 0, 1)}
+  endDate={new Date(2027, 11, 31)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}

@@ -1,8 +1,11 @@
+
 <script>
-  import { scaleLinear, scaleBand } from "d3-scale";
+  import { scaleLinear, scaleTime } from "d3-scale";
   import { line, curveLinear } from "d3-shape";
   import { format } from "d3-format";
+  import { timeYear } from "d3-time";
 
+  // ----- Props -----
   export let data = [];
   export let yKey = "value";
   export let yMax;
@@ -10,20 +13,24 @@
   export let title;
   export let description;
   export let units;
-  export let units_chart;
+  export let units_chart; // e.g., "percentage"
   export let index = false;
-  export let thousands;
+  export let thousands = false;
 
-  // Handle both boolean and string values for thousands
-  $: thousandsBoolean = thousands === true || thousands === "TRUE";
+  // NEW: shared fixed time window
+  export let startDate = null; // e.g., new Date(2022, 0, 1)
+  export let endDate = null;   // e.g., new Date(2025, 11, 31)
+
+  // ----- Internals -----
+  $: thousandsBoolean = thousands === true || thousands === "true";
 
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 30, top: 0, bottom: 30, right: 60 };
-  const xKey = "date";
+  const margin = { left: 60, top: 0, bottom: 30, right: 60 };
+  const xKey = "date"; // data[xKey] should be Date objects
 
-  // Ensure data exists and is an array before transformation
+  // Transform values to thousands if requested
   $: transformedData =
     data && Array.isArray(data)
       ? thousandsBoolean
@@ -31,9 +38,29 @@
         : data
       : [];
 
-  $: dateChanges = getDateChanges(transformedData, xKey);
+  // Fallback to data extent if no explicit start/end provided
+  $: dataMinDate =
+    transformedData.length ? new Date(Math.min(...transformedData.map((d) => +d[xKey]))) : null;
+  $: dataMaxDate =
+    transformedData.length ? new Date(Math.max(...transformedData.map((d) => +d[xKey]))) : null;
 
-  $: xDomain = transformedData.map((d) => d[xKey]);
+  $: effectiveStart = startDate ?? dataMinDate ?? new Date(2000, 0, 1);
+  $: effectiveEnd   = endDate   ?? dataMaxDate ?? new Date(2000, 11, 31);
+
+  // Avoid zero-length domain
+  $: [domainStart, domainEnd] =
+    +effectiveStart === +effectiveEnd
+      ? [
+          new Date(effectiveStart.getTime() - 24 * 3600 * 1000),
+          new Date(effectiveEnd.getTime() + 24 * 3600 * 1000),
+        ]
+      : [effectiveStart, effectiveEnd];
+
+  // ---- Scales ----
+  $: x = scaleTime()
+    .domain([domainStart, domainEnd])
+    .range([margin.left, width - margin.right])
+    .clamp(true);
 
   $: computedYMax =
     yMax ??
@@ -41,17 +68,11 @@
       ? Math.max(...transformedData.map((d) => d[yKey])) * 1.2
       : 100);
 
-  $: yDomain = [0, computedYMax];
-
-  $: x = scaleBand()
-    .padding(0.1)
-    .domain(xDomain)
-    .range([margin.left, width - margin.right]);
-
   $: y = scaleLinear()
-    .domain(yDomain)
+    .domain([0, computedYMax])
     .range([height - margin.bottom, margin.top]);
 
+  // ---- Formatting ----
   $: yTicks = y.ticks(5);
 
   $: formatValue = (() => {
@@ -64,153 +85,143 @@
     return format(hasDecimal ? ".1%" : ".0%");
   })();
 
-  $: lineFn = line()
-    .curve(curveLinear)
-    .x((d) => x(d[xKey]))
-    .y((d) => y(d[yKey]));
-
+  // ---- Original-style helpers preserved ----
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
   }
 
   function isQ3Start(date) {
-    return date.getMonth() === 6;
+    return date.getMonth() === 6; // July
   }
 
-  function getDateChanges(data, xKey) {
+  // UPDATED: similar structure but computed from the fixed domain,
+  // not from data transitions—so every chart shows identical labels/dividers.
+  function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
-      years: [],
-      yearLabels: [],
+      years: [],       // year boundary markers (Jan 1)
+      yearLabels: [],  // { date: Jul 1, year: YYYY }
     };
+    if (!domainStart || !domainEnd) return changes;
 
-    if (!data || !Array.isArray(data)) return changes;
-
-    for (let i = 1; i < data.length; i++) {
-      const prevDate = data[i - 1][xKey];
-      const currentDate = data[i][xKey];
-
-      if (!prevDate || !currentDate) continue;
-
-      if (prevDate.getFullYear() !== currentDate.getFullYear()) {
-        changes.years.push(currentDate);
-      } else if (
-        getQuarterFromDate(prevDate) !== getQuarterFromDate(currentDate)
-      ) {
-        if (isQ3Start(currentDate)) {
-          changes.yearLabels.push({
-            date: currentDate,
-            year: currentDate.getFullYear(),
-          });
-        }
+    // Year starts (Jan 1)
+    const yearStarts = timeYear.range(timeYear.floor(domainStart), timeYear.ceil(domainEnd));
+    for (const ys of yearStarts) {
+      changes.years.push(ys);
+      // Mid-year label (Jul 1) to replicate your Q3 labeling
+      const mid = new Date(ys.getFullYear(), 6, 1);
+      if (mid >= domainStart && mid <= domainEnd) {
+        changes.yearLabels.push({ date: mid, year: mid.getFullYear() });
       }
     }
 
     return changes;
   }
 
-  function isTooCloseToEdge(xPos, width) {
-    return xPos < 20 || width - xPos < 20;
+  $: dateChanges = getDateChangesFromDomain(domainStart, domainEnd);
+
+  // ---- Line generator ----
+  $: lineFn = line()
+    .curve(curveLinear)
+    .x((d) => x(d[xKey]))
+    .y((d) => y(d[yKey]));
+
+  function isTooCloseToEdge(xPos, w) {
+    return xPos < 20 || w - xPos < 20;
   }
 </script>
 
 <div style="padding:10px; margin-top:0px; margin-bottom:10px">
-  <div
-    class="chart-container"
-    bind:clientWidth={width}
-    style:height="{height}px"
-  >
-    {#if width && transformedData.length > 0}
-      <svg {width} {height} class="chart">
-        <g class="y-ticks">
-          {#each yTicks as tick (tick)}
-            <g class="y-tick" transform="translate(0 {y(tick)})">
+  {#if thousandsBoolean}
+    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+      Values shown in thousands
+    </div>
+  {/if}
+
+  <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
+    {#if width}
+      {#if transformedData.length > 0}
+        <svg {width} {height} class="chart">
+          <!-- Y grid/ticks -->
+          <g class="y-ticks">
+            {#each yTicks as tick (tick)}
+              <g class="y-tick" transform="translate(0 {y(tick)})">
+                <line
+                  class="tick-line"
+                  class:tick-line-0={tick === 0 || (index && tick === 100)}
+                  x1={margin.left}
+                  x2={width - margin.right}
+                />
+                <text style="text-anchor:end;" x={margin.left - 5} y="6" class="small">
+                  {units_chart === "percentage" ? formatPercent(tick / 100) : formatValue(tick)}
+                </text>
+              </g>
+            {/each}
+          </g>
+
+          <!-- Date dividers + mid-year labels (same idea as your original) -->
+          <g class="date-dividers">
+            {#each dateChanges.years as date}
               <line
-                class="tick-line"
-                class:tick-line-0={tick === 0 || (index && tick === 100)}
-                x1={margin.left}
-                x2={width - margin.right}
+                class="year-divider"
+                x1={x(date)}
+                y1={height - margin.bottom}
+                x2={x(date)}
+                y2={height - margin.bottom + 18}
+              />
+            {/each}
+
+            {#each dateChanges.yearLabels as { date, year }}
+              {#if !isTooCloseToEdge(x(date), width)}
+                <text
+                  class="year-label"
+                  x={x(date)}
+                  y={height - margin.bottom + 20}
+                  text-anchor="middle"
+                >
+                  {year}
+                </text>
+              {/if}
+            {/each}
+          </g>
+
+          <!-- Line series -->
+          <g class="plot">
+            <path class="line" d={lineFn(transformedData)} stroke={lineColor} />
+
+            <!-- Last point marker/label -->
+            {#if transformedData.length}
+              <circle
+                class="line-point"
+                cx={x(transformedData[transformedData.length - 1][xKey])}
+                cy={y(transformedData[transformedData.length - 1][yKey])}
+                r="4"
+                fill={lineColor}
               />
               <text
-                style="text-anchor:end;"
-                x={margin.left - 5}
-                y="6"
-                class="small"
+                x={x(transformedData[transformedData.length - 1][xKey]) + 8}
+                y={y(transformedData[transformedData.length - 1][yKey]) + 4}
+                style="fill: {lineColor}; font-weight: 600;"
               >
-                {units_chart === "percentage"
-                  ? formatPercent(tick / 100)
-                  : formatValue(tick)}
-              </text>
-            </g>
-          {/each}
-        </g>
-
-        <g class="date-dividers">
-          {#each dateChanges.years as date}
-            <line
-              class="year-divider"
-              x1={x(date)}
-              y1={height - margin.bottom}
-              x2={x(date)}
-              y2={height - margin.bottom + 18}
-            />
-          {/each}
-
-          {#each dateChanges.yearLabels as { date, year }}
-            {@const xPos = x(date)}
-            {#if !isTooCloseToEdge(xPos, width)}
-              <text
-                class="year-label"
-                x={xPos}
-                y={height - margin.bottom + 20}
-                text-anchor="middle"
-              >
-                {year}
+                {#if units_chart === "percentage"}
+                  {transformedData[transformedData.length - 1][yKey] < 20
+                    ? format(".1%")(transformedData[transformedData.length - 1][yKey] / 100)
+                    : formatPercent(transformedData[transformedData.length - 1][yKey] / 100)}
+                {:else}
+                  {transformedData[transformedData.length - 1][yKey] < 20
+                    ? format(",.1f")(transformedData[transformedData.length - 1][yKey])
+                    : formatValue(transformedData[transformedData.length - 1][yKey])}
+                {/if}
               </text>
             {/if}
-          {/each}
-        </g>
-
-        <g class="plot">
-          <path class="line" d={lineFn(transformedData)} stroke={lineColor} />
-
-          <circle
-            class="line-point"
-            cx={x(transformedData[transformedData.length - 1][xKey])}
-            cy={y(transformedData[transformedData.length - 1][yKey])}
-            r="4"
-            fill={lineColor}
-          />
-          <text
-            x={x(transformedData[transformedData.length - 1][xKey]) + 8}
-            y={y(transformedData[transformedData.length - 1][yKey]) + 4}
-            style="fill: {lineColor}; font-weight: 600;"
-          >
-            {#if units_chart === "percentage"}
-              {transformedData[transformedData.length - 1][yKey] < 20
-                ? format(".1%")(
-                    transformedData[transformedData.length - 1][yKey] / 100
-                  )
-                : formatPercent(
-                    transformedData[transformedData.length - 1][yKey] / 100
-                  )}
-            {:else}
-              {transformedData[transformedData.length - 1][yKey] < 20
-                ? format(",.1f")(
-                    transformedData[transformedData.length - 1][yKey]
-                  )
-                : formatValue(
-                    transformedData[transformedData.length - 1][yKey]
-                  )}
-            {/if}
-          </text>
-        </g>
-      </svg>
-    {:else if width}
-      <div
-        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;"
-      >
-        No data available
-      </div>
+          </g>
+        </svg>
+      {:else}
+        <div
+          style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;"
+        >
+          No data available
+        </div>
+      {/if}
     {/if}
   </div>
 </div>
