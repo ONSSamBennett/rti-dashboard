@@ -1,4 +1,3 @@
-
 <script>
   import { format } from "d3-format";
 
@@ -9,6 +8,9 @@
   // NEW: identify the series and provide the metadata lookup
   export let seriesId = "";
   export let metadataBySeries = {}; // passed from +page.svelte via data.metadataBySeries
+  
+  // Optional label prop for year-over-year indicator
+  export let label = "";
 
   // Colors (your existing values)
   export let noChangeBackground = "#D9D9D9";
@@ -28,25 +30,26 @@
       ? `${formatValue(Math.abs(change))}pp`
       : formatValue(Math.abs(change));
 
-  // 🔎 Read cadence from metadata ('weekly' | 'monthly' | ...)
-  const updated = metadataBySeries?.[seriesId]?.updated?.toLowerCase?.();
-
-  // Map cadence to the human-friendly label
-  const periodMap = {
-    daily: "From previous day",
-    day: "From previous day",
-    weekly: "From previous week",
-    week: "From previous week",
-    monthly: "From previous month",
-    month: "From previous month",
-    quarterly: "From previous quarter",
-    quarter: "From previous quarter",
-    yearly: "From last year",
-    year: "From last year",
-  };
-
-  // Safe fallback if metadata missing/unexpected
-  const changeContextLabel = periodMap[updated] ?? "Change from previous period";
+  // 🔎 Determine the label text
+  let changeContextLabel;
+  
+  if (label === "year") {
+    // Second indicator always shows "Past year"
+    changeContextLabel = "Past year";
+  } else {
+    // First indicator: check the frequency from metadata
+    const updated = metadataBySeries?.[seriesId]?.updated?.toLowerCase?.();
+    
+    if (updated === "daily" || updated === "day" || updated === "weekly" || updated === "week") {
+      changeContextLabel = "Past week";
+    } else if (updated === "monthly" || updated === "month") {
+      changeContextLabel = "Past month";
+    } else if (updated === "quarterly" || updated === "quarter") {
+      changeContextLabel = "Past quarter";
+    } else {
+      changeContextLabel = "Past period";
+    }
+  }
 </script>
 
 <p class="text-indicator-sm" style="margin-bottom: 0; margin-top: 0;">

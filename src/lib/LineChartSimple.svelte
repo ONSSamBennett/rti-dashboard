@@ -87,7 +87,7 @@
   })();
 
   // NEW: Date formatter for last point label (under the value)
-  const formatLastDate = timeFormat("%-d %B"); // e.g., "Jul 2024"
+  const formatLastDate = timeFormat("%-d %b"); // e.g., "Jul 2024"
   // If you prefer full day: const formatLastDate = timeFormat("%d %b %Y");
 
   // ---- Original-style helpers preserved ----

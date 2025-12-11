@@ -105,12 +105,12 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                                     startDate={new Date(2023, 0, 1)}
-  endDate={new Date(2025, 11, 17)}
+                      startDate={new Date(2023, 0, 1)}
+                      endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
@@ -118,22 +118,23 @@
                   <div class="causes-container">
                     <div class="causes-header">
                       <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
                       >
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
+                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
+                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                     </div>
                     <div class="causes-row">
                       <div class="causes-child">
                         <ChangeIndicator
-                    
-  seriesId={seriesId}
-  metadataBySeries={metadataBySeries}
-  change={metadataBySeries[seriesId]?.units === "percentage"
-    ? (row.period_over_period_percent ?? row.month_over_month_percent) // fallback if Stage 2 not applied yet
-    : (row.period_over_period_change ?? row.month_over_month_change)}
-  units={metadataBySeries[seriesId]?.units}
-
+                          seriesId={seriesId}
+                          metadataBySeries={metadataBySeries}
+                          change={metadataBySeries[seriesId]?.units === "percentage"
+                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
+                            : (row.period_over_period_change ?? row.month_over_month_change)}
+                          units={metadataBySeries[seriesId]?.units}
                         />
                       </div>
                       <div class="causes-child">
@@ -169,32 +170,35 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                                     startDate={new Date(2023, 0, 1)}
-  endDate={new Date(2025, 11, 17)}
+                      startDate={new Date(2023, 0, 1)}
+                      endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">
-                    <div class="causes-header">
+                        <div class="causes-header">
                       <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
                       >
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
+                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
+                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                     </div>
                     <div class="causes-row">
                       <div class="causes-child">
                         <ChangeIndicator
-                          label="month"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.month_over_month_percent
-                            : row.month_over_month_change}
+                          seriesId={seriesId}
+                          metadataBySeries={metadataBySeries}
+                          change={metadataBySeries[seriesId]?.units === "percentage"
+                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
+                            : (row.period_over_period_change ?? row.month_over_month_change)}
                           units={metadataBySeries[seriesId]?.units}
                         />
                       </div>
@@ -231,32 +235,35 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                                     startDate={new Date(2023, 0, 1)}
-  endDate={new Date(2025, 11, 17)}
+                      startDate={new Date(2023, 0, 1)}
+                      endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">
-                    <div class="causes-header">
+                        <div class="causes-header">
                       <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
                       >
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
+                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
+                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                     </div>
                     <div class="causes-row">
                       <div class="causes-child">
                         <ChangeIndicator
-                          label="month"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.month_over_month_percent
-                            : row.month_over_month_change}
+                          seriesId={seriesId}
+                          metadataBySeries={metadataBySeries}
+                          change={metadataBySeries[seriesId]?.units === "percentage"
+                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
+                            : (row.period_over_period_change ?? row.month_over_month_change)}
                           units={metadataBySeries[seriesId]?.units}
                         />
                       </div>
@@ -293,32 +300,35 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                                     startDate={new Date(2023, 0, 1)}
-  endDate={new Date(2025, 11, 17)}
+                      startDate={new Date(2023, 0, 1)}
+                      endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
                   <div class="causes-container">
-                    <div class="causes-header">
+                       <div class="causes-header">
                       <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:10px"
+                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
                       >
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
+                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
+                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                     </div>
                     <div class="causes-row">
                       <div class="causes-child">
                         <ChangeIndicator
-                          label="month"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.month_over_month_percent
-                            : row.month_over_month_change}
+                          seriesId={seriesId}
+                          metadataBySeries={metadataBySeries}
+                          change={metadataBySeries[seriesId]?.units === "percentage"
+                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
+                            : (row.period_over_period_change ?? row.month_over_month_change)}
                           units={metadataBySeries[seriesId]?.units}
                         />
                       </div>

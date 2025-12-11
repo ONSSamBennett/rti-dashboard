@@ -24,6 +24,28 @@ const manualHolidays = manualHolidayDates.map((dateStr) =>
   nextFriday(new Date(dateStr))
 );
 
+// Helper function to determine lookback periods based on frequency
+function getLookbackPeriods(frequency) {
+  const freq = frequency?.toLowerCase();
+  
+  switch(freq) {
+    case 'daily':
+    case 'day':
+      return { period: 7, year: 365 }; // 7 days back (weekly change), 365 days for year
+    case 'weekly':
+    case 'week':
+      return { period: 1, year: 52 }; // 1 week back, 52 weeks for year
+    case 'monthly':
+    case 'month':
+      return { period: 1, year: 12 }; // 1 month back, 12 months for year
+    case 'quarterly':
+    case 'quarter':
+      return { period: 1, year: 4 }; // 1 quarter back, 4 quarters for year
+    default:
+      return { period: 1, year: 12 }; // default to monthly
+  }
+}
+
 export async function load({ fetch }) {
   const dates = await (await fetch(datesUrl)).json();
 
@@ -42,9 +64,6 @@ export async function load({ fetch }) {
   const array2 = csvParse(str2, autoType);
 
   const json = await (await fetch(holidaysUrl)).json();
-
-  // Group by series_id and get the latest entry based on date
-  const latestBySeries = {};
 
   const parseDate = (str2) => {
     const [day, month, year] = str2.split("/").map(Number);
@@ -67,14 +86,20 @@ export async function load({ fetch }) {
     entries.sort((a, b) => a.date - b.date); // oldest to newest
 
     const latest = entries[entries.length - 1];
-    const prevMonth = entries[entries.length - 2];
-    const prevYear = entries[entries.length - 13]; // 12 entries before latest
+    
+    // Get the frequency from metadata for this series
+    const frequency = metadataBySeries[series_id]?.updated;
+    const { period, year } = getLookbackPeriods(frequency);
+    
+    // Calculate period-over-period (adaptive based on frequency)
+    const prevPeriod = entries[entries.length - 1 - period];
+    const prevYear = entries[entries.length - 1 - year];
 
-    const mom = prevMonth ? latest.num_uk - prevMonth.num_uk : null;
+    const pop = prevPeriod ? latest.num_uk - prevPeriod.num_uk : null;
     const yoy = prevYear ? latest.num_uk - prevYear.num_uk : null;
 
-    const mom_percent = prevMonth
-      ? 100 * ((latest.num_uk - prevMonth.num_uk) / prevMonth.num_uk)
+    const pop_percent = prevPeriod
+      ? 100 * ((latest.num_uk - prevPeriod.num_uk) / prevPeriod.num_uk)
       : null;
 
     const yoy_percent = prevYear
@@ -83,15 +108,19 @@ export async function load({ fetch }) {
 
     result[series_id] = {
       ...latest,
-      month_over_month_change: mom,
-      month_over_month_percent: mom_percent,
+      // Keep old names for backward compatibility
+      month_over_month_change: pop,
+      month_over_month_percent: pop_percent,
       year_over_year_change: yoy,
       year_over_year_percent: yoy_percent,
-      full_series: entries, // 👈 include full series for chart
+      // Add new names that are more accurate
+      period_over_period_change: pop,
+      period_over_period_percent: pop_percent,
+      full_series: entries,
     };
   }
 
-  console.log(latestBySeries); // This will show the result in the browser console
+  console.log(result);
 
   // Combine API holidays with manual ones
   const holidays = [
@@ -136,19 +165,13 @@ export async function load({ fetch }) {
     percent_due_to: 100 * (current.covid_due_to / current.num_england_wales),
     percent_involving: 100 * (current.covid_with / current.num_england_wales),
   };
+  
   const flu = {
     value_due_to: current.flu_due_to,
     value_involving: current.flu_with,
     percent_due_to: 100 * (current.flu_due_to / current.num_england_wales),
     percent_involving: 100 * (current.flu_with / current.num_england_wales),
   };
-
-  // const flu_covid_max = Math.max(...[
-  //     ...array.map(d => d.flu_due_to),
-  //     ...array.map(d => d.flu_with),
-  //     ...array.map(d => d.covid_due_to),
-  //     ...array.map(d => d.covid_with)
-  // ]);
 
   const flu_covid_max = Math.max(
     ...[
@@ -157,7 +180,7 @@ export async function load({ fetch }) {
       ...array.map((d) => d.covid_due_to_percent),
       ...array.map((d) => d.covid_with_percent),
     ]
-  ); // Convert to decimal if your chart expects 0.2 for 20%
+  );
 
   const deaths_registered_wales = {
     value: current.num_wales,
@@ -185,8 +208,6 @@ export async function load({ fetch }) {
     percent_difference:
       100 * ((current.num_wales - current.exp_wales) / current.exp_wales),
   };
-
-  // Add this right before the return statement
 
   const current_bank_holiday = current.bank_holiday;
   const previous_bank_holiday = previous.bank_holiday;
