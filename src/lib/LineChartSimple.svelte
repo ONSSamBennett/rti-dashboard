@@ -4,9 +4,9 @@
   import { line, curveLinear } from "d3-shape";
   import { format } from "d3-format";
   import { timeYear } from "d3-time";
-  import { timeFormat } from "d3-time-format"; // NEW: format last-point date
+  import { timeFormat } from "d3-time-format";
 
-  // ----- Props -----
+  // Props (existing)
   export let data = [];
   export let yKey = "value";
   export let yMax;
@@ -18,13 +18,15 @@
   export let index = false;
   export let thousands = false;
 
-  // Fixed time window (shared across charts)
+  // Fixed time window
   export let startDate = null; // e.g., new Date(2022, 0, 1)
   export let endDate = null;   // e.g., new Date(2025, 11, 31)
 
-  // ----- Internals -----
-  $: thousandsBoolean = thousands === true || thousands === "true";
+  // NEW: metadata object to drive axis options (and anything else)
+  export let meta = {};
 
+  // Internals
+  $: thousandsBoolean = thousands === true || thousands === "true";
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
@@ -39,7 +41,7 @@
         : data
       : [];
 
-  // Fallback to data extent if no explicit start/end provided
+  // Fallback to data extent if no start/end provided
   $: dataMinDate =
     transformedData.length ? new Date(Math.min(...transformedData.map((d) => +d[xKey]))) : null;
   $: dataMaxDate =
@@ -57,24 +59,69 @@
         ]
       : [effectiveStart, effectiveEnd];
 
-  // ---- Scales ----
   $: x = scaleTime()
     .domain([domainStart, domainEnd])
     .range([margin.left, width - margin.right])
     .clamp(true);
 
-  $: computedYMax =
-    yMax ??
-    (transformedData?.length
-      ? Math.max(...transformedData.map((d) => d[yKey])) * 1.2
-      : 100);
+  // --- Y domain calculations driven by metadata ---
+  // Pull axis settings from metadata (with sensible defaults)
+  $: yMinMode = meta?.yMinMode ?? "zero";  // "zero" | "data" | "above-zero"
+  $: yPadding = meta?.yPadding ?? 0.1;     // 10% padding
+
+  // Data min/max
+  $: dataYMin =
+    transformedData?.length
+      ? Math.min(...transformedData.map((d) => d[yKey]))
+      : 0;
+
+  $: dataYMax =
+    transformedData?.length
+      ? Math.max(...transformedData.map((d) => d[yKey]))
+      : 100;
+
+  // Respect explicit yMax when provided; otherwise use data max
+  $: topMax = yMax ?? dataYMax;
+
+  // Add padding to top max
+  $: paddedMax = topMax + Math.abs(topMax) * yPadding;
+
+  // Compute bottom min based on mode
+  $: computedYMin = (() => {
+    if (yMinMode === "zero") return 0;
+
+    if (yMinMode === "data") {
+      const m = dataYMin;
+      return m - Math.abs(m) * yPadding;
+    }
+
+    if (yMinMode === "above-zero") {
+      // Lift floor above zero only if all data is positive
+      if (dataYMin > 0) {
+        const m = dataYMin;
+        // Keep a small buffer below min, but never below 0
+        return Math.max(0, m - Math.abs(m) * yPadding);
+      }
+      // Mixed or negative values: keep zero floor
+      return 0;
+    }
+
+    // Fallback
+    return 0;
+  })();
+
+  // Avoid inverted domain when top and bottom collide
+  $: computedYMin = Math.min(computedYMin, paddedMax - Number.EPSILON);
 
   $: y = scaleLinear()
-    .domain([0, computedYMax])
-    .range([height - margin.bottom, margin.top]);
+    .domain([computedYMin, paddedMax])
+    .range([height - margin.bottom, margin.top])
+    .nice();
 
-  // ---- Formatting ----
   $: yTicks = y.ticks(5);
+
+  // For baseline styling when 0 is visible
+  $: zeroInDomain = computedYMin <= 0 && 0 <= paddedMax;
 
   $: formatValue = (() => {
     const hasDecimal = yTicks.some((t) => t % 1 !== 0);
@@ -86,11 +133,8 @@
     return format(hasDecimal ? ".1%" : ".0%");
   })();
 
-  // NEW: Date formatter for last point label (under the value)
-  const formatLastDate = timeFormat("%-d %b"); // e.g., "Jul 2024"
-  // If you prefer full day: const formatLastDate = timeFormat("%d %b %Y");
+  const formatLastDate = timeFormat("%-d %b");
 
-  // ---- Original-style helpers preserved ----
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
   }
@@ -99,7 +143,6 @@
     return date.getMonth() === 6; // July
   }
 
-  // Compute year dividers and mid-year labels from the fixed domain
   function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
       years: [],       // year boundary markers (Jan 1)
@@ -111,7 +154,7 @@
     const yearStarts = timeYear.range(timeYear.floor(domainStart), timeYear.ceil(domainEnd));
     for (const ys of yearStarts) {
       changes.years.push(ys);
-      // Mid-year label (Jul 1) to replicate your Q3 labeling
+      // Mid-year label (Jul 1) to replicate Q3 labeling
       const mid = new Date(ys.getFullYear(), 6, 1);
       if (mid >= domainStart && mid <= domainEnd) {
         changes.yearLabels.push({ date: mid, year: mid.getFullYear() });
@@ -123,7 +166,7 @@
 
   $: dateChanges = getDateChangesFromDomain(domainStart, domainEnd);
 
-  // ---- Line generator ----
+  // Line generator
   $: lineFn = line()
     .curve(curveLinear)
     .x((d) => x(d[xKey]))
@@ -151,7 +194,7 @@
               <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                  class:tick-line-0={tick === 0 || (index && tick === 100)}
+                  class:tick-line-0={(zeroInDomain && tick === 0) || (index && tick === 100)}
                   x1={margin.left}
                   x2={width - margin.right}
                 />
@@ -162,7 +205,7 @@
             {/each}
           </g>
 
-          <!-- Date dividers + mid-year labels (same idea as your original) -->
+          <!-- Date dividers + mid-year labels -->
           <g class="date-dividers">
             {#each dateChanges.years as date}
               <line
@@ -243,6 +286,7 @@
     {/if}
   </div>
 </div>
+
 
 <style>
   .chart-container {

@@ -94,10 +94,13 @@
         <Cards>
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "consumer" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card
-                title={metadataBySeries[seriesId]?.title ?? seriesId}
-                colspan={3}
-              >
+              <Card colspan={3}>
+                <div class="card-header">
+                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                  {/if}
+                </div>
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
@@ -159,10 +162,13 @@
         <Cards>
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "business" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card
-                title={metadataBySeries[seriesId]?.title ?? seriesId}
-                colspan={3}
-              >
+              <Card colspan={3}>
+                <div class="card-header">
+                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                  {/if}
+                </div>
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
@@ -178,6 +184,13 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      
+
+    meta={{
+      yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "zero",     // "zero" | "data" | "above-zero"
+      yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1         // 10% padding
+    }}
+
                     />
                   </div>
                   <div class="causes-container">
@@ -224,10 +237,13 @@
         <Cards>
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "energy" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card
-                title={metadataBySeries[seriesId]?.title ?? seriesId}
-                colspan={3}
-              >
+              <Card colspan={3}>
+                <div class="card-header">
+                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                  {/if}
+                </div>
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
@@ -289,10 +305,13 @@
         <Cards>
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "transport" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card
-                title={metadataBySeries[seriesId]?.title ?? seriesId}
-                colspan={3}
-              >
+              <Card colspan={3}>
+                <div class="card-header">
+                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                  {/if}
+                </div>
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
@@ -392,6 +411,39 @@
     padding: 8px 0 0 0;
   }
 
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0 6px; /* restore top spacing similar to native card title */
+    margin-bottom: 6px;
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.1;
+    font-weight: 600;
+  }
+
+  .updated-flag {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .updated-dot {
+    display: inline-block;
+    width: 12px; /* diameter 12px => radius 6px */
+    height: 12px;
+    border-radius: 6px;
+    background-color: #16a34a; /* green */
+    margin-right: 8px;
+    flex: 0 0 auto;
+  }
+
   .causes-row {
     display: flex;
     gap: 16px;
@@ -420,6 +472,32 @@
 
     .causes-container {
       flex: 2 1 0;
+    }
+  }
+
+  /* Mobile: place the updated flag above the title but keep it right-aligned */
+  @media screen and (max-width: 607px) {
+    .card-header {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 10px 0 6px;
+    }
+
+    /* Put the flag above the title (DOM order is title, flag) */
+    .updated-flag {
+      order: -1; /* show before title */
+      align-self: flex-end;
+      margin-bottom: 6px;
+    }
+
+    .updated-dot {
+      margin-right: 6px;
+    }
+
+    .card-title {
+      margin: 0;
+      order: 0;
+      align-self: flex-start;
     }
   }
 </style>
