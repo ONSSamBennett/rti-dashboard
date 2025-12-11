@@ -21,6 +21,7 @@
   export let data2;
 
   const { metadataBySeries } = data;
+  
   const { latestBySeries } = data;
   const dateCurrent = new Date(data.dates.current);
   const dateNext = new Date(data.dates.next);
@@ -104,12 +105,12 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                                     startDate={new Date(2022, 0, 1)}
-  endDate={new Date(2027, 11, 31)}
+                                     startDate={new Date(2023, 0, 1)}
+  endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                                            units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
@@ -125,12 +126,14 @@
                     <div class="causes-row">
                       <div class="causes-child">
                         <ChangeIndicator
-                          label="month"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.month_over_month_percent
-                            : row.month_over_month_change}
-                          units={metadataBySeries[seriesId]?.units}
+                    
+  seriesId={seriesId}
+  metadataBySeries={metadataBySeries}
+  change={metadataBySeries[seriesId]?.units === "percentage"
+    ? (row.period_over_period_percent ?? row.month_over_month_percent) // fallback if Stage 2 not applied yet
+    : (row.period_over_period_change ?? row.month_over_month_change)}
+  units={metadataBySeries[seriesId]?.units}
+
                         />
                       </div>
                       <div class="causes-child">
@@ -162,17 +165,17 @@
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
-                    <LineChartSimple
+                      <LineChartSimple
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                        startDate={new Date(2022, 0, 1)}
-  endDate={new Date(2027, 11, 31)}
+                                     startDate={new Date(2023, 0, 1)}
+  endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
-                      <LineChartSimple
+                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
@@ -228,10 +231,13 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
+                                     startDate={new Date(2023, 0, 1)}
+  endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>
@@ -283,14 +289,17 @@
                 <p>{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
-                    <LineChartSimple
+                   <LineChartSimple
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
+                                     startDate={new Date(2023, 0, 1)}
+  endDate={new Date(2025, 11, 17)}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
+                                            units_chart={metadataBySeries[seriesId]?.units_chart}
+                      index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                     />
                   </div>

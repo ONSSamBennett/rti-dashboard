@@ -258,7 +258,7 @@
 
   .line {
     fill: none;
-    stroke-width: 3px;
+    stroke-width: 2px;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
