@@ -26,7 +26,15 @@
   export let meta = {};
 
   // Internals
-  $: thousandsBoolean = thousands === true || thousands === "true";
+  $: thousandsBoolean = (() => {
+    if (thousands === true) return true;
+    if (typeof thousands === "number") return thousands === 1;
+    if (typeof thousands === "string") {
+      const v = thousands.trim().toLowerCase();
+      return v === "true" || v === "1" || v === "yes";
+    }
+    return Boolean(thousands);
+  })();
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
@@ -37,7 +45,19 @@
   $: transformedData =
     data && Array.isArray(data)
       ? thousandsBoolean
-        ? data.map((d) => ({ ...d, [yKey]: d[yKey] / 1000 }))
+        ? data.map((d) => {
+            // Ensure numeric value (handle strings like "742,745")
+            const raw = d[yKey];
+            let val = raw;
+            if (typeof raw === "string") {
+              // remove any commas or whitespace
+              const cleaned = raw.replace(/,/g, "").trim();
+              val = cleaned === "" ? NaN : Number(cleaned);
+            }
+            // If value is not a number, leave as-is (NaN will propagate)
+            const numeric = typeof val === "number" && !isNaN(val) ? val / 1000 : val;
+            return { ...d, [yKey]: numeric };
+          })
         : data
       : [];
 
