@@ -18,6 +18,18 @@
   export let index = false;
   export let thousands = false;
 
+  // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
+  $: indexBoolean = (() => {
+    if (index === true) return true;
+    if (index === false) return false;
+    if (typeof index === "number") return index === 1;
+    if (typeof index === "string") {
+      const v = index.trim().toLowerCase();
+      return v === "true" || v === "1" || v === "yes";
+    }
+    return Boolean(index);
+  })();
+
   // Fixed time window
   export let startDate = null; // e.g., new Date(2022, 0, 1)
   export let endDate = null;   // e.g., new Date(2025, 11, 31)
@@ -222,6 +234,9 @@
       Values shown in thousands
     </div>
   {/if}
+  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+    <strong>Index</strong>: {indexBoolean ? 'yes' : 'no'}
+  </div>
   <div style="font-size: 12px; color: #999; line-height:1.4;">
     <div><strong>yMinMode</strong>: {yMinMode}</div>
     <div><strong>Axis top</strong>: {units_chart === "percentage" ? formatPercent(paddedMax/100) : formatValue(paddedMax)}</div>
@@ -237,10 +252,10 @@
           <!-- Y grid/ticks -->
           <g class="y-ticks">
             {#each yTicks as tick (tick)}
-              <g class="y-tick" transform="translate(0 {y(tick)})">
+                  <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                  class:tick-line-0={(zeroInDomain && tick === 0) || (index && tick === 100)}
+                      class:tick-line-0={(zeroInDomain && tick === 0) || (indexBoolean && tick === 100)}
                   x1={margin.left}
                   x2={width - margin.right}
                 />
