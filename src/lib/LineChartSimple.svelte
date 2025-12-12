@@ -258,6 +258,21 @@
   function isTooCloseToEdge(xPos, w) {
     return xPos < 20 || w - xPos < 20;
   }
+
+  // Calculate if there's a significant gap at the start (no data period)
+  $: hasNoDataPeriod = (() => {
+    if (!transformedData.length || !effectiveStart) return false;
+    
+    const firstDataDate = transformedData[0][xKey];
+    const daysDiff = (firstDataDate - effectiveStart) / (1000 * 60 * 60 * 24);
+    
+    // If first data point is more than 30 days after axis start, show no-data indicator
+    return daysDiff > 30;
+  })();
+
+  $: noDataRectEnd = hasNoDataPeriod && transformedData.length 
+    ? transformedData[0][xKey] 
+    : null;
 </script>
 
 <div style="padding:10px; margin-top:0px; margin-bottom:10px">
@@ -323,6 +338,19 @@
               {/if}
             {/each}
           </g>
+
+          <!-- No data period indicator -->
+          {#if hasNoDataPeriod && noDataRectEnd}
+            <rect
+              class="no-data-rect"
+              x={x(effectiveStart)}
+              y={margin.top}
+              width={x(noDataRectEnd) - x(effectiveStart)}
+              height={height - margin.bottom - margin.top}
+              fill="rgba(200, 200, 200, 0.3)"
+              stroke="none"
+            />
+          {/if}
 
           <!-- Line series -->
           <g class="plot">
@@ -395,7 +423,7 @@
 
   .line {
     fill: none;
-    stroke-width: 2px;
+    stroke-width: 1px;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
