@@ -116,6 +116,10 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      meta={{
+                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
+                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
+                      }}
                     />
                   </div>
                   <div class="causes-container">
@@ -259,6 +263,10 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      meta={{
+                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
+                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
+                      }}
                     />
                   </div>
                   <div class="causes-container">
@@ -327,6 +335,10 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      meta={{
+                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
+                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
+                      }}
                     />
                   </div>
                   <div class="causes-container">

@@ -86,7 +86,7 @@
 
   // --- Y domain calculations driven by metadata ---
   // Pull axis settings from metadata (with sensible defaults)
-  $: yMinMode = meta?.yMinMode ?? "zero";  // "zero" | "data" | "above-zero"
+  $: yMinMode = meta?.yMinMode ?? "auto";  // "zero" | "data" | "above-zero" | "auto"
   $: yPadding = meta?.yPadding ?? 0.1;     // 10% padding
 
   // Data min/max
@@ -103,45 +103,64 @@
   // Respect explicit yMax when provided; otherwise use data max
   $: topMax = yMax ?? dataYMax;
 
-  // Add padding to top max
-  $: paddedMax = topMax + Math.abs(topMax) * yPadding;
-
   // Compute bottom min based on mode
   $: computedYMin = (() => {
-    if (yMinMode === "zero") return 0;
-
-    if (yMinMode === "data") {
-      const m = dataYMin;
-      return m - Math.abs(m) * yPadding;
+    // First, determine the baseline min based on the mode
+    let baseMin;
+    if (yMinMode === "zero") {
+      baseMin = 0;
+    } else if (yMinMode === "data") {
+      baseMin = dataYMin;
+    } else if (yMinMode === "above-zero") {
+      baseMin = dataYMin > 0 ? dataYMin : 0;
+    } else if (yMinMode === "auto") {
+      // Auto mode: start with zero, then check for wasted space
+      baseMin = 0;
+    } else {
+      baseMin = 0;
     }
 
-    if (yMinMode === "above-zero") {
-      // Lift floor above zero only if all data is positive
-      if (dataYMin > 0) {
-        const m = dataYMin;
-        // Keep a small buffer below min, but never below 0
-        return Math.max(0, m - Math.abs(m) * yPadding);
+    // Auto-detection: if yMinMode is "auto", check for excessive unused space
+    if (yMinMode === "auto" && dataYMin > baseMin) {
+      // Calculate what the range would be if we kept baseMin
+      const range = topMax - baseMin;
+      // Gap between data minimum and the floor
+      const gap = dataYMin - baseMin;
+      // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the data
+      if (range > 0 && gap / range > 0.5) {
+        const frac = 0.3; // fraction of final axis to reserve below the lowest data point
+        // Solve for new bottom B so that dataYMin - B = frac * (topMax - B)
+        // => B = (dataYMin - frac * topMax) / (1 - frac)
+        const denom = 1 - frac;
+        if (denom > 0) {
+          const newBottom = (dataYMin - frac * topMax) / denom;
+          // Ensure we don't accidentally pick a bottom above the data
+          if (newBottom < dataYMin) return newBottom;
+        }
       }
-      // Mixed or negative values: keep zero floor
-      return 0;
     }
 
-    // Fallback
-    return 0;
+    return baseMin;
   })();
 
+  // Add padding to bottom min (expand downward)
+  $: paddedMin = computedYMin - Math.abs(computedYMin) * yPadding;
+
+  // Final domain max (no padding applied here)
+  $: paddedMax = topMax;
+
   // Avoid inverted domain when top and bottom collide
-  $: computedYMin = Math.min(computedYMin, paddedMax - Number.EPSILON);
+  $: paddedMin = Math.min(paddedMin, paddedMax - Number.EPSILON);
 
   $: y = scaleLinear()
-    .domain([computedYMin, paddedMax])
+    .domain([paddedMin, paddedMax])
     .range([height - margin.bottom, margin.top])
     .nice();
 
   $: yTicks = y.ticks(5);
 
   // For baseline styling when 0 is visible
-  $: zeroInDomain = computedYMin <= 0 && 0 <= paddedMax;
+  $: zeroInDomain = paddedMin <= 0 && 0 <= paddedMax;
 
   $: formatValue = (() => {
     const hasDecimal = yTicks.some((t) => t % 1 !== 0);
@@ -203,6 +222,13 @@
       Values shown in thousands
     </div>
   {/if}
+  <div style="font-size: 12px; color: #999; line-height:1.4;">
+    <div><strong>yMinMode</strong>: {yMinMode}</div>
+    <div><strong>Axis top</strong>: {units_chart === "percentage" ? formatPercent(paddedMax/100) : formatValue(paddedMax)}</div>
+    <div><strong>Axis min</strong>: {units_chart === "percentage" ? formatPercent(paddedMin/100) : formatValue(paddedMin)}</div>
+    <div><strong>Data top</strong>: {units_chart === "percentage" ? formatPercent(dataYMax/100) : formatValue(dataYMax)}</div>
+    <div><strong>Data bottom</strong>: {units_chart === "percentage" ? formatPercent(dataYMin/100) : formatValue(dataYMin)}</div>
+  </div>
 
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
