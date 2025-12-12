@@ -80,6 +80,13 @@
       sectionNumber,
     });
   }
+
+  function renderCards(category) {
+    return Object.entries(latestBySeries).filter(([seriesId]) => 
+      metadataBySeries[seriesId]?.category === category && 
+      metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
+    );
+  }
 </script>
 
 <Embed>
@@ -87,10 +94,15 @@
 
   <Section width="wide">
     <Accordion>
-      <AccordionItem title="Consumer behaviour">
-        <div class="cards">
-          {#each Object.entries(latestBySeries) as [seriesId, row]}
-            {#if metadataBySeries[seriesId]?.category === "consumer" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
+      {#each [
+        { title: "Consumer behaviour", category: "consumer" },
+        { title: "Business", category: "business" },
+        { title: "Energy and housing", category: "energy" },
+        { title: "Transport", category: "transport" }
+      ] as section}
+        <AccordionItem title={section.title}>
+          <div class="cards">
+            {#each renderCards(section.category) as [seriesId, row]}
               <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
@@ -157,234 +169,10 @@
                   </div>
                 </div>
               </div>
-            {/if}
-          {/each}
-        </div>
-      </AccordionItem>
-      <AccordionItem title="Business">
-        <div class="cards">
-          {#each Object.entries(latestBySeries) as [seriesId, row]}
-            {#if metadataBySeries[seriesId]?.category === "business" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
-                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                  {/if}
-                </div>
-                <p>{metadataBySeries[seriesId]?.description}</p>
-                <div class="layout-container">
-                  <div class="chart">
-                      <LineChartSimple
-                      data={row.full_series}
-                      yKey="num_uk"
-                      lineColor="#206095"
-                      startDate={new Date(2023, 0, 1)}
-                      endDate={new Date(2025, 11, 17)}
-                      title={metadataBySeries[seriesId]?.title}
-                      description={metadataBySeries[seriesId]?.description}
-                      units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
-                      index={metadataBySeries[seriesId]?.index}
-                      thousands={metadataBySeries[seriesId]?.thousands}
-                      series_id={seriesId}
-                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
-
-    meta={{
-      yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "zero",     // "zero" | "data" | "above-zero"
-      yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1         // 10% padding
-    }}
-
-                    />
-                  </div>
-                  <div class="causes-container">
-                        <div class="causes-header">
-                      <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
-                      >
-                        Change in {metadataBySeries[seriesId]?.units}
-                      </h4>
-                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
-                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <div class="causes-row">
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          seriesId={seriesId}
-                          metadataBySeries={metadataBySeries}
-                          change={metadataBySeries[seriesId]?.units === "percentage"
-                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
-                            : (row.period_over_period_change ?? row.month_over_month_change)}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          label="year"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.year_over_year_percent
-                            : row.year_over_year_change}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-          {/each}
-        </div>
-      </AccordionItem>
-      <AccordionItem title="Energy and housing">
-        <div class="cards">
-          {#each Object.entries(latestBySeries) as [seriesId, row]}
-            {#if metadataBySeries[seriesId]?.category === "energy" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
-                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                  {/if}
-                </div>
-                <p>{metadataBySeries[seriesId]?.description}</p>
-                <div class="layout-container">
-                  <div class="chart">
-                    <LineChartSimple
-                      data={row.full_series}
-                      yKey="num_uk"
-                      lineColor="#206095"
-                      startDate={new Date(2023, 0, 1)}
-                      endDate={new Date(2025, 11, 17)}
-                      title={metadataBySeries[seriesId]?.title}
-                      description={metadataBySeries[seriesId]?.description}
-                      units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
-                      index={metadataBySeries[seriesId]?.index}
-                      thousands={metadataBySeries[seriesId]?.thousands}
-                      series_id={seriesId}
-                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
-                      meta={{
-                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
-                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
-                      }}
-                    />
-                  </div>
-                  <div class="causes-container">
-                        <div class="causes-header">
-                      <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
-                      >
-                        Change in {metadataBySeries[seriesId]?.units}
-                      </h4>
-                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
-                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <div class="causes-row">
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          seriesId={seriesId}
-                          metadataBySeries={metadataBySeries}
-                          change={metadataBySeries[seriesId]?.units === "percentage"
-                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
-                            : (row.period_over_period_change ?? row.month_over_month_change)}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          label="year"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.year_over_year_percent
-                            : row.year_over_year_change}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-          {/each}
-        </div>
-      </AccordionItem>
-      <AccordionItem title="Transport">
-        <div class="cards">
-          {#each Object.entries(latestBySeries) as [seriesId, row]}
-            {#if metadataBySeries[seriesId]?.category === "transport" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
-                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                  {/if}
-                </div>
-                <p>{metadataBySeries[seriesId]?.description}</p>
-                <div class="layout-container">
-                  <div class="chart">
-                   <LineChartSimple
-                      data={row.full_series}
-                      yKey="num_uk"
-                      lineColor="#206095"
-                      startDate={new Date(2023, 0, 1)}
-                      endDate={new Date(2025, 11, 17)}
-                      title={metadataBySeries[seriesId]?.title}
-                      description={metadataBySeries[seriesId]?.description}
-                      units={metadataBySeries[seriesId]?.units}
-                      units_chart={metadataBySeries[seriesId]?.units_chart}
-                      index={metadataBySeries[seriesId]?.index}
-                      thousands={metadataBySeries[seriesId]?.thousands}
-                      series_id={seriesId}
-                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
-                      meta={{
-                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
-                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
-                      }}
-                    />
-                  </div>
-                  <div class="causes-container">
-                       <div class="causes-header">
-                      <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
-                      >
-                        Change in {metadataBySeries[seriesId]?.units}
-                      </h4>
-                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
-                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <div class="causes-row">
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          seriesId={seriesId}
-                          metadataBySeries={metadataBySeries}
-                          change={metadataBySeries[seriesId]?.units === "percentage"
-                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
-                            : (row.period_over_period_change ?? row.month_over_month_change)}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          label="year"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.year_over_year_percent
-                            : row.year_over_year_change}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-          {/each}
-        </div>
-      </AccordionItem>
+            {/each}
+          </div>
+        </AccordionItem>
+      {/each}
     </Accordion>
   </Section>
 </Embed>
