@@ -116,6 +116,8 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      series_id={seriesId}
+                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
                       meta={{
                         yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
@@ -188,7 +190,8 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
-                      
+                      series_id={seriesId}
+                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
 
     meta={{
       yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "zero",     // "zero" | "data" | "above-zero"
@@ -263,6 +266,8 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      series_id={seriesId}
+                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
                       meta={{
                         yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
@@ -335,6 +340,8 @@
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
+                      series_id={seriesId}
+                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
                       meta={{
                         yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1

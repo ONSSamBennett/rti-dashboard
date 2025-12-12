@@ -17,6 +17,8 @@
   export let units_chart; // e.g., "percentage"
   export let index = false;
   export let thousands = false;
+  export let series_id = null; // NEW: identifier for this series
+  export let thinSeries = null; // NEW: which series_id should be thinner
 
   // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
   $: indexBoolean = (() => {
@@ -38,6 +40,8 @@
   export let meta = {};
 
   // Internals
+  // Determine stroke width based on series_id
+  $: strokeWidth = (thinSeries && series_id === thinSeries) ? 1 : 2;
   $: thousandsBoolean = (() => {
     if (thousands === true) return true;
     if (typeof thousands === "number") return thousands === 1;
@@ -284,6 +288,9 @@
   <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
     <strong>Index</strong>: {indexBoolean ? 'yes' : 'no'}
   </div>
+  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+    <strong>series_id</strong>: {series_id} | <strong>thinSeries</strong>: {thinSeries} | <strong>strokeWidth</strong>: {strokeWidth}px
+  </div>
   <div style="font-size: 12px; color: #999; line-height:1.4;">
     <div><strong>yMinMode</strong>: {yMinMode}</div>
     <div><strong>Axis top</strong>: {units_chart === "percentage" ? formatPercent(paddedMax/100) : formatValue(paddedMax)}</div>
@@ -354,7 +361,7 @@
 
           <!-- Line series -->
           <g class="plot">
-            <path class="line" d={lineFn(transformedData)} stroke={lineColor} />
+            <path class="line" d={lineFn(transformedData)} stroke={lineColor} stroke-width="{strokeWidth}px" />
 
             <!-- Last point marker/label: value (top) + date (bottom) -->
             {#if transformedData.length}
@@ -423,7 +430,6 @@
 
   .line {
     fill: none;
-    stroke-width: 1px;
     stroke-linejoin: round;
     stroke-linecap: round;
   }

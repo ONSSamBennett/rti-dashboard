@@ -1,21 +1,21 @@
-series_id,title,category,description,units,units_chart,show,index,thousands,updated,yMinMode,updated_this_week
-job_ads,New job adverts,business,"Number of new online job adverts in the UK, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE
-redundancies_potential,Potential redundancies,business,"From Insolvency Service HR1 forms, four-week rolling-average, thousands",percentage,number,TRUE,TRUE,FALSE,weekly,auto,TRUE
-redundancies_proposed,Proposed redundancies,business,"From Insolvency Service HR1 forms, four-week rolling-average, thousands",percentage,number,TRUE,TRUE,FALSE,daily,auto,FALSE
-vat_new,New businesses,business,"Number of new VAT reporters, seasonally adjusted",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE
-debit_failure,Direct debit failures,consumer,"Failures due to insufficient funds, percentage of transactions",percentage,percentage,TRUE,FALSE,FALSE,monthly,auto,FALSE
-debit_transaction amount,Direct debit transaction size,consumer,"Average transaction amount, index (2023 average = 100)",percentage,number,TRUE,TRUE,FALSE,daily,auto,TRUE
-debit_transactions,Debit card transactions,consumer,"Daily card spending, index (100 = 2023), seven-day rolling average",percentage,number,FALSE,TRUE,FALSE,monthly,auto,TRUE
-footfall,Retail footfall,consumer,"Index (2023 weekly average = 100), weekly",percentage,number,TRUE,TRUE,FALSE,weekly,auto,TRUE
-automotive_fuel_demand,Automotive fuel transaction size,consumer,"Year-on-year growth in estimated quantity per transaction (Index, year before = 100)",percentage points,number,TRUE,TRUE,FALSE,weekly,auto,TRUE
-automotive_fuel_price,Automotive fuel price,energy,"Year-on-year growth in average price (year before = 100), weekly",percentage points,number,TRUE,TRUE,FALSE,weekly,auto,TRUE
-electric_price,Electricity price,energy,"System price, pence per kilowatt hour, daily",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE
-epc_existing,EPCs for existing dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged weekly, thousands",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE
-epc_new,EPCs for new dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged weekly, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE
-gas_price,Gas price,energy,"Average system average price, pence per kilowatt hour, daily",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE
-renting,Rental costs,energy,"Percentage of gross income spent on rent, monthly",percentage points,percentage,TRUE,FALSE,FALSE,weekly,auto,TRUE
-flights,UK flights,transport,"Number of flights, seven-day rolling-average, seasonally adjusted, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE
-ship_visits,Ships visits,transport,"Total number of visits, thousands",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE
-ship_visits_cargo,Cargo and tanker ship visits,transport,"Number of visits, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE
-vehicle_production,Vehicle production,transport,"Number produced, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE
-vehicle_registration,Vehicle registrations,transport,"New car and light commercial vehicle registrations, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE
+series_id,title,category,description,units,units_chart,show,index,thousands,updated,yMinMode,updated_this_week,thin_line
+job_ads,New job adverts,business,"Number of new online job adverts in the UK, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE,false
+redundancies_potential,Potential redundancies,business,"From Insolvency Service HR1 forms, four-week rolling-average, thousands",percentage,number,TRUE,TRUE,FALSE,weekly,auto,TRUE,false
+redundancies_proposed,Proposed redundancies,business,"From Insolvency Service HR1 forms, four-week rolling-average, thousands",percentage,number,TRUE,TRUE,FALSE,daily,auto,FALSE,false
+vat_new,New businesses,business,"Number of new VAT reporters, seasonally adjusted",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE,false
+debit_failure,Direct debit failures,consumer,"Failures due to insufficient funds, percentage of transactions",percentage,percentage,TRUE,FALSE,FALSE,monthly,auto,FALSE,false
+debit_transaction amount,Direct debit transaction size,consumer,"Average transaction amount, index (2023 average = 100)",percentage,number,TRUE,TRUE,FALSE,daily,auto,TRUE,false
+debit_transactions,Debit card transactions,consumer,"Daily card spending, index (100 = 2023), seven-day rolling average",percentage,number,FALSE,TRUE,FALSE,monthly,auto,TRUE,false
+footfall,Retail footfall,consumer,"Index (2023 weekly average = 100), weekly",percentage,number,TRUE,TRUE,FALSE,weekly,auto,TRUE,false
+automotive_fuel_demand,Automotive fuel transaction size,consumer,"Year-on-year growth in estimated quantity per transaction (Index, year before = 100)",percentage points,number,TRUE,TRUE,FALSE,weekly,auto,TRUE,false
+automotive_fuel_price,Automotive fuel price,energy,"Year-on-year growth in average price (year before = 100), weekly",percentage points,number,TRUE,TRUE,FALSE,weekly,auto,TRUE,false
+electric_price,Electricity price,energy,"System price, pence per kilowatt hour, daily",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE,false
+epc_existing,EPCs for existing dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged weekly, thousands",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE,false
+epc_new,EPCs for new dwellings,energy,"Number of EPCs (Energy Performance Certificates) lodged weekly, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE,false
+gas_price,Gas price,energy,"Average system average price, pence per kilowatt hour, daily",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE,false
+renting,Rental costs,energy,"Percentage of gross income spent on rent, monthly",percentage points,percentage,TRUE,FALSE,FALSE,weekly,auto,TRUE,false
+flights,UK flights,transport,"Number of flights, seven-day rolling-average, seasonally adjusted, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE,false
+ship_visits,Ships visits,transport,"Total number of visits, thousands",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE,false
+ship_visits_cargo,Cargo and tanker ship visits,transport,"Number of visits, thousands",percentage,number,TRUE,FALSE,FALSE,weekly,auto,FALSE,false
+vehicle_production,Vehicle production,transport,"Number produced, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,TRUE,false
+vehicle_registration,Vehicle registrations,transport,"New car and light commercial vehicle registrations, monthly",percentage,number,TRUE,FALSE,FALSE,monthly,auto,FALSE,false
