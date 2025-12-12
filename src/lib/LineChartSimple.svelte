@@ -117,6 +117,13 @@
 
   // Compute bottom min based on mode
   $: computedYMin = (() => {
+    // If this is an index chart and we're in auto mode, set the axis bottom
+    // exactly to the data minimum so there is no reserved whitespace below
+    // the lowest data point (index charts should sit flush at the bottom).
+    if (indexBoolean && yMinMode === "auto") {
+      return dataYMin;
+    }
+
     // First, determine the baseline min based on the mode
     let baseMin;
     if (yMinMode === "zero") {
@@ -138,7 +145,7 @@
       const range = topMax - baseMin;
       // Gap between data minimum and the floor
       const gap = dataYMin - baseMin;
-      // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the data
+      // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the lowest data point
       if (range > 0 && gap / range > 0.5) {
         const frac = 0.3; // fraction of final axis to reserve below the lowest data point
         // Solve for new bottom B so that dataYMin - B = frac * (topMax - B)
@@ -155,11 +162,36 @@
     return baseMin;
   })();
 
-  // Add padding to bottom min (expand downward)
-  $: paddedMin = computedYMin - Math.abs(computedYMin) * yPadding;
+  // Add padding to bottom min (expand downward).
+  // For index charts: apply 10% of the final axis range as bottom gap (consistent visual spacing).
+  // For other charts: use yPadding as percentage of computed min.
+  $: paddedMin = (() => {
+    if (indexBoolean) {
+      // For index charts: reserve 10% of the final range below the data
+      // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
+      // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
+      const finalRange = topMax - dataYMin;
+      return dataYMin - 0.15 * finalRange;
+    } else {
+      // For non-index charts: use yPadding as percentage of computedYMin
+      return computedYMin - Math.abs(computedYMin) * yPadding;
+    }
+  })();
 
-  // Final domain max (no padding applied here)
-  $: paddedMax = topMax;
+  // Add padding to top max (expand upward).
+  // For index charts: apply 10% of the final axis range as top gap (symmetric with bottom).
+  // For other charts: no top padding.
+  $: paddedMax = (() => {
+    if (indexBoolean) {
+      // For index charts: reserve 10% of the final range above the data
+      // gap = 0.1 * (topMax - dataYMin)
+      // paddedMax = topMax + gap
+      const finalRange = topMax - dataYMin;
+      return topMax + 0.15 * finalRange;
+    } else {
+      return topMax;
+    }
+  })();
 
   // Avoid inverted domain when top and bottom collide
   $: paddedMin = Math.min(paddedMin, paddedMax - Number.EPSILON);
@@ -255,7 +287,7 @@
                   <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                      class:tick-line-0={(zeroInDomain && tick === 0) || (indexBoolean && tick === 100)}
+                      class:tick-line-0={(zeroInDomain && tick === 0 && !indexBoolean) || (indexBoolean && tick === 100)}
                   x1={margin.left}
                   x2={width - margin.right}
                 />

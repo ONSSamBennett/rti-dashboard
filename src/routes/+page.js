@@ -122,6 +122,15 @@ export async function load({ fetch }) {
 
   console.log(result);
 
+  // Debug: log specific series that have shown unexpected indicator behaviour
+  // This helps confirm what values are being passed to the ChangeIndicator component.
+  try {
+    console.log("DEBUG latestBySeries.debit_failure:", result.debit_failure);
+    console.log("DEBUG latestBySeries.vehicle_production:", result.vehicle_production);
+  } catch (e) {
+    console.warn("DEBUG: could not log specific series", e);
+  }
+
   // Combine API holidays with manual ones
   const holidays = [
     ...json["england-and-wales"].events.map((d) =>
