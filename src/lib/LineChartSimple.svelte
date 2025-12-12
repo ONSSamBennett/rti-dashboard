@@ -9,7 +9,7 @@
   // Props (existing)
   export let data = [];
   export let yKey = "value";
-  export let yMax;
+  export let yMax = undefined;
   export let lineColor = "#27a0cc";
   export let title;
   export let description;
@@ -352,7 +352,7 @@
               class="no-data-rect"
               x={x(effectiveStart)}
               y={margin.top}
-              width={x(noDataRectEnd) - x(effectiveStart)}
+              width={Math.max(0, x(noDataRectEnd) - x(effectiveStart))}
               height={height - margin.bottom - margin.top}
               fill="rgba(200, 200, 200, 0.3)"
               stroke="none"

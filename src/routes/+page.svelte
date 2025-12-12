@@ -4,8 +4,6 @@
     Embed,
     Notice,
     Section,
-    Cards,
-    Card,
     Twisty,
     Accordion,
     AccordionItem,
@@ -18,7 +16,6 @@
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
   export let data;
-  export let data2;
 
   const { metadataBySeries } = data;
   
@@ -91,10 +88,10 @@
   <Section width="wide">
     <Accordion>
       <AccordionItem title="Consumer behaviour">
-        <Cards>
+        <div class="cards">
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "consumer" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card colspan={3}>
+              <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
@@ -159,16 +156,16 @@
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             {/if}
           {/each}
-        </Cards>
+        </div>
       </AccordionItem>
       <AccordionItem title="Business">
-        <Cards>
+        <div class="cards">
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "business" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card colspan={3}>
+              <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
@@ -235,16 +232,16 @@
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             {/if}
           {/each}
-        </Cards>
+        </div>
       </AccordionItem>
       <AccordionItem title="Energy and housing">
-        <Cards>
+        <div class="cards">
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "energy" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card colspan={3}>
+              <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
@@ -309,16 +306,16 @@
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             {/if}
           {/each}
-        </Cards>
+        </div>
       </AccordionItem>
       <AccordionItem title="Transport">
-        <Cards>
+        <div class="cards">
           {#each Object.entries(latestBySeries) as [seriesId, row]}
             {#if metadataBySeries[seriesId]?.category === "transport" && metadataBySeries[seriesId]?.show?.toLowerCase() === "true"}
-              <Card colspan={3}>
+              <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
@@ -383,16 +380,51 @@
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             {/if}
           {/each}
-        </Cards>
+        </div>
       </AccordionItem>
     </Accordion>
   </Section>
 </Embed>
 
 <style>
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: #f5f5f5;
+    padding: 20px;
+  }
+
+  /* Typography inside cards */
+  .card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #222;
+    margin: 0 0 0px 0;
+  }
+
+  .card h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #222;
+    margin: 0 0 8px 0;
+  }
+
+  .card p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #222;
+    margin: 0 0 12px 0;
+  }
+
   .card-full-width {
     width: 100% !important;
     grid-column: 1 / -1;
@@ -433,10 +465,10 @@
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
-    padding: 12px 0 6px; /* restore top spacing similar to native card title */
-    margin-bottom: 6px;
+    padding: 0px 0 0px; /* restore top spacing similar to native card title */
+    margin-bottom: 4px;
   }
 
   .card-title {
@@ -499,7 +531,7 @@
     .card-header {
       flex-direction: column;
       align-items: stretch;
-      padding: 10px 0 6px;
+      padding: 0px;
     }
 
     /* Put the flag above the title (DOM order is title, flag) */
