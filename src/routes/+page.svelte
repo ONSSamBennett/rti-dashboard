@@ -99,11 +99,16 @@
     return isPercentage ? row.year_over_year_percent : row.year_over_year_change;
   }
 
-  // Track expanded state for each card
-  let expandedCards = {};
+  // Track expanded state for each section
+  let expandedSections = {
+    consumer: false,
+    business: false,
+    energy: false,
+    transport: false
+  };
   
-  function toggleCard(seriesId) {
-    expandedCards[seriesId] = !expandedCards[seriesId];
+  function toggleSection(category) {
+    expandedSections[category] = !expandedSections[category];
   }
 </script>
 
@@ -117,14 +122,23 @@
     { title: "Transport", category: "transport" }
   ] as section}
     <Section width="wide">
-      <h2>{section.title}</h2>
+      <div class="section-header">
+        <h2>{section.title}</h2>
+        <button 
+          class="expand-toggle" 
+          on:click={() => toggleSection(section.category)}
+          aria-label="{expandedSections[section.category] ? 'Collapse' : 'Expand'} all rows in {section.title}"
+        >
+          {expandedSections[section.category] ? 'Collapse all rows in this section' : 'Expand all rows in this section'}
+        </button>
+      </div>
       <div class="cards">
         {#each renderCards(section.category) as [seriesId, row]}
-              <div class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" on:click={() => toggleCard(seriesId)} on:keydown={(e) => e.key === 'Enter' && toggleCard(seriesId)} role="button" tabindex="0">
+              <div class="card {expandedSections[section.category] ? 'expanded' : 'collapsed'}">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   <div class="card-header-right">
-                    {#if !expandedCards[seriesId]}
+                    {#if !expandedSections[section.category]}
                       <div class="compact-change">
                         <ChangeIndicator
                           seriesId={seriesId}
@@ -141,7 +155,7 @@
                     </div>
                   </div>
                 </div>
-                {#if expandedCards[seriesId]}
+                {#if expandedSections[section.category]}
                 <p class="subtitle">{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
@@ -202,8 +216,39 @@
 </Embed>
 
 <style>
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
   h2 {
     padding: 0px 0 11px 0;
+    margin: 0;
+  }
+
+  .expand-toggle {
+    background: transparent;
+    border: none;
+    color: #206095;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    white-space: nowrap;
+    text-decoration: underline;
+    font-weight: 400;
+  }
+
+  .expand-toggle:hover {
+    color: #003c57;
+    text-decoration: none;
+  }
+
+  .expand-toggle:focus {
+    outline: 3px solid #206095;
+    outline-offset: 2px;
   }
 
   .cards {
@@ -215,8 +260,7 @@
   .card {
     background: #f5f5f5;
     padding: 20px;
-    cursor: pointer;
-    transition: padding 0.3s ease, background 0.3s ease;
+    transition: padding 0.3s ease;
     width: 900px;
     max-width: 100%;
     box-sizing: border-box;
@@ -225,19 +269,6 @@
 
   .card.collapsed {
     padding: 12px 20px;
-  }
-
-  .card:hover {
-    background: #ebebeb;
-  }
-
-  .card:focus {
-    outline: none;
-  }
-
-  .card:focus-visible {
-    outline: 3px solid #206095;
-    outline-offset: 2px;
   }
 
   /* Typography inside cards */
@@ -393,6 +424,17 @@
 
   /* Mobile: stack elements and improve spacing */
   @media screen and (max-width: 900px) {
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .expand-toggle {
+      font-size: 0.9rem;
+      padding: 6px 0;
+    }
+
     .card {
       width: 100%;
       padding: 16px;
