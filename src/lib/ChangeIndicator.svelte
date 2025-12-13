@@ -94,11 +94,11 @@
 </p>
 
 {#if isEffectivelyZero}
-  <div class="indicator-area" style="background: {noChangeBackground}; margin-top:5px;padding:5px; padding-left: 10px;padding-right:13px;display:inline-block">
+  <div class="indicator-area" style="background: {noChangeBackground};">
     No change{#if noChangeFormatted && noChangeFormatted !== ""}&nbsp;({noChangeFormatted}){/if}
   </div>
 {:else if numericChange > 0}
-  <div class="indicator-area" style="background: {increaseBackground}; margin-top:5px;padding:5px; padding-left: 10px;padding-right:13px;display:inline-block">
+  <div class="indicator-area" style="background: {increaseBackground};">
     <svg width="14" height="16" viewBox="0 0 12 14">
       <path d="M5.5 1.5L5.5 12.5M5.5 1.5L9.5 5.5M5.5 1.5L1.5 5.5" fill="none" stroke={increaseArrowColor} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -106,7 +106,7 @@
     higher
   </div>
 {:else}
-  <div class="indicator-area" style="background: {decreaseBackground}; margin-top:5px;padding:5px; padding-left: 10px; padding-right:13px;display:inline-block">
+  <div class="indicator-area" style="background: {decreaseBackground};">
     <svg width="14" height="16" viewBox="0 0 12 14">
       <path d="M5.5 12.5L5.5 1.5M5.5 12.5L1.5 8.5M5.5 12.5L9.5 8.5" fill="none" stroke={decreaseArrowColor} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -117,5 +117,10 @@
 
 <style>
   .text-indicator-sm { font-size: 14px; }
-  .indicator-area { font-size: 17px; }
+  .indicator-area { 
+    font-size: 17px; 
+    margin-top: 0px;
+    padding: 5px 13px 5px 10px;
+    display: inline-block;
+  }
 </style>

@@ -175,7 +175,7 @@
       // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
       // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
       const finalRange = topMax - dataYMin;
-      return dataYMin - 0.15 * finalRange;
+      return dataYMin - 0.20 * finalRange;
     } else {
       // For non-index charts: use yPadding as percentage of computedYMin
       return computedYMin - Math.abs(computedYMin) * yPadding;
@@ -191,7 +191,7 @@
       // gap = 0.1 * (topMax - dataYMin)
       // paddedMax = topMax + gap
       const finalRange = topMax - dataYMin;
-      return topMax + 0.15 * finalRange;
+      return topMax + 0.20 * finalRange;
     } else {
       return topMax;
     }
@@ -279,25 +279,12 @@
     : null;
 </script>
 
-<div style="padding:10px; margin-top:0px; margin-bottom:10px">
+<div style="padding:0px; margin-top:0px; margin-bottom:0px">
   {#if thousandsBoolean}
     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
       Values shown in thousands
     </div>
   {/if}
-  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-    <strong>Index</strong>: {indexBoolean ? 'yes' : 'no'}
-  </div>
-  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-    <strong>series_id</strong>: {series_id} | <strong>thinSeries</strong>: {thinSeries} | <strong>strokeWidth</strong>: {strokeWidth}px
-  </div>
-  <div style="font-size: 12px; color: #999; line-height:1.4;">
-    <div><strong>yMinMode</strong>: {yMinMode}</div>
-    <div><strong>Axis top</strong>: {units_chart === "percentage" ? formatPercent(paddedMax/100) : formatValue(paddedMax)}</div>
-    <div><strong>Axis min</strong>: {units_chart === "percentage" ? formatPercent(paddedMin/100) : formatValue(paddedMin)}</div>
-    <div><strong>Data top</strong>: {units_chart === "percentage" ? formatPercent(dataYMax/100) : formatValue(dataYMax)}</div>
-    <div><strong>Data bottom</strong>: {units_chart === "percentage" ? formatPercent(dataYMin/100) : formatValue(dataYMin)}</div>
-  </div>
 
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
@@ -440,7 +427,8 @@
   }
 
   .tick-line-0 {
-    stroke: #555;
+    stroke: #B3B3B3;
+    stroke-width: 2px;
   }
 
   .year-divider {

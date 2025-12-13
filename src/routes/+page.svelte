@@ -87,30 +87,48 @@
       metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
     );
   }
+
+  function getChangeValue(row, metadata, isPercentage) {
+    if (isPercentage) {
+      return row.period_over_period_percent ?? row.month_over_month_percent;
+    }
+    return row.period_over_period_change ?? row.month_over_month_change;
+  }
+
+  function getYearOverYearChange(row, metadata, isPercentage) {
+    return isPercentage ? row.year_over_year_percent : row.year_over_year_change;
+  }
+
+  // Track expanded state for each card
+  let expandedCards = {};
+  
+  function toggleCard(seriesId) {
+    expandedCards[seriesId] = !expandedCards[seriesId];
+  }
 </script>
 
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
 
-  <Section width="wide">
-    <Accordion>
-      {#each [
-        { title: "Consumer behaviour", category: "consumer" },
-        { title: "Business", category: "business" },
-        { title: "Energy and housing", category: "energy" },
-        { title: "Transport", category: "transport" }
-      ] as section}
-        <AccordionItem title={section.title}>
-          <div class="cards">
-            {#each renderCards(section.category) as [seriesId, row]}
-              <div class="card">
+  {#each [
+    { title: "Consumer behaviour", category: "consumer" },
+    { title: "Business", category: "business" },
+    { title: "Energy and housing", category: "energy" },
+    { title: "Transport", category: "transport" }
+  ] as section}
+    <Section width="wide">
+      <h2>{section.title}</h2>
+      <div class="cards">
+        {#each renderCards(section.category) as [seriesId, row]}
+              <div class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" on:click={() => toggleCard(seriesId)} on:keydown={(e) => e.key === 'Enter' && toggleCard(seriesId)} role="button" tabindex="0">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
                   {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
                     <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
                   {/if}
                 </div>
-                <p>{metadataBySeries[seriesId]?.description}</p>
+                {#if expandedCards[seriesId]}
+                <p class="subtitle">{metadataBySeries[seriesId]?.description}</p>
                 <div class="layout-container">
                   <div class="chart">
                     <LineChartSimple
@@ -135,9 +153,7 @@
                   </div>
                   <div class="causes-container">
                     <div class="causes-header">
-                      <h4
-                        style="padding-top:10px; font-size:17px; margin-bottom:5px"
-                      >
+                      <h4>
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
                       <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
@@ -145,48 +161,68 @@
                       </p>
                     </div>
                     <div class="causes-row">
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          seriesId={seriesId}
-                          metadataBySeries={metadataBySeries}
-                          change={metadataBySeries[seriesId]?.units === "percentage"
-                            ? (row.period_over_period_percent ?? row.month_over_month_percent)
-                            : (row.period_over_period_change ?? row.month_over_month_change)}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
-                      <div class="causes-child">
-                        <ChangeIndicator
-                          label="year"
-                          change={metadataBySeries[seriesId]?.units ===
-                          "percentage"
-                            ? row.year_over_year_percent
-                            : row.year_over_year_change}
-                          units={metadataBySeries[seriesId]?.units}
-                        />
-                      </div>
+                      {#each [
+                        { label: undefined, getValue: (r, m, isP) => getChangeValue(r, m, isP) },
+                        { label: "year", getValue: (r, m, isP) => getYearOverYearChange(r, m, isP) }
+                      ] as indicator}
+                        <div class="causes-child">
+                          <ChangeIndicator
+                            seriesId={indicator.label ? undefined : seriesId}
+                            metadataBySeries={indicator.label ? undefined : metadataBySeries}
+                            label={indicator.label}
+                            change={indicator.getValue(row, metadataBySeries[seriesId], metadataBySeries[seriesId]?.units === "percentage")}
+                            units={metadataBySeries[seriesId]?.units}
+                          />
+                        </div>
+                      {/each}
                     </div>
                   </div>
                 </div>
+                {/if}
               </div>
             {/each}
           </div>
-        </AccordionItem>
-      {/each}
-    </Accordion>
-  </Section>
+    </Section>
+    <Divider hr="full" />
+  {/each}
 </Embed>
 
 <style>
+  h2 {
+    padding: 21px 0 11px 0;
+  }
+
   .cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
-
   .card {
     background: #f5f5f5;
     padding: 20px;
+    cursor: pointer;
+    transition: padding 0.3s ease, background 0.3s ease;
+    width: 960px;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
+  .card.collapsed {
+    padding: 12px 20px;
+  }
+
+  .card:hover {
+    background: #ebebeb;
+  }
+
+  .card:focus {
+    outline: none;
+  }
+
+  .card:focus-visible {
+    outline: 3px solid #206095;
+    outline-offset: 2px;
   }
 
   /* Typography inside cards */
@@ -203,14 +239,17 @@
     font-weight: 600;
     line-height: 1.3;
     color: #222;
-    margin: 0 0 8px 0;
+    margin: 0;
   }
 
   .card p {
     font-size: 1rem;
-    line-height: 1.5;
     color: #222;
     margin: 0 0 12px 0;
+  }
+
+  .subtitle {
+    line-height: 1.3;
   }
 
   .card-full-width {
@@ -247,7 +286,7 @@
 
   .causes-header {
     font-weight: bold;
-    padding: 8px 0 0 0;
+    padding: 0;
   }
 
   .card-header {
@@ -261,6 +300,7 @@
 
   .card-title {
     margin: 0;
+    padding: 12px 0 0 0;
     font-size: 1.05rem;
     line-height: 1.1;
     font-weight: 600;
@@ -291,6 +331,7 @@
   .causes-child {
     flex: 1;
     padding: 0px;
+    padding-top: 8px;
   }
   .layout-container,
   .causes-header,
