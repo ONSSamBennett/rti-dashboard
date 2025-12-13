@@ -98,11 +98,11 @@ svg {
   }
 
   body {
-    padding: 0 16px;
+    padding: 0 8px;
   }
 
   .container {
-    padding: 0 8px;
+    padding: 0;
   }
 
   .content {
@@ -120,5 +120,13 @@ svg {
     order: -1;
     align-self: flex-start; /* Keeps the image aligned to the left */
     width: 100%;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  h3 {
+    font-size: 1.1rem;
   }
 }

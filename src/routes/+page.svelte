@@ -123,9 +123,23 @@
               <div class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" on:click={() => toggleCard(seriesId)} on:keydown={(e) => e.key === 'Enter' && toggleCard(seriesId)} role="button" tabindex="0">
                 <div class="card-header">
                   <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
-                  {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                    <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                  {/if}
+                  <div class="card-header-right">
+                    {#if !expandedCards[seriesId]}
+                      <div class="compact-change">
+                        <ChangeIndicator
+                          seriesId={seriesId}
+                          metadataBySeries={metadataBySeries}
+                          change={getChangeValue(row, metadataBySeries[seriesId], metadataBySeries[seriesId]?.units === "percentage")}
+                          units={metadataBySeries[seriesId]?.units}
+                        />
+                      </div>
+                    {/if}
+                    <div class="updated-flag-container">
+                      {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                        <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                      {/if}
+                    </div>
+                  </div>
                 </div>
                 {#if expandedCards[seriesId]}
                 <p class="subtitle">{metadataBySeries[seriesId]?.description}</p>
@@ -189,20 +203,21 @@
 
 <style>
   h2 {
-    padding: 21px 0 11px 0;
+    padding: 0px 0 11px 0;
   }
 
   .cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    align-items: flex-start;
   }
   .card {
     background: #f5f5f5;
     padding: 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
-    width: 960px;
+    width: 900px;
     max-width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
@@ -292,10 +307,17 @@
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
     padding: 0px 0 0px; /* restore top spacing similar to native card title */
     margin-bottom: 4px;
+  }
+
+  .card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   .card-title {
@@ -304,6 +326,19 @@
     font-size: 1.05rem;
     line-height: 1.1;
     font-weight: 600;
+    flex: 1;
+  }
+
+  .compact-change {
+    padding-top: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .updated-flag-container {
+    min-width: 170px; /* width to reserve space for "Updated this week" flag */
+    display: flex;
+    justify-content: flex-end;
   }
 
   .updated-flag {
@@ -333,6 +368,7 @@
     padding: 0px;
     padding-top: 8px;
   }
+
   .layout-container,
   .causes-header,
   .causes-row,
@@ -355,29 +391,67 @@
     }
   }
 
-  /* Mobile: place the updated flag above the title but keep it right-aligned */
+  /* Mobile: stack elements and improve spacing */
+  @media screen and (max-width: 900px) {
+    .card {
+      width: 100%;
+      padding: 16px;
+    }
+
+    .card.collapsed {
+      padding: 12px 16px;
+    }
+  }
+
   @media screen and (max-width: 607px) {
     .card-header {
       flex-direction: column;
       align-items: stretch;
+      gap: 8px;
       padding: 0px;
     }
 
-    /* Put the flag above the title (DOM order is title, flag) */
+    .card-header-right {
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .compact-change {
+      order: 1;
+    }
+
+    .updated-flag-container {
+      min-width: auto;
+      order: 2;
+    }
+
     .updated-flag {
-      order: -1; /* show before title */
-      align-self: flex-end;
-      margin-bottom: 6px;
+      font-size: 0.8rem;
     }
 
     .updated-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
       margin-right: 6px;
     }
 
     .card-title {
       margin: 0;
-      order: 0;
-      align-self: flex-start;
+      padding: 8px 0 0 0;
+      font-size: 1rem;
+    }
+
+    .layout-container {
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .causes-row {
+      flex-direction: column;
+      gap: 12px;
     }
   }
 </style>
