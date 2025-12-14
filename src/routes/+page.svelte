@@ -99,6 +99,19 @@
     return isPercentage ? row.year_over_year_percent : row.year_over_year_change;
   }
 
+  function getTimePeriod(metadata) {
+    const updated = metadata?.updated?.toLowerCase?.();
+    if (updated === "daily" || updated === "day" || updated === "weekly" || updated === "week") {
+      return "week";
+    } else if (updated === "monthly" || updated === "month") {
+      return "month";
+    } else if (updated === "quarterly" || updated === "quarter") {
+      return "quarter";
+    } else {
+      return "period";
+    }
+  }
+
   // Track expanded state for each card
   let expandedCards = {};
   
@@ -126,11 +139,15 @@
                   <div class="card-header-right">
                     {#if !expandedCards[seriesId]}
                       <div class="compact-change">
+                        <p style="margin:0; margin-right:12px; font-weight:normal; font-size:14px; color:#666; line-height:1.2; text-align:right;">
+                          <span style="text-transform: capitalize;">{getTimePeriod(metadataBySeries[seriesId])}</span> up to<br>{row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
                         <ChangeIndicator
                           seriesId={seriesId}
                           metadataBySeries={metadataBySeries}
                           change={getChangeValue(row, metadataBySeries[seriesId], metadataBySeries[seriesId]?.units === "percentage")}
                           units={metadataBySeries[seriesId]?.units}
+                          showLabel={false}
                         />
                       </div>
                     {/if}
@@ -276,7 +293,7 @@
     display: flex;
     flex-wrap: wrap; /* ✅ allow children to wrap */
     gap: 16px;
-    margin-top: 16.8px;
+    margin-top: 40px;
   }
 
   .layout-header {

@@ -11,6 +11,9 @@
   
   // Optional label prop for year-over-year indicator
   export let label = "";
+  
+  // Control whether to show the label text
+  export let showLabel = true;
 
   // Colors (your existing values)
   export let noChangeBackground = "#D9D9D9";
@@ -89,13 +92,15 @@
   }
 </script>
 
-<p class="text-indicator-sm" style="margin-bottom: 0; margin-top: 0;">
-  {changeContextLabel}
-</p>
+{#if showLabel}
+  <p class="text-indicator-sm" style="margin-bottom: 0; margin-top: 0;">
+    {changeContextLabel}
+  </p>
+{/if}
 
 {#if isEffectivelyZero}
   <div class="indicator-area" style="background: {noChangeBackground};">
-    No change{#if noChangeFormatted && noChangeFormatted !== ""}&nbsp;({noChangeFormatted}){/if}
+    No change
   </div>
 {:else if numericChange > 0}
   <div class="indicator-area" style="background: {increaseBackground};">
