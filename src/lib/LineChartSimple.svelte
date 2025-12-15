@@ -54,7 +54,7 @@
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 60, top: 0, bottom: 30, right: 60 };
+  const margin = { left: 40, top: 0, bottom: 30, right: 60 };
   const xKey = "date"; // data[xKey] should be Date objects
 
   // Transform values to thousands if requested

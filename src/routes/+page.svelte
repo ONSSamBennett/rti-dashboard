@@ -138,9 +138,9 @@
                   <div class="title-with-arrow">
                     <svg class="twisty-arrow {expandedCards[seriesId] ? 'expanded' : ''}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                       {#if expandedCards[seriesId]}
-                        <path d="M5 12 L19 12" stroke="#206095" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M5 12 L19 12" stroke-width="2.5" stroke-linecap="round"/>
                       {:else}
-                        <path d="M12 5 L12 19 M5 12 L19 12" stroke="#206095" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M12 5 L12 19 M5 12 L19 12" stroke-width="2.5" stroke-linecap="round"/>
                       {/if}
                     </svg>
                     <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
@@ -216,7 +216,16 @@
                         </div>
                       {/each}
                     </div>
-                    <p class="get-data-link">Get the data for {(metadataBySeries[seriesId]?.title ?? seriesId).toLowerCase()}</p>
+                    <p class="get-data-link">
+                      <a href="#" target="_blank" rel="noopener noreferrer">
+                        Get the data for {(metadataBySeries[seriesId]?.title ?? seriesId).toLowerCase().replace('uk', 'UK')}
+                        <svg class="external-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M12 8.66667V12.6667C12 13.0203 11.8595 13.3594 11.6095 13.6095C11.3594 13.8595 11.0203 14 10.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V5.33333C2 4.97971 2.14048 4.64057 2.39052 4.39052C2.64057 4.14048 2.97971 4 3.33333 4H7.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M10 2H14V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M6.66666 9.33333L14 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </a>
+                    </p>
                   </div>
                 </div>
                 {/if}
@@ -244,7 +253,7 @@
     padding: 16px 20px 20px 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
-    width: 900px;
+    width: 950px;
     max-width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
@@ -343,7 +352,7 @@
 
   .card-header-right {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
     flex-shrink: 0;
   }
@@ -364,6 +373,10 @@
     border: none;
   }
 
+  .twisty-arrow path {
+    stroke: rgb(55, 55, 55);
+  }
+
   .twisty-arrow.expanded {
     /* No rotation needed for +/- icons */
   }
@@ -375,12 +388,17 @@
     line-height: 1.1;
     font-weight: 600;
     flex: 1;
+    color: #206095;
   }
 
   .compact-change {
     padding-top: 0;
     display: flex;
     align-items: center;
+  }
+
+  .compact-change :global(.change-indicator) {
+    align-self: center;
   }
 
   .updated-flag-container {
@@ -422,8 +440,22 @@
     margin-top: 8px;
     font-size: 17px;
     line-height: 1.3;
+  }
+
+  .card .get-data-link a {
+    color: #206095;
     text-decoration: underline;
-    color: #222;
+    display: inline;
+  }
+
+  .card .get-data-link a:hover {
+    color: #0F1E2E;
+  }
+
+  .card .get-data-link .external-icon {
+    display: inline;
+    vertical-align: baseline;
+    margin-left: 2px;
   }
 
   .layout-container,
@@ -434,7 +466,7 @@
     border: 0px solid #666;
   }
 
-  svg {
+  svg:not(.external-icon):not(.twisty-arrow) {
     border: 1px solid #666;
   }
 
@@ -449,7 +481,7 @@
   }
 
   /* Mobile: stack elements and improve spacing */
-  @media screen and (max-width: 900px) {
+  @media screen and (max-width: 950px) {
     .card {
       width: 100%;
       padding: 16px;
@@ -499,6 +531,7 @@
       margin: 0;
       padding: 0;
       font-size: 1rem;
+      color: #206095;
     }
 
     .layout-container {
