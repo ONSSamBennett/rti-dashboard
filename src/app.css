@@ -32,6 +32,15 @@ body {
   align-items: center;
   padding: 0px;
 }
+
+/* Fixed width container */
+.ons-page__container,
+.ons-page__body,
+.ons-container {
+  max-width: 840px !important;
+  width: 840px !important;
+  margin: 0 auto !important;
+}
 svg {
   padding: 0;
   margin: 0;

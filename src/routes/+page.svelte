@@ -182,11 +182,16 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-width: 840px;
+    width: 100%;
   }
 
   .card {
     background: #f5f5f5;
     padding: 20px;
+    max-width: 840px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* Typography inside cards */

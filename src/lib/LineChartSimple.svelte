@@ -54,7 +54,7 @@
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 60, top: 0, bottom: 30, right: 60 };
+  const margin = { left: 30, top: 0, bottom: 30, right: 60 };
   const xKey = "date"; // data[xKey] should be Date objects
 
   // Transform values to thousands if requested
@@ -151,7 +151,7 @@
       const gap = dataYMin - baseMin;
       // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the lowest data point
       if (range > 0 && gap / range > 0.5) {
-        const frac = 0.3; // fraction of final axis to reserve below the lowest data point
+        const frac = 0.24; // fraction of final axis to reserve below the lowest data point
         // Solve for new bottom B so that dataYMin - B = frac * (topMax - B)
         // => B = (dataYMin - frac * topMax) / (1 - frac)
         const denom = 1 - frac;
@@ -280,12 +280,6 @@
 </script>
 
 <div style="padding:10px; margin-top:0px; margin-bottom:10px">
-  {#if thousandsBoolean}
-    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-      Values shown in thousands
-    </div>
-  {/if}
-
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
       {#if transformedData.length > 0}
