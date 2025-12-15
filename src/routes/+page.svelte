@@ -231,7 +231,7 @@
   }
   .card {
     background: #f5f5f5;
-    padding: 20px;
+    padding: 16px 20px 20px 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
     width: 900px;
@@ -241,7 +241,7 @@
   }
 
   .card.collapsed {
-    padding: 12px 20px;
+    padding: 16px 20px;
   }
 
   .card:hover {
@@ -324,22 +324,22 @@
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-    padding: 0px 0 0px; /* restore top spacing similar to native card title */
-    margin-bottom: 4px;
+    padding: 0;
+    margin: 0;
   }
 
   .card-header-right {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     flex-shrink: 0;
   }
 
   .card-title {
     margin: 0;
-    padding: 12px 0 0 0;
+    padding: 0;
     font-size: 1.05rem;
     line-height: 1.1;
     font-weight: 600;
@@ -457,7 +457,7 @@
 
     .card-title {
       margin: 0;
-      padding: 8px 0 0 0;
+      padding: 0;
       font-size: 1rem;
     }
 
