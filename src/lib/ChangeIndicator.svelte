@@ -95,7 +95,7 @@
 
 {#if isEffectivelyZero}
   <div class="indicator-area" style="background: {noChangeBackground}; margin-top:5px;padding:5px; padding-left: 10px;padding-right:13px;display:inline-block">
-    No change{#if noChangeFormatted && noChangeFormatted !== ""}&nbsp;({noChangeFormatted}){/if}
+    No change
   </div>
 {:else if numericChange > 0}
   <div class="indicator-area" style="background: {increaseBackground}; margin-top:5px;padding:5px; padding-left: 10px;padding-right:13px;display:inline-block">

@@ -285,19 +285,6 @@
       Values shown in thousands
     </div>
   {/if}
-  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-    <strong>Index</strong>: {indexBoolean ? 'yes' : 'no'}
-  </div>
-  <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-    <strong>series_id</strong>: {series_id} | <strong>thinSeries</strong>: {thinSeries} | <strong>strokeWidth</strong>: {strokeWidth}px
-  </div>
-  <div style="font-size: 12px; color: #999; line-height:1.4;">
-    <div><strong>yMinMode</strong>: {yMinMode}</div>
-    <div><strong>Axis top</strong>: {units_chart === "percentage" ? formatPercent(paddedMax/100) : formatValue(paddedMax)}</div>
-    <div><strong>Axis min</strong>: {units_chart === "percentage" ? formatPercent(paddedMin/100) : formatValue(paddedMin)}</div>
-    <div><strong>Data top</strong>: {units_chart === "percentage" ? formatPercent(dataYMax/100) : formatValue(dataYMax)}</div>
-    <div><strong>Data bottom</strong>: {units_chart === "percentage" ? formatPercent(dataYMin/100) : formatValue(dataYMin)}</div>
-  </div>
 
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
