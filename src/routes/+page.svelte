@@ -135,7 +135,16 @@
         {#each renderCards(section.category) as [seriesId, row]}
               <div class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" on:click={() => toggleCard(seriesId)} on:keydown={(e) => e.key === 'Enter' && toggleCard(seriesId)} role="button" tabindex="0">
                 <div class="card-header">
-                  <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  <div class="title-with-arrow">
+                    <svg class="twisty-arrow {expandedCards[seriesId] ? 'expanded' : ''}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                      {#if expandedCards[seriesId]}
+                        <path d="M5 12 L19 12" stroke="#206095" stroke-width="2.5" stroke-linecap="round"/>
+                      {:else}
+                        <path d="M12 5 L12 19 M5 12 L19 12" stroke="#206095" stroke-width="2.5" stroke-linecap="round"/>
+                      {/if}
+                    </svg>
+                    <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                  </div>
                   <div class="card-header-right">
                     {#if !expandedCards[seriesId]}
                       <div class="compact-change">
@@ -207,6 +216,7 @@
                         </div>
                       {/each}
                     </div>
+                    <p class="get-data-link">Get the data for {(metadataBySeries[seriesId]?.title ?? seriesId).toLowerCase()}</p>
                   </div>
                 </div>
                 {/if}
@@ -282,6 +292,7 @@
 
   .subtitle {
     line-height: 1.3;
+    padding-top: 10px;
   }
 
   .card-full-width {
@@ -337,6 +348,26 @@
     flex-shrink: 0;
   }
 
+  .title-with-arrow {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .twisty-arrow {
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    margin-top: 3px;
+    display: block;
+    outline: none;
+    border: none;
+  }
+
+  .twisty-arrow.expanded {
+    /* No rotation needed for +/- icons */
+  }
+
   .card-title {
     margin: 0;
     padding: 0;
@@ -384,6 +415,15 @@
     flex: 1;
     padding: 0px;
     padding-top: 8px;
+  }
+
+  .card .get-data-link {
+    padding-top: 15px;
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.3;
+    text-decoration: underline;
+    color: #222;
   }
 
   .layout-container,

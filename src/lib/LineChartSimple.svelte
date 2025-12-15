@@ -280,12 +280,6 @@
 </script>
 
 <div style="padding:0px; margin-top:0px; margin-bottom:0px">
-  {#if thousandsBoolean}
-    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-      Values shown in thousands
-    </div>
-  {/if}
-
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
       {#if transformedData.length > 0}
