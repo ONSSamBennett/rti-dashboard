@@ -41,7 +41,7 @@
 
   // Internals
   // Determine stroke width based on series_id
-  $: strokeWidth = (thinSeries && series_id === thinSeries) ? 1 : 2;
+  $: strokeWidth = (thinSeries && series_id === thinSeries) ? 2 : 3;
   $: thousandsBoolean = (() => {
     if (thousands === true) return true;
     if (typeof thousands === "number") return thousands === 1;
@@ -54,7 +54,7 @@
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 40, top: 0, bottom: 30, right: 60 };
+  const margin = { left: 58, top: 0, bottom: 30, right: 60 };
   const xKey = "date"; // data[xKey] should be Date objects
 
   // Transform values to thousands if requested

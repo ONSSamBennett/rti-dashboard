@@ -302,6 +302,7 @@
   .subtitle {
     line-height: 1.3;
     padding-top: 10px;
+    font-size: 18px !important;
   }
 
   .card-full-width {
@@ -490,6 +491,10 @@
     .card.collapsed {
       padding: 12px 16px;
     }
+
+    .subtitle {
+      font-size: 16px !important;
+    }
   }
 
   @media screen and (max-width: 607px) {
@@ -502,29 +507,29 @@
 
     .card-header-right {
       flex-direction: row;
-      justify-content: space-between;
+      justify-content: flex-end;
       width: 100%;
       gap: 8px;
     }
 
     .compact-change {
-      order: 1;
+      order: 0;
     }
 
     .updated-flag-container {
       min-width: auto;
-      order: 2;
+      order: 0;
     }
 
     .updated-flag {
-      font-size: 0.8rem;
+      font-size: 0;
     }
 
     .updated-dot {
       width: 10px;
       height: 10px;
       border-radius: 5px;
-      margin-right: 6px;
+      margin-right: 0;
     }
 
     .card-title {
@@ -534,13 +539,17 @@
       color: #206095;
     }
 
+    .subtitle {
+      font-size: 16px !important;
+    }
+
     .layout-container {
       gap: 12px;
       margin-top: 12px;
     }
 
     .causes-row {
-      flex-direction: column;
+      flex-direction: row;
       gap: 12px;
     }
   }
