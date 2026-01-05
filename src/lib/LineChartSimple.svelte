@@ -41,7 +41,9 @@
 
   // Internals
   // Determine stroke width based on series_id
-  $: strokeWidth = (thinSeries && series_id === thinSeries) ? 2 : 3;
+  let baseStrokeWidth;
+  $: baseStrokeWidth = (thinSeries && series_id === thinSeries) ? 2 : 3;
+  $: strokeWidth = width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
   $: thousandsBoolean = (() => {
     if (thousands === true) return true;
     if (typeof thousands === "number") return thousands === 1;

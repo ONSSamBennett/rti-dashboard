@@ -98,7 +98,7 @@ svg {
   }
 
   body {
-    padding: 0 8px;
+    padding: 0;
   }
 
   .container {
@@ -128,5 +128,15 @@ svg {
   
   h3 {
     font-size: 1.1rem;
+  }
+}
+
+/* Remove Section component padding on mobile */
+/* Breakpoint defined in src/lib/config.js */
+@media (max-width: 720px) {
+  :global(.ons-page__container),
+  :global(.ons-container) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }

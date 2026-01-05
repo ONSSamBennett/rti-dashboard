@@ -124,8 +124,10 @@
   .text-indicator-sm { font-size: 14px; }
   .indicator-area { 
     font-size: 17px; 
-    margin-top: 0px;
     padding: 5px 13px 5px 10px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
   }
 </style>

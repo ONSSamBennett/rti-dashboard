@@ -11,7 +11,6 @@
     AnalyticsBanner,
     analyticsEvent,
   } from "@onsvisual/svelte-components";
-  import BarChartAlt from "$lib/BarChartAlt.svelte";
   import LineChartSimple from "$lib/LineChartSimple.svelte";
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
@@ -123,6 +122,11 @@
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
 
+  <div class="mobile-legend">
+    <span class="updated-dot" aria-hidden></span>
+    <span class="legend-text">Updated this week</span>
+  </div>
+
   {#each [
     { title: "Consumer behaviour", category: "consumer" },
     { title: "Business", category: "business" },
@@ -143,12 +147,17 @@
                         <path d="M12 5 L12 19 M5 12 L19 12" stroke-width="2.5" stroke-linecap="round"/>
                       {/if}
                     </svg>
-                    <h3 class="card-title">{metadataBySeries[seriesId]?.title ?? seriesId}</h3>
+                    <h3 class="card-title">
+                      {metadataBySeries[seriesId]?.title ?? seriesId}
+                      {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
+                        <span class="updated-dot-inline" aria-hidden></span>
+                      {/if}
+                    </h3>
                   </div>
                   <div class="card-header-right">
                     {#if !expandedCards[seriesId]}
                       <div class="compact-change">
-                        <p style="margin:0; margin-right:12px; font-weight:normal; font-size:14px; color:#666; line-height:1.2; text-align:right;">
+                        <p style="margin:0; font-weight:normal; font-size:14px; color:#666; line-height:1.3; text-align:right;">
                           <span style="text-transform: capitalize;">{getTimePeriod(metadataBySeries[seriesId])}</span> up to<br>{row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
                         <ChangeIndicator
@@ -238,6 +247,26 @@
 </Embed>
 
 <style>
+  :global(body) {
+    margin: 0;
+    padding: 0;
+  }
+
+  @media screen and (max-width: 950px) {
+    :global(body),
+    :global(#svelte),
+    :global(.ons-page),
+    :global(.ons-page__container),
+    :global(.ons-container) {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+  }
+
   h2 {
     padding: 0px 0 11px 0;
   }
@@ -246,25 +275,29 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    align-items: flex-start;
+    align-items: stretch;
+    width: 100%;
   }
   .card {
     background: #f5f5f5;
     padding: 16px 20px 20px 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
-    width: 950px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 950px;
     box-sizing: border-box;
-    flex-shrink: 0;
+    flex-shrink: 1;
   }
 
   .card.collapsed {
     padding: 16px 20px;
+    width: 100%;
   }
 
-  .card:hover {
-    background: #ebebeb;
+  @media (hover: hover) {
+    .card:hover {
+      background: #ebebeb;
+    }
   }
 
   .card:focus {
@@ -345,10 +378,11 @@
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
     padding: 0;
     margin: 0;
+    position: relative;
   }
 
   .card-header-right {
@@ -356,19 +390,21 @@
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    margin-right: 180px;
   }
 
   .title-with-arrow {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
     flex: 1;
+    min-height: 32px;
   }
 
   .twisty-arrow {
     flex-shrink: 0;
     transition: all 0.3s ease;
-    margin-top: 3px;
+    margin-top: 0;
     display: block;
     outline: none;
     border: none;
@@ -396,14 +432,22 @@
     padding-top: 0;
     display: flex;
     align-items: center;
+    gap: 12px;
   }
 
-  .compact-change :global(.change-indicator) {
+  .compact-change p {
+    align-self: center;
+  }
+
+  .compact-change :global(.indicator-area) {
     align-self: center;
   }
 
   .updated-flag-container {
-    min-width: 170px; /* width to reserve space for "Updated this week" flag */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0px;
     display: flex;
     justify-content: flex-end;
   }
@@ -423,6 +467,10 @@
     background-color: #16a34a; /* green */
     margin-right: 8px;
     flex: 0 0 auto;
+  }
+
+  .updated-dot-inline {
+    display: none; /* hidden on desktop */
   }
 
   .causes-row {
@@ -471,7 +519,8 @@
     border: 1px solid #666;
   }
 
-  @media screen and (min-width: 608px) {
+  /* Breakpoint defined in src/lib/config.js */
+  @media screen and (min-width: 721px) {
     .chart {
       flex: 1 1 30%;
     }
@@ -483,13 +532,19 @@
 
   /* Mobile: stack elements and improve spacing */
   @media screen and (max-width: 950px) {
-    .card {
+    .cards {
       width: 100%;
+      min-width: 0;
+    }
+
+    .card {
+      width: 100% !important;
+      min-width: 0 !important;
       padding: 16px;
     }
 
     .card.collapsed {
-      padding: 12px 16px;
+      padding: 16px 16px 12px 16px;
     }
 
     .subtitle {
@@ -497,7 +552,44 @@
     }
   }
 
-  @media screen and (max-width: 607px) {
+  .mobile-legend {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .legend-text {
+    font-weight: 400;
+  }
+
+  /* Medium mobile breakpoint: 490-720px - No legend at top, updated flag with text on same line as indicators */
+  /* Breakpoint defined in src/lib/config.js */
+  @media screen and (min-width: 491px) and (max-width: 720px) {
+    h2 {
+      padding: 0px 0px 4px 0px;
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .card-header {
+      flex-wrap: wrap;
+    }
+
+    .card-header-right {
+      margin-right: 0;
+    }
+
+    .updated-flag {
+      white-space: normal;
+    }
+
     .card-header {
       flex-direction: column;
       align-items: stretch;
@@ -505,24 +597,178 @@
       padding: 0px;
     }
 
+    .title-with-arrow {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .card-title {
+      margin: 0;
+      padding: 0;
+      font-size: 1.1rem;
+      color: #206095;
+    }
+
     .card-header-right {
       flex-direction: row;
-      justify-content: flex-end;
+      justify-content: flex-start;
+      align-items: center;
       width: 100%;
-      gap: 8px;
+      gap: 12px;
+    }
+
+    .card.expanded .card-header-right {
+      display: none;
     }
 
     .compact-change {
       order: 0;
+      justify-content: flex-start;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .compact-change p {
+      text-align: left !important;
+      margin-right: 0 !important;
     }
 
     .updated-flag-container {
       min-width: auto;
       order: 0;
+      align-self: center;
+      position: relative;
+      top: 0;
+      display: flex; /* show updated flag */
     }
 
     .updated-flag {
-      font-size: 0;
+      font-size: 0.85rem; /* show text */
+      white-space: nowrap;
+    }
+
+    .updated-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      margin-right: 8px;
+      position: relative;
+      top: 0;
+      left: 0;
+    }
+
+    .updated-dot-inline {
+      display: none; /* hide inline dot in title */
+    }
+
+    .subtitle {
+      font-size: 16px !important;
+      padding-top: 4px;
+    }
+
+    .layout-container {
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .causes-header {
+      margin-top: 2px;
+    }
+
+    .causes-row {
+      flex-direction: row;
+      gap: 12px;
+    }
+  }
+
+  /* Small mobile breakpoint: below 490px - Legend at top, only inline dot on cards */
+  /* Breakpoint defined in src/lib/config.js */
+  @media screen and (max-width: 490px) {
+    .mobile-legend {
+      display: flex;
+      padding: 12px 4px;
+    }
+
+    h2 {
+      padding: 0px 0px 4px 0px;
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .card-header {
+      flex-wrap: wrap;
+    }
+
+    .card-header-right {
+      margin-right: 0;
+    }
+
+    .updated-flag {
+      white-space: normal;
+    }
+
+    .card-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 0px;
+    }
+
+    .title-with-arrow {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .card-title {
+      margin: 0;
+      padding: 0;
+      font-size: 1.1rem;
+      color: #206095;
+    }
+
+    .card-header-right {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .card.expanded .card-header-right {
+      display: none;
+    }
+
+    .compact-change {
+      order: 0;
+      justify-content: flex-start;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .compact-change p {
+      text-align: left !important;
+      margin-right: 0 !important;
+    }
+
+    .updated-flag-container {
+      min-width: auto;
+      order: 0;
+      align-self: center;
+      position: relative;
+      top: 8px;
+      display: none; /* hide text completely on small mobile */
+    }
+
+    .updated-flag {
+      font-size: 0; /* hide text */
     }
 
     .updated-dot {
@@ -530,22 +776,36 @@
       height: 10px;
       border-radius: 5px;
       margin-right: 0;
+      position: relative;
+      top: 2px;
+      left: -2px;
     }
 
-    .card-title {
-      margin: 0;
-      padding: 0;
-      font-size: 1rem;
-      color: #206095;
+    .updated-dot-inline {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: #16a34a;
+      margin-left: 4px;
+      vertical-align: middle;
+      position: relative;
+      top: 0px;
+      left: -2px;
     }
 
     .subtitle {
       font-size: 16px !important;
+      padding-top: 4px;
     }
 
     .layout-container {
       gap: 12px;
-      margin-top: 12px;
+      margin-top: 20px;
+    }
+
+    .causes-header {
+      margin-top: 2px;
     }
 
     .causes-row {

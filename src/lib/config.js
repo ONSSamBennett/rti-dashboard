@@ -30,6 +30,12 @@ export const themes = {
   }
 }
 
+// BREAKPOINTS CONFIG
+export const breakpoints = {
+  mobile: 720, // Mobile breakpoint in pixels (max-width for mobile, min-width + 1 for desktop)
+  smallMobile: 490 // Small mobile breakpoint - below this shows only dots
+};
+
 // DEMO-SPECIFIC CONFIG
 
 export const regions = [
