@@ -19,6 +19,7 @@
   export let thousands = false;
   export let series_id = null; // NEW: identifier for this series
   export let thinSeries = null; // NEW: which series_id should be thinner
+  export let updated = null; // NEW: frequency of updates (e.g., "monthly", "weekly")
 
   // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
   $: indexBoolean = (() => {
@@ -223,6 +224,7 @@
   })();
 
   const formatLastDate = timeFormat("%-d %b");
+  const formatLastDateMonthly = timeFormat("%B");
 
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
@@ -285,7 +287,7 @@
   <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
     {#if width}
       {#if transformedData.length > 0}
-        <svg {width} {height} class="chart">
+        <svg {width} {height} class="chart" aria-hidden="true">
           <!-- Y grid/ticks -->
           <g class="y-ticks">
             {#each yTicks as tick (tick)}
@@ -381,7 +383,7 @@
                 </tspan>
                 <!-- bottom line: date -->
                 <tspan x={lastX + 8} dy="1.2em" style="fill:#666; font-weight: 400;">
-                  {lastDateStr}
+                  {updated?.toLowerCase() === 'monthly' ? formatLastDateMonthly(lastPoint[xKey]) : lastDateStr}
                 </tspan>
               </text>
             {/if}
@@ -438,7 +440,7 @@
   }
 
   .year-label {
-    font-size: 12px;
+    font-size: 14px;
     fill: #666;
   }
 

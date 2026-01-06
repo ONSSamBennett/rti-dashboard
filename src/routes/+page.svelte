@@ -14,6 +14,7 @@
   import LineChartSimple from "$lib/LineChartSimple.svelte";
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
+  import { format } from "d3-format";
   export let data;
 
   const { metadataBySeries } = data;
@@ -122,8 +123,8 @@
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
 
-  <div class="mobile-legend">
-    <span class="updated-dot" aria-hidden></span>
+  <div class="mobile-legend" aria-hidden="true">
+    <span class="updated-dot" aria-hidden="true"></span>
     <span class="legend-text">Updated this week</span>
   </div>
 
@@ -134,10 +135,16 @@
     { title: "Transport", category: "transport" }
   ] as section}
     <Section width="wide">
-      <h2>{section.title}</h2>
-      <div class="cards">
-        {#each renderCards(section.category) as [seriesId, row]}
-              <div class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" on:click={() => toggleCard(seriesId)} on:keydown={(e) => e.key === 'Enter' && toggleCard(seriesId)} role="button" tabindex="0">
+      <section aria-label="{section.title} section">
+        <h2>{section.title}</h2>
+        <div class="cards">
+          {#each renderCards(section.category) as [seriesId, row]}
+              <button 
+                class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" 
+                on:click={() => toggleCard(seriesId)}
+                aria-expanded="{expandedCards[seriesId] ? 'true' : 'false'}"
+                aria-label="{expandedCards[seriesId] ? 'Collapse' : 'Expand'} {metadataBySeries[seriesId]?.title ?? seriesId} details"
+              >
                 <div class="card-header">
                   <div class="title-with-arrow">
                     <svg class="twisty-arrow {expandedCards[seriesId] ? 'expanded' : ''}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
@@ -150,7 +157,11 @@
                     <h3 class="card-title">
                       {metadataBySeries[seriesId]?.title ?? seriesId}
                       {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                        <span class="updated-dot-inline" aria-hidden></span>
+                        <span class="screen-reader-only">Updated this week.</span>
+                        <span class="updated-dot-inline" aria-hidden="true"></span>
+                        <span class="updated-flag-top-row">
+                          <span class="updated-flag-top"><span class="updated-dot" aria-hidden></span>Updated this week</span>
+                        </span>
                       {/if}
                     </h3>
                   </div>
@@ -158,7 +169,9 @@
                     {#if !expandedCards[seriesId]}
                       <div class="compact-change">
                         <p style="margin:0; font-weight:normal; font-size:14px; color:#666; line-height:1.3; text-align:right;">
-                          <span style="text-transform: capitalize;">{getTimePeriod(metadataBySeries[seriesId])}</span> up to<br>{row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          <span style="text-transform: capitalize;">{getTimePeriod(metadataBySeries[seriesId])}</span> up to<br>{metadataBySeries[seriesId]?.updated?.toLowerCase() === 'monthly' 
+                            ? row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                            : row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
                         <ChangeIndicator
                           seriesId={seriesId}
@@ -194,6 +207,7 @@
                       thousands={metadataBySeries[seriesId]?.thousands}
                       series_id={seriesId}
                       thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
+                      updated={metadataBySeries[seriesId]?.updated}
                       meta={{
                         yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
@@ -205,8 +219,10 @@
                       <h4>
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
-                      <p style="margin:0; font-weight:normal; font-size:14px; color:#666">
-                        up to {row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <p style="font-weight:normal; font-size:14px; color:#666">
+                        up to {metadataBySeries[seriesId]?.updated?.toLowerCase() === 'monthly' 
+                          ? row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                          : row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
                     </div>
                     <div class="causes-row">
@@ -226,8 +242,9 @@
                       {/each}
                     </div>
                     <p class="get-data-link">
-                      <a href="#" target="_blank" rel="noopener noreferrer">
+                      <a href={metadataBySeries[seriesId]?.url} target="_blank" rel="noopener noreferrer">
                         Get the data for {(metadataBySeries[seriesId]?.title ?? seriesId).toLowerCase().replace('uk', 'UK')}
+                        <span class="screen-reader-only">(opens in new tab)</span>
                         <svg class="external-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                           <path d="M12 8.66667V12.6667C12 13.0203 11.8595 13.3594 11.6095 13.6095C11.3594 13.8595 11.0203 14 10.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V5.33333C2 4.97971 2.14048 4.64057 2.39052 4.39052C2.64057 4.14048 2.97971 4 3.33333 4H7.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M10 2H14V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -235,12 +252,74 @@
                         </svg>
                       </a>
                     </p>
+                    {#if row.full_series && row.full_series.length > 0}
+                      {@const firstDataPoint = row.full_series[0]}
+                      {@const lastDataPoint = row.full_series[row.full_series.length - 1]}
+                      {@const metadata = metadataBySeries[seriesId]}
+                      {@const isPercentageChart = metadata?.units_chart === "percentage"}
+                      {@const useThousands = metadata?.thousands === "TRUE" || metadata?.thousands === true}
+                      {@const rawValue = lastDataPoint.num_uk}
+                      {@const displayValue = useThousands ? rawValue / 1000 : rawValue}
+                      
+                      <!-- Find minimum value and its date -->
+                      {@const minDataPoint = row.full_series.reduce((min, point) => 
+                        point.num_uk < min.num_uk ? point : min
+                      )}
+                      {@const minRawValue = minDataPoint.num_uk}
+                      {@const minDisplayValue = useThousands ? minRawValue / 1000 : minRawValue}
+                      {@const formattedMinValue = isPercentageChart 
+                        ? (minDisplayValue < 20 ? format(".1%")(minDisplayValue / 100) : format(".0%")(minDisplayValue / 100))
+                        : (minDisplayValue < 20 ? format(",.1f")(minDisplayValue) : format(",.0f")(minDisplayValue))
+                      }
+                      {@const minDate = metadata?.updated?.toLowerCase() === 'monthly' 
+                        ? minDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                        : minDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+                      }
+                      
+                      <!-- Find maximum value and its date -->
+                      {@const maxDataPoint = row.full_series.reduce((max, point) => 
+                        point.num_uk > max.num_uk ? point : max
+                      )}
+                      {@const maxRawValue = maxDataPoint.num_uk}
+                      {@const maxDisplayValue = useThousands ? maxRawValue / 1000 : maxRawValue}
+                      {@const formattedMaxValue = isPercentageChart 
+                        ? (maxDisplayValue < 20 ? format(".1%")(maxDisplayValue / 100) : format(".0%")(maxDisplayValue / 100))
+                        : (maxDisplayValue < 20 ? format(",.1f")(maxDisplayValue) : format(",.0f")(maxDisplayValue))
+                      }
+                      {@const maxDate = metadata?.updated?.toLowerCase() === 'monthly' 
+                        ? maxDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                        : maxDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+                      }
+                      
+                      {@const formattedValue = isPercentageChart 
+                        ? (displayValue < 20 ? format(".1%")(displayValue / 100) : format(".0%")(displayValue / 100))
+                        : (displayValue < 20 ? format(",.1f")(displayValue) : format(",.0f")(displayValue))
+                      }
+                      {@const firstDate = metadata?.updated?.toLowerCase() === 'monthly' 
+                        ? firstDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                        : firstDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+                      }
+                      {@const lastDate = metadata?.updated?.toLowerCase() === 'monthly' 
+                        ? lastDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
+                        : lastDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+                      }
+                      {@const datePreposition = metadata?.updated?.toLowerCase() === 'monthly' ? 'in' : 'on'}
+                      
+                      <!-- Check if latest is also highest or lowest -->
+                      {@const latestIsHighest = lastDataPoint.num_uk === maxDataPoint.num_uk && lastDataPoint.date.getTime() === maxDataPoint.date.getTime()}
+                      {@const latestIsLowest = lastDataPoint.num_uk === minDataPoint.num_uk && lastDataPoint.date.getTime() === minDataPoint.date.getTime()}
+                      
+                      <p class="screen-reader-only">
+                        A line chart showing the trend in {metadata?.title ?? seriesId} since {firstDate}. The latest value is {formattedValue} {datePreposition} {lastDate}{#if latestIsHighest && latestIsLowest}. This was both the highest and lowest data value.{:else if latestIsHighest}. This was the highest data value.{:else if latestIsLowest}. This was the lowest data value.{:else}.{/if} {#if !latestIsHighest && !latestIsLowest}The highest data value was {formattedMaxValue} {datePreposition} {maxDate}. The lowest data value was {formattedMinValue} {datePreposition} {minDate}.{:else if latestIsLowest}The highest data value was {formattedMaxValue} {datePreposition} {maxDate}.{:else if latestIsHighest}The lowest data value was {formattedMinValue} {datePreposition} {minDate}.{/if} The data for the charts is available to download at the end of this dashboard.
+                      </p>
+                    {/if}
                   </div>
                 </div>
                 {/if}
-              </div>
+              </button>
             {/each}
           </div>
+      </section>
     </Section>
     <Divider hr="full" />
   {/each}
@@ -279,6 +358,12 @@
     width: 100%;
   }
   .card {
+    /* Button reset */
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    
     background: #f5f5f5;
     padding: 16px 20px 20px 20px;
     cursor: pointer;
@@ -292,6 +377,7 @@
   .card.collapsed {
     padding: 16px 20px;
     width: 100%;
+    max-width: 950px;
   }
 
   @media (hover: hover) {
@@ -319,8 +405,8 @@
   }
 
   .card h4 {
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 700;
     line-height: 1.3;
     color: #222;
     margin: 0;
@@ -336,6 +422,7 @@
     line-height: 1.3;
     padding-top: 10px;
     font-size: 18px !important;
+    text-wrap: balance;
   }
 
   .card-full-width {
@@ -348,6 +435,8 @@
     flex-wrap: wrap; /* ✅ allow children to wrap */
     gap: 16px;
     margin-top: 40px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .layout-header {
@@ -361,6 +450,7 @@
   .chart {
     padding: 0px;
     flex: 1 1 100%; /* ✅ full width on mobile */
+    max-width: 100%;
   }
 
   .causes-container {
@@ -368,11 +458,17 @@
     flex-direction: column;
     gap: 0px;
     flex: 1 1 100%; /* ✅ full width on mobile */
+    max-width: 100%;
   }
 
   .causes-header {
     font-weight: bold;
     padding: 0;
+  }
+
+  .causes-header p {
+    margin: 0;
+    margin-top: 6px;
   }
 
   .card-header {
@@ -426,6 +522,7 @@
     font-weight: 600;
     flex: 1;
     color: #206095;
+    text-wrap: balance;
   }
 
   .compact-change {
@@ -473,15 +570,45 @@
     display: none; /* hidden on desktop */
   }
 
+  .screen-reader-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .updated-flag-top-row {
+    display: none; /* hidden by default, shown only on intermediate screens */
+  }
+
+  .updated-flag-top {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 400;
+    white-space: nowrap;
+    display: inline;
+  }
+
   .causes-row {
     display: flex;
     gap: 16px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .causes-child {
     flex: 1;
     padding: 0px;
     padding-top: 8px;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   .card .get-data-link {
@@ -489,12 +616,17 @@
     margin-top: 8px;
     font-size: 17px;
     line-height: 1.3;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    text-wrap: balance;
   }
 
   .card .get-data-link a {
     color: #206095;
     text-decoration: underline;
     display: inline;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   .card .get-data-link a:hover {
@@ -503,7 +635,7 @@
 
   .card .get-data-link .external-icon {
     display: inline;
-    vertical-align: baseline;
+    vertical-align: -2px;
     margin-left: 2px;
   }
 
@@ -523,10 +655,25 @@
   @media screen and (min-width: 721px) {
     .chart {
       flex: 1 1 30%;
+      min-width: 0;
     }
 
     .causes-container {
       flex: 2 1 0;
+      min-width: 0;
+    }
+  }
+
+  /* Desktop: lock card width to prevent expansion beyond 950px */
+  @media screen and (min-width: 951px) {
+    .card {
+      width: 950px !important;
+      max-width: 950px !important;
+    }
+
+    .card.collapsed {
+      width: 950px !important;
+      max-width: 950px !important;
     }
   }
 
@@ -565,7 +712,7 @@
     font-weight: 400;
   }
 
-  /* Medium mobile breakpoint: 490-720px - No legend at top, updated flag with text on same line as indicators */
+  /* Medium mobile breakpoint: 490-720px - No legend at top, updated flag in top row before +/- symbols */
   /* Breakpoint defined in src/lib/config.js */
   @media screen and (min-width: 491px) and (max-width: 720px) {
     h2 {
@@ -599,8 +746,13 @@
 
     .title-with-arrow {
       flex-direction: row-reverse;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 8px;
+    }
+
+    .updated-flag-top-row {
+      display: inline; /* show inline within title for intermediate screens */
+      margin-left: 8px;
     }
 
     .card-title {
@@ -636,27 +788,7 @@
     }
 
     .updated-flag-container {
-      min-width: auto;
-      order: 0;
-      align-self: center;
-      position: relative;
-      top: 0;
-      display: flex; /* show updated flag */
-    }
-
-    .updated-flag {
-      font-size: 0.85rem; /* show text */
-      white-space: nowrap;
-    }
-
-    .updated-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 5px;
-      margin-right: 8px;
-      position: relative;
-      top: 0;
-      left: 0;
+      display: none; /* hide bottom row updated flag on intermediate screens */
     }
 
     .updated-dot-inline {
@@ -677,9 +809,14 @@
       margin-top: 2px;
     }
 
+    .causes-header p {
+      margin-top: 6px;
+    }
+
     .causes-row {
       flex-direction: row;
-      gap: 12px;
+      gap: 12px
+      
     }
   }
 
@@ -806,6 +943,10 @@
 
     .causes-header {
       margin-top: 2px;
+    }
+
+    .causes-header p {
+      margin-top: 6px;
     }
 
     .causes-row {
