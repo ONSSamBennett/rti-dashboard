@@ -1,43 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
 
-body {
-  font-size: 1rem;
-}
-.tile {
-  box-shadow: none !important;
-}
-.ons-collapsible + .ons-collapsible {
-  margin-top: 18px;
-}
-h2,
-h3 {
-  margin-bottom: 8px;
-}
-.ons-spacer {
-  height: 32px;
-}
-.hr-full {
-  border-top: 1px solid var(--ons-color-text, #222) !important;
-  margin-top: 6px !important;
-}
-/* .ons-spacer{background-color: red;} */
-
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 body {
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0px;
 }
+
 svg {
   padding: 0;
   margin: 0;
 }
+
+h2,
+h3 {
+  margin-bottom: 8px;
+}
+
+.tile {
+  box-shadow: none !important;
+}
+
+.ons-collapsible + .ons-collapsible {
+  margin-top: 18px;
+}
+
+.ons-spacer {
+  height: 32px;
+}
+
+.hr-full {
+  border-top: 1px solid var(--ons-color-text, #222) !important;
+  margin-top: 6px !important;
+}
+
+.ons-breadcrumb {
+  background-color: #eaeaea;
+  color: #206095;
+}
+
 .container {
   display: flex;
   flex-wrap: wrap;
@@ -45,6 +52,7 @@ svg {
   width: 100%;
   gap: 20px;
 }
+
 .row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -58,19 +66,11 @@ svg {
   flex: 1;
   min-width: 0;
 }
-/* .ons-panel__body{background-color: red;} */
-.box {
-  /* background-color: steelblue; */
-  /* color: white; */
-  padding: 0px;
-  text-align: left;
-  border-radius: 0px;
-  /* box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); */
-}
 
-.ons-breadcrumb {
-  background-color: #eaeaea;
-  color: #206095;
+.box {
+  padding: 0;
+  text-align: left;
+  border-radius: 0;
 }
 
 .image-container {
@@ -84,7 +84,6 @@ svg {
   width: 100%;
   max-width: 300px;
   border-radius: 8px;
-  /* box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); */
 }
 
 .card-full-width {
@@ -97,13 +96,6 @@ svg {
   .container {
     flex-direction: column;
     align-items: center;
-  }
-
-  body {
-    padding: 0;
-  }
-
-  .container {
     padding: 0;
   }
 
@@ -120,7 +112,7 @@ svg {
 
   .image-container {
     order: -1;
-    align-self: flex-start; /* Keeps the image aligned to the left */
+    align-self: flex-start;
     width: 100%;
   }
   
@@ -133,8 +125,6 @@ svg {
   }
 }
 
-/* Remove Section component padding on mobile */
-/* Breakpoint defined in src/lib/config.js */
 @media (max-width: 720px) {
   :global(.ons-page__container),
   :global(.ons-container) {

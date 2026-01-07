@@ -18,7 +18,7 @@
   export let data;
 
   const { metadataBySeries } = data;
-  
+
   const { latestBySeries } = data;
   const dateCurrent = new Date(data.dates.current);
   const dateNext = new Date(data.dates.next);
@@ -82,9 +82,10 @@
   }
 
   function renderCards(category) {
-    return Object.entries(latestBySeries).filter(([seriesId]) => 
-      metadataBySeries[seriesId]?.category === category && 
-      metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
+    return Object.entries(latestBySeries).filter(
+      ([seriesId]) =>
+        metadataBySeries[seriesId]?.category === category &&
+        metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
     );
   }
 
@@ -96,12 +97,19 @@
   }
 
   function getYearOverYearChange(row, metadata, isPercentage) {
-    return isPercentage ? row.year_over_year_percent : row.year_over_year_change;
+    return isPercentage
+      ? row.year_over_year_percent
+      : row.year_over_year_change;
   }
 
   function getTimePeriod(metadata) {
     const updated = metadata?.updated?.toLowerCase?.();
-    if (updated === "daily" || updated === "day" || updated === "weekly" || updated === "week") {
+    if (
+      updated === "daily" ||
+      updated === "day" ||
+      updated === "weekly" ||
+      updated === "week"
+    ) {
       return "week";
     } else if (updated === "monthly" || updated === "month") {
       return "month";
@@ -114,7 +122,7 @@
 
   // Track expanded state for each card
   let expandedCards = {};
-  
+
   function toggleCard(seriesId) {
     expandedCards[seriesId] = !expandedCards[seriesId];
   }
@@ -124,73 +132,113 @@
   <AnalyticsBanner {analyticsProps} hideBanner />
 
   <div class="mobile-legend" aria-hidden="true">
-    <span class="updated-dot" aria-hidden="true"></span>
+    <span class="updated-dot" aria-hidden="true" />
     <span class="legend-text">Updated this week</span>
   </div>
 
-  {#each [
-    { title: "Consumer behaviour", category: "consumer" },
-    { title: "Business", category: "business" },
-    { title: "Energy and housing", category: "energy" },
-    { title: "Transport", category: "transport" }
-  ] as section}
+  {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section}
     <Section width="wide">
       <section aria-label="{section.title} section">
         <h2>{section.title}</h2>
         <div class="cards">
           {#each renderCards(section.category) as [seriesId, row]}
-              <button 
-                class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}" 
-                on:click={() => toggleCard(seriesId)}
-                aria-expanded="{expandedCards[seriesId] ? 'true' : 'false'}"
-                aria-label="{expandedCards[seriesId] ? 'Collapse' : 'Expand'} {metadataBySeries[seriesId]?.title ?? seriesId} details"
-              >
-                <div class="card-header">
-                  <div class="title-with-arrow">
-                    <svg class="twisty-arrow {expandedCards[seriesId] ? 'expanded' : ''}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                      {#if expandedCards[seriesId]}
-                        <path d="M5 12 L19 12" stroke-width="2.5" stroke-linecap="round"/>
-                      {:else}
-                        <path d="M12 5 L12 19 M5 12 L19 12" stroke-width="2.5" stroke-linecap="round"/>
-                      {/if}
-                    </svg>
-                    <h3 class="card-title">
-                      {metadataBySeries[seriesId]?.title ?? seriesId}
-                      {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                        <span class="screen-reader-only">Updated this week.</span>
-                        <span class="updated-dot-inline" aria-hidden="true"></span>
-                        <span class="updated-flag-top-row">
-                          <span class="updated-flag-top"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                        </span>
-                      {/if}
-                    </h3>
-                  </div>
-                  <div class="card-header-right">
-                    {#if !expandedCards[seriesId]}
-                      <div class="compact-change">
-                        <p style="margin:0; font-weight:normal; font-size:14px; color:#666; line-height:1.3; text-align:right;">
-                          <span style="text-transform: capitalize;">{getTimePeriod(metadataBySeries[seriesId])}</span> up to<br>{metadataBySeries[seriesId]?.updated?.toLowerCase() === 'monthly' 
-                            ? row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                            : row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <ChangeIndicator
-                          seriesId={seriesId}
-                          metadataBySeries={metadataBySeries}
-                          change={getChangeValue(row, metadataBySeries[seriesId], metadataBySeries[seriesId]?.units === "percentage")}
-                          units={metadataBySeries[seriesId]?.units}
-                          showLabel={false}
-                        />
-                      </div>
+            <button
+              class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}"
+              on:click={() => toggleCard(seriesId)}
+              aria-expanded={expandedCards[seriesId] ? "true" : "false"}
+              aria-label="{expandedCards[seriesId]
+                ? 'Collapse'
+                : 'Expand'} {metadataBySeries[seriesId]?.title ??
+                seriesId} details"
+            >
+              <div class="card-header">
+                <div class="title-with-arrow">
+                  <svg
+                    class="twisty-arrow {expandedCards[seriesId]
+                      ? 'expanded'
+                      : ''}"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    {#if expandedCards[seriesId]}
+                      <path
+                        d="M5 12 L19 12"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      />
+                    {:else}
+                      <path
+                        d="M12 5 L12 19 M5 12 L19 12"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      />
                     {/if}
-                    <div class="updated-flag-container">
-                      {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === 'true'}
-                        <span class="updated-flag"><span class="updated-dot" aria-hidden></span>Updated this week</span>
-                      {/if}
+                  </svg>
+                  <h3 class="card-title">
+                    {metadataBySeries[seriesId]?.title ?? seriesId}
+                    {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === "true"}
+                      <span class="screen-reader-only">Updated this week.</span>
+                      <span class="updated-dot-inline" aria-hidden="true" />
+                      <span class="updated-flag-top-row">
+                        <span class="updated-flag-top"
+                          ><span class="updated-dot" aria-hidden />Updated this
+                          week</span
+                        >
+                      </span>
+                    {/if}
+                  </h3>
+                </div>
+                <div class="card-header-right">
+                  {#if !expandedCards[seriesId]}
+                    <div class="compact-change">
+                      <p
+                        style="margin:0; font-weight:normal; font-size:14px; color:#666; line-height:1.3; text-align:right;"
+                      >
+                        <span style="text-transform: capitalize;"
+                          >{getTimePeriod(metadataBySeries[seriesId])}</span
+                        >
+                        up to<br />{metadataBySeries[
+                          seriesId
+                        ]?.updated?.toLowerCase() === "monthly"
+                          ? row.date.toLocaleDateString("en-GB", {
+                              year: "numeric",
+                              month: "long",
+                            })
+                          : row.date.toLocaleDateString("en-GB", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                      </p>
+                      <ChangeIndicator
+                        {seriesId}
+                        {metadataBySeries}
+                        change={getChangeValue(
+                          row,
+                          metadataBySeries[seriesId],
+                          metadataBySeries[seriesId]?.units === "percentage"
+                        )}
+                        units={metadataBySeries[seriesId]?.units}
+                        showLabel={false}
+                      />
                     </div>
+                  {/if}
+                  <div class="updated-flag-container">
+                    {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === "true"}
+                      <span class="updated-flag"
+                        ><span class="updated-dot" aria-hidden />Updated this
+                        week</span
+                      >
+                    {/if}
                   </div>
                 </div>
-                {#if expandedCards[seriesId]}
-                <p class="subtitle">{metadataBySeries[seriesId]?.description}</p>
+              </div>
+              {#if expandedCards[seriesId]}
+                <p class="subtitle">
+                  {metadataBySeries[seriesId]?.description}
+                </p>
                 <div class="layout-container">
                   <div class="chart">
                     <LineChartSimple
@@ -206,119 +254,110 @@
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                       series_id={seriesId}
-                      thinSeries={metadataBySeries[seriesId]?.thin_line === "TRUE" ? seriesId : null}
+                      thinSeries={metadataBySeries[seriesId]?.thin_line ===
+                      "TRUE"
+                        ? seriesId
+                        : null}
                       updated={metadataBySeries[seriesId]?.updated}
                       meta={{
-                        yMinMode: metadataBySeries[seriesId]?.yMinMode ?? "auto",
-                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1
+                        yMinMode:
+                          metadataBySeries[seriesId]?.yMinMode ?? "auto",
+                        yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1,
                       }}
                     />
                   </div>
-                  <div class="causes-container">
-                    <div class="causes-header">
+                  <div class="indicators-container">
+                    <div class="indicators-header">
                       <h4>
                         Change in {metadataBySeries[seriesId]?.units}
                       </h4>
                       <p style="font-weight:normal; font-size:14px; color:#666">
-                        up to {metadataBySeries[seriesId]?.updated?.toLowerCase() === 'monthly' 
-                          ? row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                          : row.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        up to {metadataBySeries[
+                          seriesId
+                        ]?.updated?.toLowerCase() === "monthly"
+                          ? row.date.toLocaleDateString("en-GB", {
+                              year: "numeric",
+                              month: "long",
+                            })
+                          : row.date.toLocaleDateString("en-GB", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
                       </p>
                     </div>
-                    <div class="causes-row">
-                      {#each [
-                        { label: undefined, getValue: (r, m, isP) => getChangeValue(r, m, isP) },
-                        { label: "year", getValue: (r, m, isP) => getYearOverYearChange(r, m, isP) }
-                      ] as indicator}
-                        <div class="causes-child">
+                    <div class="indicators-row">
+                      {#each [{ label: undefined, getValue: (r, m, isP) => getChangeValue(r, m, isP) }, { label: "year", getValue: (r, m, isP) => getYearOverYearChange(r, m, isP) }] as indicator}
+                        <div class="indicators-child">
                           <ChangeIndicator
                             seriesId={indicator.label ? undefined : seriesId}
-                            metadataBySeries={indicator.label ? undefined : metadataBySeries}
+                            metadataBySeries={indicator.label
+                              ? undefined
+                              : metadataBySeries}
                             label={indicator.label}
-                            change={indicator.getValue(row, metadataBySeries[seriesId], metadataBySeries[seriesId]?.units === "percentage")}
+                            change={indicator.getValue(
+                              row,
+                              metadataBySeries[seriesId],
+                              metadataBySeries[seriesId]?.units === "percentage"
+                            )}
                             units={metadataBySeries[seriesId]?.units}
                           />
                         </div>
                       {/each}
                     </div>
                     <p class="get-data-link">
-                      <a href={metadataBySeries[seriesId]?.url} target="_blank" rel="noopener noreferrer">
-                        Get the data for {(metadataBySeries[seriesId]?.title ?? seriesId).toLowerCase().replace('uk', 'UK')}
-                        <span class="screen-reader-only">(opens in new tab)</span>
-                        <svg class="external-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                          <path d="M12 8.66667V12.6667C12 13.0203 11.8595 13.3594 11.6095 13.6095C11.3594 13.8595 11.0203 14 10.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V5.33333C2 4.97971 2.14048 4.64057 2.39052 4.39052C2.64057 4.14048 2.97971 4 3.33333 4H7.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M10 2H14V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M6.66666 9.33333L14 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <a
+                        href={metadataBySeries[seriesId]?.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Get the data for {(
+                          metadataBySeries[seriesId]?.title ?? seriesId
+                        )
+                          .toLowerCase()
+                          .replace("uk", "UK")}
+                        <span class="screen-reader-only"
+                          >(opens in new tab)</span
+                        >
+                        <svg
+                          class="external-icon"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12 8.66667V12.6667C12 13.0203 11.8595 13.3594 11.6095 13.6095C11.3594 13.8595 11.0203 14 10.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V5.33333C2 4.97971 2.14048 4.64057 2.39052 4.39052C2.64057 4.14048 2.97971 4 3.33333 4H7.33333"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                          <path
+                            d="M10 2H14V6"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                          <path
+                            d="M6.66666 9.33333L14 2"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
                         </svg>
                       </a>
                     </p>
-                    {#if row.full_series && row.full_series.length > 0}
-                      {@const firstDataPoint = row.full_series[0]}
-                      {@const lastDataPoint = row.full_series[row.full_series.length - 1]}
-                      {@const metadata = metadataBySeries[seriesId]}
-                      {@const isPercentageChart = metadata?.units_chart === "percentage"}
-                      {@const useThousands = metadata?.thousands === "TRUE" || metadata?.thousands === true}
-                      {@const rawValue = lastDataPoint.num_uk}
-                      {@const displayValue = useThousands ? rawValue / 1000 : rawValue}
-                      
-                      <!-- Find minimum value and its date -->
-                      {@const minDataPoint = row.full_series.reduce((min, point) => 
-                        point.num_uk < min.num_uk ? point : min
-                      )}
-                      {@const minRawValue = minDataPoint.num_uk}
-                      {@const minDisplayValue = useThousands ? minRawValue / 1000 : minRawValue}
-                      {@const formattedMinValue = isPercentageChart 
-                        ? (minDisplayValue < 20 ? format(".1%")(minDisplayValue / 100) : format(".0%")(minDisplayValue / 100))
-                        : (minDisplayValue < 20 ? format(",.1f")(minDisplayValue) : format(",.0f")(minDisplayValue))
-                      }
-                      {@const minDate = metadata?.updated?.toLowerCase() === 'monthly' 
-                        ? minDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                        : minDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
-                      }
-                      
-                      <!-- Find maximum value and its date -->
-                      {@const maxDataPoint = row.full_series.reduce((max, point) => 
-                        point.num_uk > max.num_uk ? point : max
-                      )}
-                      {@const maxRawValue = maxDataPoint.num_uk}
-                      {@const maxDisplayValue = useThousands ? maxRawValue / 1000 : maxRawValue}
-                      {@const formattedMaxValue = isPercentageChart 
-                        ? (maxDisplayValue < 20 ? format(".1%")(maxDisplayValue / 100) : format(".0%")(maxDisplayValue / 100))
-                        : (maxDisplayValue < 20 ? format(",.1f")(maxDisplayValue) : format(",.0f")(maxDisplayValue))
-                      }
-                      {@const maxDate = metadata?.updated?.toLowerCase() === 'monthly' 
-                        ? maxDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                        : maxDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
-                      }
-                      
-                      {@const formattedValue = isPercentageChart 
-                        ? (displayValue < 20 ? format(".1%")(displayValue / 100) : format(".0%")(displayValue / 100))
-                        : (displayValue < 20 ? format(",.1f")(displayValue) : format(",.0f")(displayValue))
-                      }
-                      {@const firstDate = metadata?.updated?.toLowerCase() === 'monthly' 
-                        ? firstDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                        : firstDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
-                      }
-                      {@const lastDate = metadata?.updated?.toLowerCase() === 'monthly' 
-                        ? lastDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long' })
-                        : lastDataPoint.date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
-                      }
-                      {@const datePreposition = metadata?.updated?.toLowerCase() === 'monthly' ? 'in' : 'on'}
-                      
-                      <!-- Check if latest is also highest or lowest -->
-                      {@const latestIsHighest = lastDataPoint.num_uk === maxDataPoint.num_uk && lastDataPoint.date.getTime() === maxDataPoint.date.getTime()}
-                      {@const latestIsLowest = lastDataPoint.num_uk === minDataPoint.num_uk && lastDataPoint.date.getTime() === minDataPoint.date.getTime()}
-                      
-                      <p class="screen-reader-only">
-                        A line chart showing the trend in {metadata?.title ?? seriesId} since {firstDate}. The latest value is {formattedValue} {datePreposition} {lastDate}{#if latestIsHighest && latestIsLowest}. This was both the highest and lowest data value.{:else if latestIsHighest}. This was the highest data value.{:else if latestIsLowest}. This was the lowest data value.{:else}.{/if} {#if !latestIsHighest && !latestIsLowest}The highest data value was {formattedMaxValue} {datePreposition} {maxDate}. The lowest data value was {formattedMinValue} {datePreposition} {minDate}.{:else if latestIsLowest}The highest data value was {formattedMaxValue} {datePreposition} {maxDate}.{:else if latestIsHighest}The lowest data value was {formattedMinValue} {datePreposition} {minDate}.{/if} The data for the charts is available to download at the end of this dashboard.
-                      </p>
-                    {/if}
                   </div>
                 </div>
-                {/if}
-              </button>
-            {/each}
-          </div>
+              {/if}
+            </button>
+          {/each}
+        </div>
       </section>
     </Section>
     <Divider hr="full" />
@@ -354,30 +393,26 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    align-items: stretch;
     width: 100%;
   }
+
   .card {
     /* Button reset */
     border: none;
     font-family: inherit;
     font-size: inherit;
     text-align: left;
-    
+
     background: #f5f5f5;
     padding: 16px 20px 20px 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
     width: 100%;
     max-width: 950px;
-    box-sizing: border-box;
-    flex-shrink: 1;
   }
 
   .card.collapsed {
     padding: 16px 20px;
-    width: 100%;
-    max-width: 950px;
   }
 
   @media (hover: hover) {
@@ -391,7 +426,7 @@
   }
 
   .card:focus-visible {
-    outline: 3px solid #206095;
+    outline: 3px solid #222;
     outline-offset: 2px;
   }
 
@@ -432,41 +467,27 @@
 
   .layout-container {
     display: flex;
-    flex-wrap: wrap; /* ✅ allow children to wrap */
+    flex-wrap: wrap;
     gap: 16px;
     margin-top: 40px;
-    min-width: 0;
-    max-width: 100%;
   }
 
-  .layout-header {
-    width: 100%; /* ✅ force full width */
-    font-size: 1.25rem;
-    font-weight: bold;
-    padding: 0px 0 0 0;
-    border-bottom: 1px solid #ccc;
+  .chart,
+  .indicators-container {
+    flex: 1 1 100%;
   }
 
-  .chart {
-    padding: 0px;
-    flex: 1 1 100%; /* ✅ full width on mobile */
-    max-width: 100%;
-  }
-
-  .causes-container {
+  .indicators-container {
     display: flex;
     flex-direction: column;
-    gap: 0px;
-    flex: 1 1 100%; /* ✅ full width on mobile */
-    max-width: 100%;
   }
 
-  .causes-header {
+  .indicators-header {
     font-weight: bold;
     padding: 0;
   }
 
-  .causes-header p {
+  .indicators-header p {
     margin: 0;
     margin-top: 6px;
   }
@@ -594,21 +615,15 @@
     display: inline;
   }
 
-  .causes-row {
+  .indicators-row {
     display: flex;
     gap: 16px;
-    min-width: 0;
-    max-width: 100%;
   }
 
-  .causes-child {
+  .indicators-child {
     flex: 1;
-    padding: 0px;
     padding-top: 8px;
-    min-width: 0;
-    max-width: 100%;
     overflow-wrap: break-word;
-    word-wrap: break-word;
   }
 
   .card .get-data-link {
@@ -630,7 +645,7 @@
   }
 
   .card .get-data-link a:hover {
-    color: #0F1E2E;
+    color: #0f1e2e;
   }
 
   .card .get-data-link .external-icon {
@@ -640,9 +655,9 @@
   }
 
   .layout-container,
-  .causes-header,
-  .causes-row,
-  .causes-child,
+  .indicators-header,
+  .indicators-row,
+  .indicators-child,
   .chart {
     border: 0px solid #666;
   }
@@ -658,35 +673,23 @@
       min-width: 0;
     }
 
-    .causes-container {
+    .indicators-container {
       flex: 2 1 0;
       min-width: 0;
     }
   }
 
-  /* Desktop: lock card width to prevent expansion beyond 950px */
+  /* Desktop: lock card width */
   @media screen and (min-width: 951px) {
     .card {
       width: 950px !important;
-      max-width: 950px !important;
-    }
-
-    .card.collapsed {
-      width: 950px !important;
-      max-width: 950px !important;
     }
   }
 
-  /* Mobile: stack elements and improve spacing */
+  /* Mobile: full width */
   @media screen and (max-width: 950px) {
-    .cards {
-      width: 100%;
-      min-width: 0;
-    }
-
     .card {
       width: 100% !important;
-      min-width: 0 !important;
       padding: 16px;
     }
 
@@ -712,59 +715,26 @@
     font-weight: 400;
   }
 
-  /* Medium mobile breakpoint: 490-720px - No legend at top, updated flag in top row before +/- symbols */
-  /* Breakpoint defined in src/lib/config.js */
-  @media screen and (min-width: 491px) and (max-width: 720px) {
+  /* Mobile breakpoints: below 720px - shared styles */
+  @media screen and (max-width: 720px) {
     h2 {
-      padding: 0px 0px 4px 0px;
+      padding: 0 0 4px 0;
     }
 
     .card h3 {
       font-size: 1.1rem;
-      word-wrap: break-word;
       overflow-wrap: break-word;
-    }
-
-    .card-header {
-      flex-wrap: wrap;
-    }
-
-    .card-header-right {
-      margin-right: 0;
-    }
-
-    .updated-flag {
-      white-space: normal;
     }
 
     .card-header {
       flex-direction: column;
       align-items: stretch;
       gap: 8px;
-      padding: 0px;
-    }
-
-    .title-with-arrow {
-      flex-direction: row-reverse;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .updated-flag-top-row {
-      display: inline; /* show inline within title for intermediate screens */
-      margin-left: 8px;
-    }
-
-    .card-title {
-      margin: 0;
-      padding: 0;
-      font-size: 1.1rem;
-      color: #206095;
     }
 
     .card-header-right {
+      margin-right: 0;
       flex-direction: row;
-      justify-content: flex-start;
       align-items: center;
       width: 100%;
       gap: 12px;
@@ -774,25 +744,26 @@
       display: none;
     }
 
-    .compact-change {
-      order: 0;
-      justify-content: flex-start;
+    .title-with-arrow {
       flex-direction: row-reverse;
-      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+    }
+
+    .compact-change {
+      flex-direction: row-reverse;
       gap: 12px;
     }
-    
+
     .compact-change p {
       text-align: left !important;
-      margin-right: 0 !important;
     }
 
     .updated-flag-container {
-      display: none; /* hide bottom row updated flag on intermediate screens */
-    }
-
-    .updated-dot-inline {
-      display: none; /* hide inline dot in title */
+      display: none;
     }
 
     .subtitle {
@@ -805,117 +776,45 @@
       margin-top: 20px;
     }
 
-    .causes-header {
+    .indicators-header {
       margin-top: 2px;
     }
 
-    .causes-header p {
-      margin-top: 6px;
-    }
-
-    .causes-row {
-      flex-direction: row;
-      gap: 12px
-      
+    .indicators-row {
+      gap: 12px;
     }
   }
 
-  /* Small mobile breakpoint: below 490px - Legend at top, only inline dot on cards */
-  /* Breakpoint defined in src/lib/config.js */
+  /* Medium mobile: 491-720px */
+  @media screen and (min-width: 491px) and (max-width: 720px) {
+    .title-with-arrow {
+      justify-content: space-between;
+    }
+
+    .updated-flag-top-row {
+      display: inline;
+      margin-left: 8px;
+    }
+
+    .card-header-right {
+      justify-content: flex-start;
+    }
+  }
+
+  /* Small mobile: below 490px */
   @media screen and (max-width: 490px) {
     .mobile-legend {
       display: flex;
       padding: 12px 4px;
     }
 
-    h2 {
-      padding: 0px 0px 4px 0px;
-    }
-
-    .card h3 {
-      font-size: 1.1rem;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
-
-    .card-header {
-      flex-wrap: wrap;
-    }
-
-    .card-header-right {
-      margin-right: 0;
-    }
-
-    .updated-flag {
-      white-space: normal;
-    }
-
-    .card-header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      padding: 0px;
-    }
-
     .title-with-arrow {
-      flex-direction: row-reverse;
       justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .card-title {
-      margin: 0;
-      padding: 0;
-      font-size: 1.1rem;
-      color: #206095;
     }
 
     .card-header-right {
-      flex-direction: row;
       justify-content: space-between;
-      align-items: flex-start;
-      width: 100%;
       gap: 8px;
-    }
-
-    .card.expanded .card-header-right {
-      display: none;
-    }
-
-    .compact-change {
-      order: 0;
-      justify-content: flex-start;
-      flex-direction: row-reverse;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .compact-change p {
-      text-align: left !important;
-      margin-right: 0 !important;
-    }
-
-    .updated-flag-container {
-      min-width: auto;
-      order: 0;
-      align-self: center;
-      position: relative;
-      top: 8px;
-      display: none; /* hide text completely on small mobile */
-    }
-
-    .updated-flag {
-      font-size: 0; /* hide text */
-    }
-
-    .updated-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 5px;
-      margin-right: 0;
-      position: relative;
-      top: 2px;
-      left: -2px;
     }
 
     .updated-dot-inline {
@@ -926,32 +825,7 @@
       background-color: #16a34a;
       margin-left: 4px;
       vertical-align: middle;
-      position: relative;
-      top: 0px;
       left: -2px;
-    }
-
-    .subtitle {
-      font-size: 16px !important;
-      padding-top: 4px;
-    }
-
-    .layout-container {
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .causes-header {
-      margin-top: 2px;
-    }
-
-    .causes-header p {
-      margin-top: 6px;
-    }
-
-    .causes-row {
-      flex-direction: row;
-      gap: 12px;
     }
   }
 </style>

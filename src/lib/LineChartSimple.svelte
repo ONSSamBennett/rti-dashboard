@@ -1,4 +1,3 @@
-
 <script>
   import { scaleLinear, scaleTime } from "d3-scale";
   import { line, curveLinear } from "d3-shape";
@@ -35,7 +34,7 @@
 
   // Fixed time window
   export let startDate = null; // e.g., new Date(2022, 0, 1)
-  export let endDate = null;   // e.g., new Date(2025, 11, 31)
+  export let endDate = null; // e.g., new Date(2025, 11, 31)
 
   // NEW: metadata object to drive axis options (and anything else)
   export let meta = {};
@@ -43,8 +42,9 @@
   // Internals
   // Determine stroke width based on series_id
   let baseStrokeWidth;
-  $: baseStrokeWidth = (thinSeries && series_id === thinSeries) ? 2 : 3;
-  $: strokeWidth = width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
+  $: baseStrokeWidth = thinSeries && series_id === thinSeries ? 2 : 3;
+  $: strokeWidth =
+    width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
   $: thousandsBoolean = (() => {
     if (thousands === true) return true;
     if (typeof thousands === "number") return thousands === 1;
@@ -74,20 +74,23 @@
               val = cleaned === "" ? NaN : Number(cleaned);
             }
             // If value is not a number, leave as-is (NaN will propagate)
-            const numeric = typeof val === "number" && !isNaN(val) ? val / 1000 : val;
+            const numeric =
+              typeof val === "number" && !isNaN(val) ? val / 1000 : val;
             return { ...d, [yKey]: numeric };
           })
         : data
       : [];
 
   // Fallback to data extent if no start/end provided
-  $: dataMinDate =
-    transformedData.length ? new Date(Math.min(...transformedData.map((d) => +d[xKey]))) : null;
-  $: dataMaxDate =
-    transformedData.length ? new Date(Math.max(...transformedData.map((d) => +d[xKey]))) : null;
+  $: dataMinDate = transformedData.length
+    ? new Date(Math.min(...transformedData.map((d) => +d[xKey])))
+    : null;
+  $: dataMaxDate = transformedData.length
+    ? new Date(Math.max(...transformedData.map((d) => +d[xKey])))
+    : null;
 
   $: effectiveStart = startDate ?? dataMinDate ?? new Date(2000, 0, 1);
-  $: effectiveEnd   = endDate   ?? dataMaxDate ?? new Date(2000, 11, 31);
+  $: effectiveEnd = endDate ?? dataMaxDate ?? new Date(2000, 11, 31);
 
   // Avoid zero-length domain
   $: [domainStart, domainEnd] =
@@ -105,19 +108,17 @@
 
   // --- Y domain calculations driven by metadata ---
   // Pull axis settings from metadata (with sensible defaults)
-  $: yMinMode = meta?.yMinMode ?? "auto";  // "zero" | "data" | "above-zero" | "auto"
-  $: yPadding = meta?.yPadding ?? 0.1;     // 10% padding
+  $: yMinMode = meta?.yMinMode ?? "auto"; // "zero" | "data" | "above-zero" | "auto"
+  $: yPadding = meta?.yPadding ?? 0.1; // 10% padding
 
   // Data min/max
-  $: dataYMin =
-    transformedData?.length
-      ? Math.min(...transformedData.map((d) => d[yKey]))
-      : 0;
+  $: dataYMin = transformedData?.length
+    ? Math.min(...transformedData.map((d) => d[yKey]))
+    : 0;
 
-  $: dataYMax =
-    transformedData?.length
-      ? Math.max(...transformedData.map((d) => d[yKey]))
-      : 100;
+  $: dataYMax = transformedData?.length
+    ? Math.max(...transformedData.map((d) => d[yKey]))
+    : 100;
 
   // Respect explicit yMax when provided; otherwise use data max
   $: topMax = yMax ?? dataYMax;
@@ -178,7 +179,7 @@
       // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
       // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
       const finalRange = topMax - dataYMin;
-      return dataYMin - 0.20 * finalRange;
+      return dataYMin - 0.2 * finalRange;
     } else {
       // For non-index charts: use yPadding as percentage of computedYMin
       return computedYMin - Math.abs(computedYMin) * yPadding;
@@ -194,7 +195,7 @@
       // gap = 0.1 * (topMax - dataYMin)
       // paddedMax = topMax + gap
       const finalRange = topMax - dataYMin;
-      return topMax + 0.20 * finalRange;
+      return topMax + 0.2 * finalRange;
     } else {
       return topMax;
     }
@@ -236,13 +237,16 @@
 
   function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
-      years: [],       // year boundary markers (Jan 1)
-      yearLabels: [],  // { date: Jul 1, year: YYYY }
+      years: [], // year boundary markers (Jan 1)
+      yearLabels: [], // { date: Jul 1, year: YYYY }
     };
     if (!domainStart || !domainEnd) return changes;
 
     // Year starts (Jan 1)
-    const yearStarts = timeYear.range(timeYear.floor(domainStart), timeYear.ceil(domainEnd));
+    const yearStarts = timeYear.range(
+      timeYear.floor(domainStart),
+      timeYear.ceil(domainEnd)
+    );
     for (const ys of yearStarts) {
       changes.years.push(ys);
       // Mid-year label (Jul 1) to replicate Q3 labeling
@@ -270,36 +274,138 @@
   // Calculate if there's a significant gap at the start (no data period)
   $: hasNoDataPeriod = (() => {
     if (!transformedData.length || !effectiveStart) return false;
-    
+
     const firstDataDate = transformedData[0][xKey];
     const daysDiff = (firstDataDate - effectiveStart) / (1000 * 60 * 60 * 24);
-    
+
     // If first data point is more than 30 days after axis start, show no-data indicator
     return daysDiff > 30;
   })();
 
-  $: noDataRectEnd = hasNoDataPeriod && transformedData.length 
-    ? transformedData[0][xKey] 
+  $: noDataRectEnd =
+    hasNoDataPeriod && transformedData.length ? transformedData[0][xKey] : null;
+
+  // Screenreader text calculations
+  $: firstDataPoint = data?.length ? data[0] : null;
+  $: lastDataPoint = data?.length ? data[data.length - 1] : null;
+  $: maxDataPoint = data?.length
+    ? data.reduce((max, d) => (d[yKey] > max[yKey] ? d : max), data[0])
     : null;
+  $: minDataPoint = data?.length
+    ? data.reduce((min, d) => (d[yKey] < min[yKey] ? d : min), data[0])
+    : null;
+
+  $: formatSRValue = (val) => {
+    if (units_chart === "percentage") {
+      return format(val < 20 ? ".1%" : ".0%")(val / 100);
+    } else if (thousandsBoolean) {
+      return format(val < 20 ? ",.1f" : ",.0f")(val) + " thousand";
+    } else {
+      return format(val < 20 ? ",.1f" : ",.0f")(val);
+    }
+  };
+
+  $: firstDate = firstDataPoint
+    ? updated?.toLowerCase() === "monthly"
+      ? firstDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : firstDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: lastDate = lastDataPoint
+    ? updated?.toLowerCase() === "monthly"
+      ? lastDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : lastDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: maxDate = maxDataPoint
+    ? updated?.toLowerCase() === "monthly"
+      ? maxDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : maxDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: minDate = minDataPoint
+    ? updated?.toLowerCase() === "monthly"
+      ? minDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : minDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: formattedValue = lastDataPoint ? formatSRValue(lastDataPoint[yKey]) : "";
+  $: formattedMaxValue = maxDataPoint ? formatSRValue(maxDataPoint[yKey]) : "";
+  $: formattedMinValue = minDataPoint ? formatSRValue(minDataPoint[yKey]) : "";
+
+  $: datePreposition = updated?.toLowerCase() === "monthly" ? "in" : "on";
+
+  $: latestIsHighest =
+    lastDataPoint && maxDataPoint
+      ? lastDataPoint[yKey] === maxDataPoint[yKey] &&
+        lastDataPoint.date.getTime() === maxDataPoint.date.getTime()
+      : false;
+  $: latestIsLowest =
+    lastDataPoint && minDataPoint
+      ? lastDataPoint[yKey] === minDataPoint[yKey] &&
+        lastDataPoint.date.getTime() === minDataPoint.date.getTime()
+      : false;
 </script>
 
 <div style="padding:0px; margin-top:0px; margin-bottom:0px">
-  <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
+  <div
+    class="chart-container"
+    bind:clientWidth={width}
+    style:height="{height}px"
+  >
     {#if width}
       {#if transformedData.length > 0}
         <svg {width} {height} class="chart" aria-hidden="true">
           <!-- Y grid/ticks -->
           <g class="y-ticks">
             {#each yTicks as tick (tick)}
-                  <g class="y-tick" transform="translate(0 {y(tick)})">
+              <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                      class:tick-line-0={(zeroInDomain && tick === 0 && !indexBoolean) || (indexBoolean && tick === 100)}
+                  class:tick-line-0={(zeroInDomain &&
+                    tick === 0 &&
+                    !indexBoolean) ||
+                    (indexBoolean && tick === 100)}
                   x1={margin.left}
                   x2={width - margin.right}
                 />
-                <text style="text-anchor:end;" x={margin.left - 5} y="6" class="small">
-                  {units_chart === "percentage" ? formatPercent(tick / 100) : formatValue(tick)}
+                <text
+                  style="text-anchor:end;"
+                  x={margin.left - 5}
+                  y="6"
+                  class="small"
+                >
+                  {units_chart === "percentage"
+                    ? formatPercent(tick / 100)
+                    : formatValue(tick)}
                 </text>
               </g>
             {/each}
@@ -346,7 +452,12 @@
 
           <!-- Line series -->
           <g class="plot">
-            <path class="line" d={lineFn(transformedData)} stroke={lineColor} stroke-width="{strokeWidth}px" />
+            <path
+              class="line"
+              d={lineFn(transformedData)}
+              stroke={lineColor}
+              stroke-width="{strokeWidth}px"
+            />
 
             <!-- Last point marker/label: value (top) + date (bottom) -->
             {#if transformedData.length}
@@ -382,8 +493,14 @@
                   {/if}
                 </tspan>
                 <!-- bottom line: date -->
-                <tspan x={lastX + 8} dy="1.2em" style="fill:#666; font-weight: 400;">
-                  {updated?.toLowerCase() === 'monthly' ? formatLastDateMonthly(lastPoint[xKey]) : lastDateStr}
+                <tspan
+                  x={lastX + 8}
+                  dy="1.2em"
+                  style="fill:#666; font-weight: 400;"
+                >
+                  {updated?.toLowerCase() === "monthly"
+                    ? formatLastDateMonthly(lastPoint[xKey])
+                    : lastDateStr}
                 </tspan>
               </text>
             {/if}
@@ -397,9 +514,30 @@
         </div>
       {/if}
     {/if}
+
+    {#if data?.length}
+      <p class="screen-reader-only">
+        A line chart showing the trend in {title ?? "the data"} since {firstDate}.
+        The latest value is {formattedValue}
+        {datePreposition}
+        {lastDate}{#if latestIsHighest && latestIsLowest}. This was both the
+          highest and lowest data value.{:else if latestIsHighest}. This was the
+          highest data value.{:else if latestIsLowest}. This was the lowest data
+          value.{:else}.{/if}
+        {#if !latestIsHighest && !latestIsLowest}The highest data value was {formattedMaxValue}
+          {datePreposition}
+          {maxDate}. The lowest data value was {formattedMinValue}
+          {datePreposition}
+          {minDate}.{:else if latestIsLowest}The highest data value was {formattedMaxValue}
+          {datePreposition}
+          {maxDate}.{:else if latestIsHighest}The lowest data value was {formattedMinValue}
+          {datePreposition}
+          {minDate}.{/if} The data for the charts is available to download at the
+        end of this dashboard.
+      </p>
+    {/if}
   </div>
 </div>
-
 
 <style>
   .chart-container {
@@ -425,7 +563,7 @@
   }
 
   .tick-line-0 {
-    stroke: #B3B3B3;
+    stroke: #b3b3b3;
     stroke-width: 2px;
   }
 
@@ -447,5 +585,17 @@
   svg {
     padding: 0px;
     margin: 0;
+  }
+
+  .screen-reader-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 </style>
