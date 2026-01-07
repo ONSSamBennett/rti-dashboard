@@ -31,42 +31,23 @@
     contentType: "dashboard",
   };
 
-  const { current_bank_holiday } = data;
-  const { previous_bank_holiday } = data;
-
-  const dateOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-
   const dateOptions2 = {
     year: "numeric",
     month: "long",
     day: "numeric",
   };
-  const currentWeek = data.current.date.toLocaleDateString(
-    "en-GB",
-    dateOptions
-  );
-
-  const currentWeek2 = data.current.date.toLocaleDateString(
-    "en-GB",
-    dateOptions2
-  );
-
-  const earliestWeek = data.earliest.date.toLocaleDateString(
-    "en-GB",
-    dateOptions2
-  );
 
   //get header dates from
   onMount(() =>
     insertHeader(
       dateCurrent.toLocaleDateString("en-GB", dateOptions2),
       dateNext.toLocaleDateString("en-GB", dateOptions2),
-      currentWeek
+      dateCurrent.toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
     )
   );
 
@@ -489,7 +470,7 @@
 
   .indicators-header p {
     margin: 0;
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
   .card-header {
@@ -583,7 +564,7 @@
     height: 12px;
     border-radius: 6px;
     background-color: #16a34a; /* green */
-    margin-right: 8px;
+    margin-right: 6px;
     flex: 0 0 auto;
   }
 
@@ -705,7 +686,7 @@
   .mobile-legend {
     display: none;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
     padding: 12px 0;
     font-size: 0.9rem;
     color: #666;
@@ -713,6 +694,7 @@
 
   .legend-text {
     font-weight: 400;
+    font-size: 14px;
   }
 
   /* Mobile breakpoints: below 720px - shared styles */
@@ -772,12 +754,16 @@
     }
 
     .layout-container {
-      gap: 12px;
+      gap: 24px;
       margin-top: 20px;
     }
 
     .indicators-header {
       margin-top: 2px;
+    }
+
+    .indicators-header p {
+      margin-top: 4px;
     }
 
     .indicators-row {
