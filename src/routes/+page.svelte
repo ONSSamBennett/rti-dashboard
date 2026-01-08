@@ -24,10 +24,10 @@
   const dateNext = new Date(data.dates.next);
 
   const analyticsProps = {
-    contentTitle: "Weekly deaths dashboard",
+    contentTitle: "Real-time indicators dashboard",
     releaseDate: data.dates.current.replaceAll("-", ""),
     nextReleaseDate: data.dates.next.replaceAll("-", ""),
-    outputSeries: "weeklyprovisionalfiguresondeathsregisteredinenglandandwales",
+    outputSeries: "economicactivityandsocialchangeintheukrealtimeindicators",
     contentType: "dashboard",
   };
 
@@ -70,14 +70,13 @@
     );
   }
 
-  function getChangeValue(row, metadata, isPercentage) {
-    if (isPercentage) {
-      return row.period_over_period_percent ?? row.month_over_month_percent;
-    }
-    return row.period_over_period_change ?? row.month_over_month_change;
+  function getChangeValue(row, isPercentage) {
+    return isPercentage
+      ? row.period_over_period_percent
+      : row.period_over_period_change;
   }
 
-  function getYearOverYearChange(row, metadata, isPercentage) {
+  function getYearOverYearChange(row, isPercentage) {
     return isPercentage
       ? row.year_over_year_percent
       : row.year_over_year_change;
@@ -104,8 +103,30 @@
   // Track expanded state for each card
   let expandedCards = {};
 
-  function toggleCard(seriesId) {
+  function toggleCard(seriesId, sectionTitle, sectionNumber) {
+    const wasExpanded = expandedCards[seriesId];
     expandedCards[seriesId] = !expandedCards[seriesId];
+    
+    // Track analytics
+    analyticsEvent({
+      event: "interaction",
+      interactionType: "accordion",
+      interactionValue: expandedCards[seriesId] ? "open" : "close",
+      label: metadataBySeries[seriesId]?.title ?? seriesId,
+      sectionTitle,
+      sectionNumber,
+    });
+  }
+
+  function trackDataLinkClick(seriesId, sectionTitle, sectionNumber) {
+    analyticsEvent({
+      event: "interaction",
+      interactionType: "link",
+      interactionValue: "click",
+      label: metadataBySeries[seriesId]?.title ?? seriesId,
+      sectionTitle,
+      sectionNumber,
+    });
   }
 </script>
 
@@ -117,7 +138,7 @@
     <span class="legend-text">Updated this week</span>
   </div>
 
-  {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section}
+  {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section, sectionIndex}
     <Section width="wide">
       <section aria-label="{section.title} section">
         <h2>{section.title}</h2>
@@ -125,7 +146,7 @@
           {#each renderCards(section.category) as [seriesId, row]}
             <button
               class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}"
-              on:click={() => toggleCard(seriesId)}
+              on:click={() => toggleCard(seriesId, section.title, String(sectionIndex + 1))}
               aria-expanded={expandedCards[seriesId] ? "true" : "false"}
               aria-label="{expandedCards[seriesId]
                 ? 'Collapse'
@@ -198,7 +219,6 @@
                         {metadataBySeries}
                         change={getChangeValue(
                           row,
-                          metadataBySeries[seriesId],
                           metadataBySeries[seriesId]?.units === "percentage"
                         )}
                         units={metadataBySeries[seriesId]?.units}
@@ -268,7 +288,7 @@
                       </p>
                     </div>
                     <div class="indicators-row">
-                      {#each [{ label: undefined, getValue: (r, m, isP) => getChangeValue(r, m, isP) }, { label: "year", getValue: (r, m, isP) => getYearOverYearChange(r, m, isP) }] as indicator}
+                      {#each [{ label: undefined, getValue: (r, isP) => getChangeValue(r, isP) }, { label: "year", getValue: (r, isP) => getYearOverYearChange(r, isP) }] as indicator}
                         <div class="indicators-child">
                           <ChangeIndicator
                             seriesId={indicator.label ? undefined : seriesId}
@@ -278,7 +298,6 @@
                             label={indicator.label}
                             change={indicator.getValue(
                               row,
-                              metadataBySeries[seriesId],
                               metadataBySeries[seriesId]?.units === "percentage"
                             )}
                             units={metadataBySeries[seriesId]?.units}
@@ -291,6 +310,7 @@
                         href={metadataBySeries[seriesId]?.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        on:click={() => trackDataLinkClick(seriesId, section.title, String(sectionIndex + 1))}
                       >
                         Get the data for {(
                           metadataBySeries[seriesId]?.title ?? seriesId
@@ -801,6 +821,12 @@
     .card-header-right {
       justify-content: space-between;
       gap: 8px;
+    }
+
+    .updated-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
     }
 
     .updated-dot-inline {

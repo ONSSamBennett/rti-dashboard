@@ -85,14 +85,10 @@ export async function load({ fetch }) {
 
     result[series_id] = {
       ...latest,
-      // Keep old names for backward compatibility
-      month_over_month_change: pop,
-      month_over_month_percent: pop_percent,
-      year_over_year_change: yoy,
-      year_over_year_percent: yoy_percent,
-      // Add new names that are more accurate
       period_over_period_change: pop,
       period_over_period_percent: pop_percent,
+      year_over_year_change: yoy,
+      year_over_year_percent: yoy_percent,
       full_series: entries,
     };
   }
