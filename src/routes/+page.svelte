@@ -10,11 +10,13 @@
     Divider,
     AnalyticsBanner,
     analyticsEvent,
+    Button,
   } from "@onsvisual/svelte-components";
   import LineChartSimple from "$lib/LineChartSimple.svelte";
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
   import { format } from "d3-format";
+  import { makeDataFile } from "$lib/dataDownload.js";
   export let data;
 
   const { metadataBySeries } = data;
@@ -106,7 +108,7 @@
   function toggleCard(seriesId, sectionTitle, sectionNumber) {
     const wasExpanded = expandedCards[seriesId];
     expandedCards[seriesId] = !expandedCards[seriesId];
-    
+
     // Track analytics
     analyticsEvent({
       event: "interaction",
@@ -128,6 +130,24 @@
       sectionNumber,
     });
   }
+
+  function downloadData() {
+    const dataFile = makeDataFile(latestBySeries, metadataBySeries, data.dates);
+    const link = document.createElement("a");
+    link.href = dataFile.href;
+    link.download = `rti-dashboard-data-${dataFile.publicationDate}.csv`;
+    link.click();
+
+    // Track analytics
+    analyticsEvent({
+      event: "interaction",
+      interactionType: "button",
+      interactionValue: "click",
+      label: "Download all data",
+      sectionTitle: "Data download",
+      sectionNumber: "footer",
+    });
+  }
 </script>
 
 <Embed>
@@ -146,7 +166,8 @@
           {#each renderCards(section.category) as [seriesId, row]}
             <button
               class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}"
-              on:click={() => toggleCard(seriesId, section.title, String(sectionIndex + 1))}
+              on:click={() =>
+                toggleCard(seriesId, section.title, String(sectionIndex + 1))}
               aria-expanded={expandedCards[seriesId] ? "true" : "false"}
               aria-label="{expandedCards[seriesId]
                 ? 'Collapse'
@@ -310,13 +331,18 @@
                         href={metadataBySeries[seriesId]?.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        on:click={() => trackDataLinkClick(seriesId, section.title, String(sectionIndex + 1))}
+                        on:click={() =>
+                          trackDataLinkClick(
+                            seriesId,
+                            section.title,
+                            String(sectionIndex + 1)
+                          )}
                       >
-                        Get the data for {(
+                        Go to the {(
                           metadataBySeries[seriesId]?.title ?? seriesId
                         )
                           .toLowerCase()
-                          .replace("uk", "UK")}
+                          .replace("uk", "UK")} dataset
                         <span class="screen-reader-only"
                           >(opens in new tab)</span
                         >
@@ -363,6 +389,28 @@
     </Section>
     <Divider hr="full" />
   {/each}
+
+  <Section width="wide">
+    <div class="download-section">
+      <h2>Download dashboard data</h2>
+      <div>
+        <p>
+          Download all indicator data from this dashboard in a single CSV file.
+          The file includes all series with their complete time series data.
+        </p>
+        <Button
+          type="button"
+          variant="secondary"
+          icon="download"
+          iconPosition="before"
+          small={true}
+          on:click={downloadData}
+        >
+          Download all data (CSV)
+        </Button>
+      </div>
+    </div>
+  </Section>
 </Embed>
 
 <style>
@@ -838,6 +886,49 @@
       margin-left: 4px;
       vertical-align: middle;
       left: -2px;
+    }
+  }
+
+  /* Download section styles */
+  .download-section {
+    padding: 0 0 32px 0;
+    max-width: 950px;
+    margin: 0 auto;
+  }
+
+  .download-section h2 {
+    margin-bottom: 0px;
+    margin-top: 0;
+  }
+
+  .download-section p {
+    color: #666;
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  @media screen and (max-width: 490px) {
+    .download-section {
+      text-align: center;
+    }
+
+    .download-section p {
+      margin-bottom: 24px;
+    }
+  }
+
+  @media screen and (min-width: 491px) {
+    .download-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+    }
+
+    .download-section > div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
     }
   }
 </style>
