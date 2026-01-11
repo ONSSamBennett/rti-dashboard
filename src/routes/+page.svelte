@@ -148,14 +148,29 @@
       sectionNumber: "footer",
     });
   }
+
+  // Calculate data file to get size
+  $: dataFile = makeDataFile(latestBySeries, metadataBySeries, data.dates);
+  $: fileSizeKB = ((dataFile?.blob?.size || 0) / 1000).toFixed(0);
 </script>
 
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
 
-  <div class="mobile-legend" aria-hidden="true">
-    <span class="updated-dot" aria-hidden="true" />
-    <span class="legend-text">Updated this week</span>
+  <Section width="wide">
+    <p style="max-width: 950px; margin: 0 auto; color: #666; display: flex; align-items: center; gap: 8px;">
+      Click on any row to view more detail for that indicator.
+      <img src="img/click.svg" alt="" aria-hidden="true" style="transform: scale(0.8);" />
+    </p>
+
+    <div class="mobile-legend" aria-hidden="true">
+      <span class="updated-dot" aria-hidden="true" />
+      <span class="legend-text">Updated this week</span>
+    </div>
+  </Section>
+
+  <div class="first-divider">
+    <Divider hr="full" />
   </div>
 
   {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section, sectionIndex}
@@ -200,7 +215,7 @@
                     {/if}
                   </svg>
                   <h3 class="card-title">
-                    {metadataBySeries[seriesId]?.title ?? seriesId}
+                    <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
                     {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === "true"}
                       <span class="screen-reader-only">Updated this week.</span>
                       <span class="updated-dot-inline" aria-hidden="true" />
@@ -392,12 +407,13 @@
 
   <Section width="wide">
     <div class="download-section">
-      <h2>Download dashboard data</h2>
-      <div>
+      <div class="download-content">
+        <h2>Download dashboard data</h2>
         <p>
-          Download all indicator data from this dashboard in a single CSV file.
-          The file includes all series with their complete time series data.
+          Download all indicator data in this dashboard in a single CSV file.
         </p>
+      </div>
+      <div class="download-button-wrapper">
         <Button
           type="button"
           variant="secondary"
@@ -406,7 +422,7 @@
           small={true}
           on:click={downloadData}
         >
-          Download all data (CSV)
+          Download data (CSV, {fileSizeKB}KB)
         </Button>
       </div>
     </div>
@@ -476,7 +492,7 @@
 
   .card:focus-visible {
     outline: 3px solid #222;
-    outline-offset: 2px;
+    outline-offset: 1px;
   }
 
   /* Typography inside cards */
@@ -593,6 +609,18 @@
     flex: 1;
     color: #206095;
     text-wrap: balance;
+  }
+
+  .card-title-text {
+    display: inline;
+  }
+
+  .card:focus-visible .card-title-text {
+    background-color: #fbc900;
+    text-decoration: underline;
+    text-decoration-color: #000;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 3px;
   }
 
   .compact-change {
@@ -755,14 +783,14 @@
     display: none;
     align-items: center;
     gap: 2px;
-    padding: 12px 0;
+    padding: 4px 0;
     font-size: 0.9rem;
     color: #666;
   }
 
   .legend-text {
     font-weight: 400;
-    font-size: 14px;
+    font-size: 16px;
   }
 
   /* Mobile breakpoints: below 720px - shared styles */
@@ -889,6 +917,10 @@
     }
   }
 
+  .first-divider {
+    margin-top: -25px;
+  }
+
   /* Download section styles */
   .download-section {
     padding: 0 0 32px 0;
@@ -896,12 +928,13 @@
     margin: 0 auto;
   }
 
-  .download-section h2 {
+  .download-content h2 {
     margin-bottom: 0px;
     margin-top: 0;
+    padding-bottom: 6px;
   }
 
-  .download-section p {
+  .download-content p {
     color: #666;
     margin-bottom: 0;
     margin-top: 0;
@@ -909,26 +942,25 @@
 
   @media screen and (max-width: 490px) {
     .download-section {
-      text-align: center;
+      text-align: left;
     }
 
-    .download-section p {
-      margin-bottom: 24px;
+    .download-content p {
+      margin-bottom: 16px;
     }
   }
 
   @media screen and (min-width: 491px) {
     .download-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
     }
 
-    .download-section > div {
+    .download-button-wrapper {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 24px;
     }
   }
 </style>

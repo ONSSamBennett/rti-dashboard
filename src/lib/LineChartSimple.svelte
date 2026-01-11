@@ -384,6 +384,17 @@
     {#if width}
       {#if transformedData.length > 0}
         <svg {width} {height} class="chart" aria-hidden="true">
+          <!-- Thousands label -->
+          {#if thousandsBoolean}
+            <text
+              x={margin.left + 5}
+              y="15"
+              class="small"
+            >
+              thousands
+            </text>
+          {/if}
+
           <!-- Y grid/ticks -->
           <g class="y-ticks">
             {#each yTicks as tick (tick)}

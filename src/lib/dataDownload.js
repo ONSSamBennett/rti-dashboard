@@ -30,7 +30,7 @@ export function makeDataFile(latestBySeries, metadataBySeries, dates) {
   csv += `Source: Office for National Statistics\n\n`;
   csv += `Notes:\n`;
   csv += `"1. This file contains all indicator series from the Real-time indicators dashboard."\n`;
-  csv += `"2. Each series has its own frequency of updates (daily, weekly, monthly, quarterly)."\n`;
+  csv += `"2. Each series has its own frequency of updates (daily, weekly, monthly)."\n`;
   csv += `"3. For full details and methodology, visit: https://www.ons.gov.uk/economy/economicoutputandproductivity/output/bulletins/economicactivityandsocialchangeintheukrealtimeindicators/latest"\n\n`;
 
   // Create column headers

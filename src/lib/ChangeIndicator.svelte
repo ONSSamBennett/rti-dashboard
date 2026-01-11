@@ -75,8 +75,8 @@
   let changeContextLabel;
 
   if (label === "year") {
-    // Second indicator always shows "Past year"
-    changeContextLabel = "Past year";
+    // Second indicator always shows "From past year"
+    changeContextLabel = "From past year";
   } else {
     // First indicator: check the frequency from metadata
     const updated = metadataBySeries?.[seriesId]?.updated?.toLowerCase?.();
@@ -87,13 +87,13 @@
       updated === "weekly" ||
       updated === "week"
     ) {
-      changeContextLabel = "Past week";
+      changeContextLabel = "From past week";
     } else if (updated === "monthly" || updated === "month") {
-      changeContextLabel = "Past month";
+      changeContextLabel = "From past month";
     } else if (updated === "quarterly" || updated === "quarter") {
-      changeContextLabel = "Past quarter";
+      changeContextLabel = "From past quarter";
     } else {
-      changeContextLabel = "Past period";
+      changeContextLabel = "From past period";
     }
   }
 </script>
