@@ -19,7 +19,7 @@
   import { makeDataFile } from "$lib/dataDownload.js";
   export let data;
 
-  const { metadataBySeries } = data;
+  const { metadataBySeries, updatedBySeries } = data;
 
   const { latestBySeries } = data;
   const dateCurrent = new Date(data.dates.current);
@@ -85,17 +85,17 @@
   }
 
   function getTimePeriod(metadata) {
-    const updated = metadata?.updated?.toLowerCase?.();
+    const indicator_period = metadata?.indicator_period?.toLowerCase?.();
     if (
-      updated === "daily" ||
-      updated === "day" ||
-      updated === "weekly" ||
-      updated === "week"
+      indicator_period === "daily" ||
+      indicator_period === "day" ||
+      indicator_period === "weekly" ||
+      indicator_period === "week"
     ) {
       return "week";
-    } else if (updated === "monthly" || updated === "month") {
+    } else if (indicator_period === "monthly" || indicator_period === "month") {
       return "month";
-    } else if (updated === "quarterly" || updated === "quarter") {
+    } else if (indicator_period === "quarterly" || indicator_period === "quarter") {
       return "quarter";
     } else {
       return "period";
@@ -153,6 +153,10 @@
   $: dataFile = makeDataFile(latestBySeries, metadataBySeries, data.dates);
   $: fileSizeKB = ((dataFile?.blob?.size || 0) / 1000).toFixed(0);
 </script>
+
+<svelte:head>
+  <title>Real-time Indicators Dashboard</title>
+</svelte:head>
 
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
@@ -216,7 +220,7 @@
                   </svg>
                   <h3 class="card-title">
                     <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
-                    {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === "true"}
+                    {#if String(updatedBySeries[seriesId]).toLowerCase() === "true"}
                       <span class="screen-reader-only">Updated this week.</span>
                       <span class="updated-dot-inline" aria-hidden="true" />
                       <span class="updated-flag-top-row">
@@ -239,7 +243,7 @@
                         >
                         up to<br />{metadataBySeries[
                           seriesId
-                        ]?.updated?.toLowerCase() === "monthly"
+                        ]?.indicator_period?.toLowerCase() === "monthly"
                           ? row.date.toLocaleDateString("en-GB", {
                               year: "numeric",
                               month: "long",
@@ -261,9 +265,11 @@
                         showLabel={false}
                       />
                     </div>
+                  {:else}
+                    <div class="header-spacer"></div>
                   {/if}
                   <div class="updated-flag-container">
-                    {#if String(metadataBySeries[seriesId]?.updated_this_week).toLowerCase() === "true"}
+                    {#if String(updatedBySeries[seriesId]).toLowerCase() === "true"}
                       <span class="updated-flag"
                         ><span class="updated-dot" aria-hidden />Updated this
                         week</span
@@ -295,7 +301,7 @@
                       "TRUE"
                         ? seriesId
                         : null}
-                      updated={metadataBySeries[seriesId]?.updated}
+                      indicator_period={metadataBySeries[seriesId]?.indicator_period}
                       meta={{
                         yMinMode:
                           metadataBySeries[seriesId]?.yMinMode ?? "auto",
@@ -311,13 +317,12 @@
                       <p style="font-weight:normal; font-size:14px; color:#666">
                         up to {metadataBySeries[
                           seriesId
-                        ]?.updated?.toLowerCase() === "monthly"
+                        ]?.indicator_period?.toLowerCase() === "monthly"
                           ? row.date.toLocaleDateString("en-GB", {
                               year: "numeric",
                               month: "long",
                             })
                           : row.date.toLocaleDateString("en-GB", {
-                              year: "numeric",
                               month: "long",
                               day: "numeric",
                             })}
@@ -469,7 +474,7 @@
     text-align: left;
 
     background: #f5f5f5;
-    padding: 16px 20px 20px 20px;
+    padding: 15px 20px 20px 20px;
     cursor: pointer;
     transition: padding 0.3s ease, background 0.3s ease;
     width: 100%;
@@ -477,7 +482,12 @@
   }
 
   .card.collapsed {
-    padding: 16px 20px;
+    padding: 15px 20px 20px 20px;
+  }
+
+  .header-spacer {
+    height: 45.547px;
+    background-color: red;
   }
 
   @media (hover: hover) {
@@ -771,7 +781,7 @@
     }
 
     .card.collapsed {
-      padding: 16px 16px 12px 16px;
+      padding: 16px 16px 16px 16px;
     }
 
     .subtitle {
@@ -797,6 +807,10 @@
   @media screen and (max-width: 720px) {
     h2 {
       padding: 0 0 4px 0;
+    }
+
+    .cards {
+      gap: 20px;
     }
 
     .card h3 {

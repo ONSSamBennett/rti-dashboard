@@ -79,18 +79,18 @@
     changeContextLabel = "From past year";
   } else {
     // First indicator: check the frequency from metadata
-    const updated = metadataBySeries?.[seriesId]?.updated?.toLowerCase?.();
+    const indicator_period = metadataBySeries?.[seriesId]?.indicator_period?.toLowerCase?.();
 
     if (
-      updated === "daily" ||
-      updated === "day" ||
-      updated === "weekly" ||
-      updated === "week"
+      indicator_period === "daily" ||
+      indicator_period === "day" ||
+      indicator_period === "weekly" ||
+      indicator_period === "week"
     ) {
       changeContextLabel = "From past week";
-    } else if (updated === "monthly" || updated === "month") {
+    } else if (indicator_period === "monthly" || indicator_period === "month") {
       changeContextLabel = "From past month";
-    } else if (updated === "quarterly" || updated === "quarter") {
+    } else if (indicator_period === "quarterly" || indicator_period === "quarter") {
       changeContextLabel = "From past quarter";
     } else {
       changeContextLabel = "From past period";

@@ -18,7 +18,7 @@
   export let thousands = false;
   export let series_id = null; // NEW: identifier for this series
   export let thinSeries = null; // NEW: which series_id should be thinner
-  export let updated = null; // NEW: frequency of updates (e.g., "monthly", "weekly")
+  export let indicator_period = null; // NEW: frequency for date formatting (e.g., "monthly", "weekly")
 
   // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
   $: indexBoolean = (() => {
@@ -173,17 +173,20 @@
   // Add padding to bottom min (expand downward).
   // For index charts: apply 10% of the final axis range as bottom gap (consistent visual spacing).
   // For other charts: use yPadding as percentage of computed min.
+  // Avoid inverted domain when top and bottom collide.
   $: paddedMin = (() => {
+    let min;
     if (indexBoolean) {
       // For index charts: reserve 10% of the final range below the data
       // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
       // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
       const finalRange = topMax - dataYMin;
-      return dataYMin - 0.2 * finalRange;
+      min = dataYMin - 0.2 * finalRange;
     } else {
       // For non-index charts: use yPadding as percentage of computedYMin
-      return computedYMin - Math.abs(computedYMin) * yPadding;
+      min = computedYMin - Math.abs(computedYMin) * yPadding;
     }
+    return Math.min(min, paddedMax - Number.EPSILON);
   })();
 
   // Add padding to top max (expand upward).
@@ -200,9 +203,6 @@
       return topMax;
     }
   })();
-
-  // Avoid inverted domain when top and bottom collide
-  $: paddedMin = Math.min(paddedMin, paddedMax - Number.EPSILON);
 
   $: y = scaleLinear()
     .domain([paddedMin, paddedMax])
@@ -306,7 +306,7 @@
   };
 
   $: firstDate = firstDataPoint
-    ? updated?.toLowerCase() === "monthly"
+    ? indicator_period?.toLowerCase() === "monthly"
       ? firstDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -319,7 +319,7 @@
     : "";
 
   $: lastDate = lastDataPoint
-    ? updated?.toLowerCase() === "monthly"
+    ? indicator_period?.toLowerCase() === "monthly"
       ? lastDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -332,7 +332,7 @@
     : "";
 
   $: maxDate = maxDataPoint
-    ? updated?.toLowerCase() === "monthly"
+    ? indicator_period?.toLowerCase() === "monthly"
       ? maxDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -345,7 +345,7 @@
     : "";
 
   $: minDate = minDataPoint
-    ? updated?.toLowerCase() === "monthly"
+    ? indicator_period?.toLowerCase() === "monthly"
       ? minDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -361,7 +361,7 @@
   $: formattedMaxValue = maxDataPoint ? formatSRValue(maxDataPoint[yKey]) : "";
   $: formattedMinValue = minDataPoint ? formatSRValue(minDataPoint[yKey]) : "";
 
-  $: datePreposition = updated?.toLowerCase() === "monthly" ? "in" : "on";
+  $: datePreposition = indicator_period?.toLowerCase() === "monthly" ? "in" : "on";
 
   $: latestIsHighest =
     lastDataPoint && maxDataPoint
@@ -509,7 +509,7 @@
                   dy="1.2em"
                   style="fill:#666; font-weight: 400;"
                 >
-                  {updated?.toLowerCase() === "monthly"
+                  {indicator_period?.toLowerCase() === "monthly"
                     ? formatLastDateMonthly(lastPoint[xKey])
                     : lastDateStr}
                 </tspan>

@@ -4,6 +4,7 @@ import { csvParse, autoType } from "d3-dsv";
 const dataUrl = `${base}/data/data.csv`;
 const datesUrl = `${base}/data/dates.json`;
 const metadataUrl = `${base}/data/metadata.csv`;
+const updatedUrl = `${base}/data/updated.csv`;
 
 // Helper function to determine lookback periods based on frequency
 function getLookbackPeriods(frequency) {
@@ -37,6 +38,15 @@ export async function load({ fetch }) {
   const metadataBySeries = {};
   for (const meta of metadataArray) {
     metadataBySeries[meta.series_id] = meta;
+  }
+
+  // Load updated_this_week separately
+  const updatedStr = await (await fetch(updatedUrl)).text();
+  const updatedArray = csvParse(updatedStr, autoType);
+  
+  const updatedBySeries = {};
+  for (const item of updatedArray) {
+    updatedBySeries[item.series_id] = item.updated_this_week;
   }
 
   const str = await (await fetch(dataUrl)).text();
@@ -97,6 +107,7 @@ export async function load({ fetch }) {
     array,
     latestBySeries: result,
     metadataBySeries,
+    updatedBySeries,
     dates,
   };
 }
