@@ -196,7 +196,7 @@
               <div class="card-header">
                 <div class="title-with-arrow">
                   <svg
-                    class="twisty-arrow {expandedCards[seriesId]
+                    class="expand-icon {expandedCards[seriesId]
                       ? 'expanded'
                       : ''}"
                     width="24"
@@ -204,19 +204,18 @@
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    {#if expandedCards[seriesId]}
-                      <path
-                        d="M5 12 L19 12"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                      />
-                    {:else}
-                      <path
-                        d="M12 5 L12 19 M5 12 L19 12"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                      />
-                    {/if}
+                    <path
+                      class="icon-vertical"
+                      d="M12 5 L12 19"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      class="icon-horizontal"
+                      d="M5 12 L19 12"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    />
                   </svg>
                   <h3 class="card-title">
                     <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
@@ -593,21 +592,34 @@
     min-height: 32px;
   }
 
-  .twisty-arrow {
+  .expand-icon {
     flex-shrink: 0;
-    transition: all 0.3s ease;
     margin-top: 0;
     display: block;
     outline: none;
     border: none;
   }
 
-  .twisty-arrow path {
+  .expand-icon path {
     stroke: rgb(55, 55, 55);
+    transition: transform 0.2s ease;
+    transform-origin: center;
   }
 
-  .twisty-arrow.expanded {
-    /* No rotation needed for +/- icons */
+  .expand-icon .icon-vertical {
+    transform: rotate(0deg);
+  }
+
+  .expand-icon .icon-horizontal {
+    transform: rotate(0deg) scaleX(1);
+  }
+
+  .expand-icon.expanded .icon-vertical {
+    transform: rotate(90deg);
+  }
+
+  .expand-icon.expanded .icon-horizontal {
+    transform: rotate(90deg) scaleX(0);
   }
 
   .card-title {
@@ -749,7 +761,7 @@
     border: 0px solid #666;
   }
 
-  svg:not(.external-icon):not(.twisty-arrow) {
+  svg:not(.external-icon):not(.expand-icon) {
     border: 1px solid #666;
   }
 
