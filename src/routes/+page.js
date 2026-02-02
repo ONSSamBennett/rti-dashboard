@@ -29,7 +29,7 @@ function getLookbackPeriods(frequency) {
 }
 
 export async function load({ fetch }) {
-  const dates = await (await fetch(datesUrl)).json();
+  let dates = await (await fetch(datesUrl)).json();
 
   const metadataStr = await (await fetch(metadataUrl)).text();
   const metadataArray = csvParse(metadataStr, autoType);
@@ -43,6 +43,43 @@ export async function load({ fetch }) {
   // Load updated_this_week separately
   const updatedStr = await (await fetch(updatedUrl)).text();
   const updatedArray = csvParse(updatedStr, autoType);
+  
+  // Handle "auto" dates by finding the most recent date_of_update from updated.csv
+  if (dates.current === "auto" || dates.next === "auto") {
+    // Parse dates from updated.csv (format: YYYY-MM-DD)
+    const updateDates = updatedArray
+      .map((row) => {
+        if (!row.date_of_update) return null;
+        const dateStr = String(row.date_of_update);
+        const parsed = new Date(dateStr);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      })
+      .filter((d) => d !== null);
+    
+    // Find the most recent date
+    const mostRecentDate = updateDates.length > 0 
+      ? new Date(Math.max(...updateDates))
+      : new Date();
+    
+    // Calculate next update date (7 days later)
+    const nextUpdateDate = new Date(mostRecentDate);
+    nextUpdateDate.setDate(nextUpdateDate.getDate() + 7);
+    
+    // Format dates as YYYY-MM-DD
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+    
+    if (dates.current === "auto") {
+      dates.current = formatDate(mostRecentDate);
+    }
+    if (dates.next === "auto") {
+      dates.next = formatDate(nextUpdateDate);
+    }
+  }
   
   const updatedBySeries = {};
   for (const item of updatedArray) {
