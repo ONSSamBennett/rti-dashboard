@@ -553,6 +553,7 @@
 <style>
   .chart-container {
     display: block;
+    min-height: 200px;
   }
 
   .chart {

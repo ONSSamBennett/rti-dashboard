@@ -1,11 +1,10 @@
 export default function insertHeader(updated, next, latest) {
     const template = `
-    <div style="font-size:28px; font-weight:400" class="col-wrap margin-left--0">
+    <div style="font-size:24px; font-weight:400" class="col-wrap margin-left--0">
     
         <div style="line-height:36px"; class="col col--md-36 col--lg-39">
     
-            Provisional number of deaths for week ending ${latest}
-        </div>
+            Data on the UK economy and society. These faster indicators are created using rapid response surveys, novel data sources, and innovative methods.         </div>
         <div style="text-align: right;" class="col col--md-11 col--lg-20">
             <a
                 href="https://uksa.statisticsauthority.gov.uk/about-the-authority/uk-statistical-system/types-of-official-statistics/">
@@ -30,7 +29,7 @@ export default function insertHeader(updated, next, latest) {
     </p>
     <p style="font-size:18px; margin-left:0px"
     class="col  col--md-one-third col--lg-one-third margin-bottom-sm--3 margin-bottom-md--3 margin-top--0 padding-bottom--0 padding-top--0">
-      <span class="font-weight-700">Contact: </span><a style="font-size:18px" href="mailto:health.data@ons.gov.uk"><span class="visuallyhidden">Email </span>Population Health Monitoring Group</a>
+      <span class="font-weight-700">Contact: </span><a style="font-size:18px" href="mailto:health.data@ons.gov.uk"><span class="visuallyhidden">Email </span>Real Time Indicators team</a>
 </p>
 </div>`;
 

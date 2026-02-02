@@ -277,7 +277,7 @@
                   </div>
                 </div>
               </div>
-              {#if expandedCards[seriesId]}
+              <div class="card-expanded-content" class:hidden={!expandedCards[seriesId]}>
                 <p class="subtitle">
                   {metadataBySeries[seriesId]?.description}
                 </p>
@@ -400,7 +400,7 @@
                     </p>
                   </div>
                 </div>
-              {/if}
+              </div>
             </button>
           {/each}
         </div>
@@ -635,6 +635,13 @@
 
   .card-title-text {
     display: inline;
+  }
+
+  .card-expanded-content.hidden {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
   }
 
   .card:focus-visible .card-title-text {
