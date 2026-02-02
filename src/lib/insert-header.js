@@ -1,20 +1,6 @@
 export default function insertHeader(updated, next, latest) {
     const template = `
-    <div style="font-size:24px; font-weight:400" class="col-wrap margin-left--0">
     
-        <div style="line-height:36px"; class="col col--md-36 col--lg-39">
-    
-            Data on the UK economy and society. These faster indicators are created using rapid response surveys, novel data sources, and innovative methods.         </div>
-        <div style="text-align: right;" class="col col--md-11 col--lg-20">
-            <a
-                href="https://uksa.statisticsauthority.gov.uk/about-the-authority/uk-statistical-system/types-of-official-statistics/">
-                    <img style="float: right;" class="meta__image meta__image--logo"
-                    src="https://cdn.ons.gov.uk/assets/images/ons-logo/kitemark/v2/uksa-kitemark-en.svg"
-                    alt="These are accredited official statistics. Click for information about types of official statistics."
-                    min-height="90" min-width="90">
-            </a>
-        </div>
-    </div>
 
     <div class="col-wrap margin-top--3 margin-left--0">
    
