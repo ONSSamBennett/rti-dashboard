@@ -20,6 +20,20 @@ export default function insertHeader(updated, next, latest) {
 </div>`;
 
     if (window?.parent?.document) {
+        // Insert "Dashboard" before the h1 title
+        const title = window.parent.document.getElementsByClassName("page-neutral-intro__title")?.[0];
+        if (title && !window.parent.document.getElementById("dashboard-prefix")) {
+            const prefix = window.parent.document.createElement('div');
+            prefix.id = "dashboard-prefix";
+            prefix.style.fontSize = "22px";
+            prefix.style.fontWeight = "400";
+            prefix.style.color = "#8D8C8E";
+            prefix.style.paddingBottom = "10px";
+            prefix.textContent = "Dashboard";
+            title.parentNode.insertBefore(prefix, title);
+        }
+
+        // Insert metadata after the intro section
         const header = window.parent.document.getElementsByClassName("page-neutral-intro")?.[1];
         if (header && !window.parent.document.getElementById("dashboard-metadata")) {
             const div = window.parent.document.createElement('div');
