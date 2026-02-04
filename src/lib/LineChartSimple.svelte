@@ -243,9 +243,10 @@
     if (!domainStart || !domainEnd) return changes;
 
     // Year starts (Jan 1)
+    // Add 1 day to domainEnd to ensure the final year boundary is included
     const yearStarts = timeYear.range(
       timeYear.floor(domainStart),
-      timeYear.ceil(domainEnd)
+      timeYear.offset(timeYear.ceil(domainEnd), 1)
     );
     for (const ys of yearStarts) {
       changes.years.push(ys);
