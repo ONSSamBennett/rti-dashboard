@@ -2,7 +2,7 @@ import { base } from "$app/paths";
 import { csvParse, autoType } from "d3-dsv";
 
 const dataUrl = `${base}/data/data.csv`;
-const datesUrl = `${base}/data/dates.json`;
+const datesUrl = `${base}/data/header-details.json`;
 const metadataUrl = `${base}/data/metadata.csv`;
 const updatedUrl = `${base}/data/updated.csv`;
 
