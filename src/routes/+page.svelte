@@ -49,7 +49,9 @@
         year: "numeric",
         month: "long",
         day: "numeric",
-      })
+      }),
+      data.dates.email,
+      data.dates.emailText
     )
   );
 
@@ -357,11 +359,11 @@
                             String(sectionIndex + 1)
                           )}
                       >
-                        Go to the {(
+                        Go to the dataset for {(
                           metadataBySeries[seriesId]?.title ?? seriesId
                         )
                           .toLowerCase()
-                          .replace("uk", "UK")} dataset
+                          .replace("uk", "UK")}
                         <span class="screen-reader-only"
                           >(opens in new tab)</span
                         >
