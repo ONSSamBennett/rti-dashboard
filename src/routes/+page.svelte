@@ -64,7 +64,10 @@
       sectionTitle,
       sectionNumber,
     });
+  
   }
+
+
 
   function renderCards(category) {
     return Object.entries(latestBySeries).filter(
@@ -154,6 +157,10 @@
   // Calculate data file to get size
   $: dataFile = makeDataFile(latestBySeries, metadataBySeries, data.dates);
   $: fileSizeKB = ((dataFile?.blob?.size || 0) / 1000).toFixed(0);
+
+  $: noticeLines = data?.dates?.notice_text
+    ? data.dates.notice_text.split(/\r?\n/)
+    : [];
 </script>
 
 <svelte:head>
@@ -162,6 +169,17 @@
 
 <Embed>
   <AnalyticsBanner {analyticsProps} hideBanner />
+
+  {#if data.dates?.notice_enabled && noticeLines.length}
+    <Section width="wide">
+      <Notice>
+        {#each noticeLines as line}
+          <p>{line}</p>
+        {/each}
+      </Notice>
+    </Section>
+  {/if}
+
 
   <Section width="wide">
     <p style="max-width: 950px; margin: 0 auto; color: #666; display: flex; align-items: center; gap: 8px;">
