@@ -107,9 +107,42 @@
   // Track expanded state for each card
   let expandedCards = {};
 
+  $: visibleSeriesIds = Object.entries(latestBySeries)
+    .filter(
+      ([seriesId]) =>
+        metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
+    )
+    .map(([seriesId]) => seriesId);
+
+  $: anyCardsExpanded = visibleSeriesIds.some(
+    (seriesId) => expandedCards[seriesId]
+  );
+
+  function toggleAllCards() {
+    const nextState = !anyCardsExpanded;
+    const nextExpanded = {};
+
+    visibleSeriesIds.forEach((seriesId) => {
+      nextExpanded[seriesId] = nextState;
+    });
+
+    expandedCards = nextExpanded;
+
+    analyticsEvent({
+      event: "interaction",
+      interactionType: "button",
+      interactionValue: nextState ? "open" : "close",
+      label: nextState ? "Expand all cards" : "Close all cards",
+      sectionTitle: "Dashboard cards",
+      sectionNumber: "all",
+    });
+  }
+
   function toggleCard(seriesId, sectionTitle, sectionNumber) {
-    const wasExpanded = expandedCards[seriesId];
-    expandedCards[seriesId] = !expandedCards[seriesId];
+    expandedCards = {
+      ...expandedCards,
+      [seriesId]: !expandedCards[seriesId],
+    };
 
     // Track analytics
     analyticsEvent({
@@ -164,15 +197,30 @@
   <AnalyticsBanner {analyticsProps} hideBanner />
 
   <Section width="wide">
-    <p style="max-width: 950px; margin: 0 auto; color: #666; display: flex; align-items: center; gap: 8px;">
-      Click on any row to view more detail for that indicator.
-      <img src="img/click.svg" alt="" aria-hidden="true" style="transform: scale(0.8);" />
-    </p>
+    <div class="intro-row">
+      <p class="intro-text">
+        Click on any row to view more detail for that indicator.
+        <img src="img/click.svg" alt="" aria-hidden="true" />
+      </p>
+
+      <div class="cards-controls">
+        <Button
+          type="button"
+          variant="secondary"
+          small={true}
+          aria-pressed={anyCardsExpanded ? "true" : "false"}
+          on:click={toggleAllCards}
+        >
+          {anyCardsExpanded ? "Close all cards" : "Expand all cards"}
+        </Button>
+      </div>
+    </div>
 
     <div class="mobile-legend" aria-hidden="true">
       <span class="updated-dot" aria-hidden="true" />
       <span class="legend-text">Updated this week</span>
     </div>
+
   </Section>
 
   <div class="first-divider">
@@ -819,6 +867,34 @@
     color: #666;
   }
 
+  .intro-row {
+    max-width: 950px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .intro-text {
+    margin: 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 420px;
+  }
+
+  .intro-text img {
+    transform: scale(0.8);
+  }
+
+  .cards-controls {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   .legend-text {
     font-weight: 400;
     font-size: 16px;
@@ -923,6 +999,14 @@
     .mobile-legend {
       display: flex;
       padding: 12px 4px;
+    }
+
+    .intro-row {
+      gap: 8px;
+    }
+
+    .cards-controls {
+      justify-content: flex-start;
     }
 
     .title-with-arrow {
