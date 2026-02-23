@@ -63,22 +63,23 @@
   // Transform values to thousands if requested
   $: transformedData =
     data && Array.isArray(data)
-      ? thousandsBoolean
-        ? data.map((d) => {
-            // Ensure numeric value (handle strings like "742,745")
-            const raw = d[yKey];
-            let val = raw;
-            if (typeof raw === "string") {
-              // remove any commas or whitespace
-              const cleaned = raw.replace(/,/g, "").trim();
-              val = cleaned === "" ? NaN : Number(cleaned);
-            }
-            // If value is not a number, leave as-is (NaN will propagate)
-            const numeric =
-              typeof val === "number" && !isNaN(val) ? val / 1000 : val;
-            return { ...d, [yKey]: numeric };
-          })
-        : data
+      ? (thousandsBoolean
+          ? data.map((d) => {
+              // Ensure numeric value (handle strings like "742,745")
+              const raw = d[yKey];
+              let val = raw;
+              if (typeof raw === "string") {
+                // remove any commas or whitespace
+                const cleaned = raw.replace(/,/g, "").trim();
+                val = cleaned === "" ? NaN : Number(cleaned);
+              }
+              // If value is not a number, leave as-is (NaN will propagate)
+              const numeric =
+                typeof val === "number" && !isNaN(val) ? val / 1000 : val;
+              return { ...d, [yKey]: numeric };
+            })
+          : data
+        ).filter((d) => !startDate || d[xKey] >= startDate)
       : [];
 
   // Fallback to data extent if no start/end provided
@@ -235,6 +236,10 @@
     return date.getMonth() === 6; // July
   }
 
+
+  // New prop: showYearDividersAtDomainEdges (default true for backward compatibility)
+  export let showYearDividersAtDomainEdges = false;
+
   function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
       years: [], // year boundary markers (Jan 1)
@@ -248,7 +253,20 @@
       timeYear.floor(domainStart),
       timeYear.offset(timeYear.ceil(domainEnd), 1)
     );
-    for (const ys of yearStarts) {
+
+
+    // If not showing dividers at domain edges, remove any divider at or outside the domainStart/domainEnd
+    let filteredYearStarts = yearStarts;
+    if (!showYearDividersAtDomainEdges && yearStarts.length > 0) {
+      filteredYearStarts = yearStarts.filter((d) => {
+        // Remove if at or before domainStart, or at or after domainEnd
+        if (d <= domainStart) return false;
+        if (d >= domainEnd) return false;
+        return true;
+      });
+    }
+
+    for (const ys of filteredYearStarts) {
       changes.years.push(ys);
       // Mid-year label (Jul 1) to replicate Q3 labeling
       const mid = new Date(ys.getFullYear(), 6, 1);

@@ -66,6 +66,24 @@
     });
   }
 
+
+  // Compute the global max date across all series
+  function getGlobalMaxDate() {
+    let maxDate = null;
+    Object.values(latestBySeries).forEach(row => {
+      if (row.full_series && Array.isArray(row.full_series)) {
+        row.full_series.forEach(d => {
+          const date = new Date(d.date);
+          if (!isNaN(date)) {
+            if (!maxDate || date > maxDate) maxDate = date;
+          }
+        });
+      }
+    });
+    return maxDate;
+  }
+  const globalMaxDate = getGlobalMaxDate();
+
   function renderCards(category) {
     return Object.entries(latestBySeries).filter(
       ([seriesId]) =>
@@ -337,8 +355,8 @@
                       data={row.full_series}
                       yKey="num_uk"
                       lineColor="#206095"
-                      startDate={new Date(2023, 0, 1)}
-                      endDate={new Date(2025, 11, 17)}
+                      startDate={new Date(2023, 11, 31)}
+                      endDate={globalMaxDate}
                       title={metadataBySeries[seriesId]?.title}
                       description={metadataBySeries[seriesId]?.description}
                       units={metadataBySeries[seriesId]?.units}
@@ -347,7 +365,7 @@
                       thousands={metadataBySeries[seriesId]?.thousands}
                       series_id={seriesId}
                       thinSeries={metadataBySeries[seriesId]?.thin_line ===
-                      "TRUE"
+                        "TRUE"
                         ? seriesId
                         : null}
                       indicator_period={metadataBySeries[seriesId]?.indicator_period}
@@ -356,6 +374,7 @@
                           metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1,
                       }}
+                      showYearDividersAtDomainEdges={false}
                     />
                   </div>
                   <div class="indicators-container">
