@@ -50,6 +50,13 @@
     return Boolean(value);
   }
 
+  function normalizeDp(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const n = typeof value === "number" ? value : Number(String(value).trim());
+    if (!Number.isFinite(n)) return null;
+    return Math.max(0, Math.trunc(n));
+  }
+
   // Internals
   // Determine stroke width based on series_id
   let baseStrokeWidth;
@@ -122,6 +129,10 @@
   // Pull axis settings from metadata (with sensible defaults)
   $: yMinMode = meta?.yMinMode ?? "auto"; // "zero" | "data" | "above-zero" | "auto"
   $: yPadding = meta?.yPadding ?? 0.1; // 10% padding
+
+  // Optional decimal place override for the last-point label (from metadata.csv)
+  $: customDpEnabled = normalizeBoolean(meta?.custom_dp);
+  $: dpOverride = normalizeDp(meta?.dp);
 
   // Data min/max
   $: dataYMin = transformedData?.length
@@ -236,31 +247,25 @@
     return format(hasDecimal ? ".1%" : ".0%");
   })();
 
-  $: customDpBoolean = normalizeBoolean(meta?.custom_dp);
-  $: explicitDp = (() => {
-    if (!customDpBoolean) return null;
-    const raw = meta?.dp;
-    if (raw === null || raw === undefined) return null;
-    const n = Number(String(raw).trim());
-    if (!Number.isFinite(n)) return null;
-    return Math.max(0, Math.min(10, Math.trunc(n)));
-  })();
-
-  function formatEndLabelValue(val) {
+  function formatLastValue(val) {
     if (val === null || val === undefined) return "";
+    const numeric = typeof val === "number" ? val : Number(val);
+    if (!Number.isFinite(numeric)) return "";
 
-    if (explicitDp !== null) {
+    if (customDpEnabled && dpOverride !== null) {
       if (units_chart === "percentage") {
-        return format(`.${explicitDp}%`)(val / 100);
+        return format(`.${dpOverride}%`)(numeric / 100);
       }
-      return format(`,.${explicitDp}f`)(val);
+      return format(`,.${dpOverride}f`)(numeric);
     }
 
     if (units_chart === "percentage") {
-      return val < 20 ? format(".1%")(val / 100) : formatPercent(val / 100);
+      return numeric < 20
+        ? format(".1%")(numeric / 100)
+        : formatPercent(numeric / 100);
     }
 
-    return val < 20 ? format(",.1f")(val) : formatValue(val);
+    return numeric < 20 ? format(",.1f")(numeric) : formatValue(numeric);
   }
 
   const formatLastDate = timeFormat("%-d %b");
@@ -387,12 +392,25 @@
     : null;
 
   $: formatSRValue = (val) => {
+    const numeric = typeof val === "number" ? val : Number(val);
+
+    if (customDpEnabled && dpOverride !== null) {
+      if (units_chart === "percentage") {
+        return Number.isFinite(numeric) ? format(`.${dpOverride}%`)(numeric / 100) : "";
+      } else if (thousandsBoolean) {
+        return Number.isFinite(numeric)
+          ? format(`,.${dpOverride}f`)(numeric) + " thousand"
+          : "";
+      }
+      return Number.isFinite(numeric) ? format(`,.${dpOverride}f`)(numeric) : "";
+    }
+
     if (units_chart === "percentage") {
-      return format(val < 20 ? ".1%" : ".0%")(val / 100);
+      return format(numeric < 20 ? ".1%" : ".0%" )(numeric / 100);
     } else if (thousandsBoolean) {
-      return format(val < 20 ? ",.1f" : ",.0f")(val) + " thousand";
+      return format(numeric < 20 ? ",.1f" : ",.0f")(numeric) + " thousand";
     } else {
-      return format(val < 20 ? ",.1f" : ",.0f")(val);
+      return format(numeric < 20 ? ",.1f" : ",.0f")(numeric);
     }
   };
 
@@ -584,7 +602,7 @@
               >
                 <!-- top line: value -->
                 <tspan x={lastX + 8} dy="0">
-                  {formatEndLabelValue(lastPoint[yKey])}
+                  {formatLastValue(lastPoint[yKey])}
                 </tspan>
                 <!-- bottom line: date -->
                 <tspan

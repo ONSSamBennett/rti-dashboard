@@ -25,7 +25,7 @@
   // Existing numeric formatting
   const formatPercent = format(".0%");
   const formatValue = (val) =>
-    Math.abs(val) < 2 ? format(",.1f")(val) : format(",.0f")(val);
+    Math.abs(val) < 10 ? format(",.1f")(val) : format(",.0f")(val);
 
   // Normalize and guard the numeric change value
   const numericChange = typeof change === "number" ? change : Number(change);

@@ -331,26 +331,21 @@
 
   function getEndLabelDecimalPlaces(seriesId, row) {
     const meta = metadataBySeries?.[seriesId] ?? {};
+    const hasCustomDp = normalizeBoolean(meta.custom_dp);
+    const customDpValue = normalizeNumber(meta.dp);
+    if (
+      hasCustomDp &&
+      typeof customDpValue === "number" &&
+      Number.isFinite(customDpValue) &&
+      !Number.isNaN(customDpValue)
+    ) {
+      return Math.max(0, Math.trunc(customDpValue));
+    }
     const indexBoolean = normalizeBoolean(meta.index);
     const thousandsBoolean = normalizeBoolean(meta.thousands);
     const unitsChart = meta.units_chart;
     const yMinMode = meta.yMinMode ?? "auto";
     const yPadding = meta.yPadding ?? 0.1;
-
-    const customDpBoolean = normalizeBoolean(meta.custom_dp);
-    const explicitDpRaw = meta.dp;
-    const explicitDp = (() => {
-      if (explicitDpRaw === null || explicitDpRaw === undefined) return null;
-      const n = Number(String(explicitDpRaw).trim());
-      if (!Number.isFinite(n)) return null;
-      // keep it sane; chart only supports fixed decimals
-      const clamped = Math.max(0, Math.min(10, Math.trunc(n)));
-      return clamped;
-    })();
-
-    if (customDpBoolean && explicitDp !== null) {
-      return explicitDp;
-    }
 
     const series = row?.full_series;
     if (!Array.isArray(series) || series.length === 0) return null;
@@ -430,26 +425,6 @@
     }
     return out;
   })();
-
-  function getEndLabelDpDisplay(seriesId) {
-    const meta = metadataBySeries?.[seriesId] ?? {};
-    const customDpBoolean = normalizeBoolean(meta.custom_dp);
-    const explicitDpRaw = meta.dp;
-    const explicitDp = (() => {
-      if (explicitDpRaw === null || explicitDpRaw === undefined) return null;
-      const n = Number(String(explicitDpRaw).trim());
-      if (!Number.isFinite(n)) return null;
-      return Math.max(0, Math.min(10, Math.trunc(n)));
-    })();
-
-    if (customDpBoolean && explicitDp !== null) {
-      return `custom: ${explicitDp}`;
-    }
-
-    const dp = endLabelDpBySeries?.[seriesId];
-    if (dp === 0 || dp === 1) return String(dp);
-    return null;
-  }
 </script>
 
 <svelte:head>
@@ -501,7 +476,7 @@
     <Divider hr="full" />
   </div>
 
-  {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section, sectionIndex}
+  {#each [{ title: "Consumer behaviour", category: "consumer" }, { title: "Business and workforce", category: "business" }, { title: "Energy and housing", category: "energy" }, { title: "Transport", category: "transport" }] as section, sectionIndex}
     <Section width="wide">
       <section aria-label="{section.title} section">
         <h2>{section.title}</h2>
@@ -764,8 +739,8 @@
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if getEndLabelDpDisplay(seriesId)}
-                  {getEndLabelDpDisplay(seriesId)}
+                {#if typeof endLabelDpBySeries?.[seriesId] === 'number'}
+                  {endLabelDpBySeries[seriesId]}
                 {:else}
                   N/A
                 {/if}
