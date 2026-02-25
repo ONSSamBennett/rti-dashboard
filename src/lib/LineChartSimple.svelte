@@ -39,6 +39,17 @@
   // NEW: metadata object to drive axis options (and anything else)
   export let meta = {};
 
+  function normalizeBoolean(value) {
+    if (value === true) return true;
+    if (value === false) return false;
+    if (typeof value === "number") return value === 1;
+    if (typeof value === "string") {
+      const v = value.trim().toLowerCase();
+      return v === "true" || v === "1" || v === "yes";
+    }
+    return Boolean(value);
+  }
+
   // Internals
   // Determine stroke width based on series_id
   let baseStrokeWidth;
@@ -224,6 +235,33 @@
     const hasDecimal = yTicks.some((t) => t % 1 !== 0);
     return format(hasDecimal ? ".1%" : ".0%");
   })();
+
+  $: customDpBoolean = normalizeBoolean(meta?.custom_dp);
+  $: explicitDp = (() => {
+    if (!customDpBoolean) return null;
+    const raw = meta?.dp;
+    if (raw === null || raw === undefined) return null;
+    const n = Number(String(raw).trim());
+    if (!Number.isFinite(n)) return null;
+    return Math.max(0, Math.min(10, Math.trunc(n)));
+  })();
+
+  function formatEndLabelValue(val) {
+    if (val === null || val === undefined) return "";
+
+    if (explicitDp !== null) {
+      if (units_chart === "percentage") {
+        return format(`.${explicitDp}%`)(val / 100);
+      }
+      return format(`,.${explicitDp}f`)(val);
+    }
+
+    if (units_chart === "percentage") {
+      return val < 20 ? format(".1%")(val / 100) : formatPercent(val / 100);
+    }
+
+    return val < 20 ? format(",.1f")(val) : formatValue(val);
+  }
 
   const formatLastDate = timeFormat("%-d %b");
   const formatLastDateMonthly = timeFormat("%B");
@@ -546,15 +584,7 @@
               >
                 <!-- top line: value -->
                 <tspan x={lastX + 8} dy="0">
-                  {#if units_chart === "percentage"}
-                    {lastPoint[yKey] < 20
-                      ? format(".1%")(lastPoint[yKey] / 100)
-                      : formatPercent(lastPoint[yKey] / 100)}
-                  {:else}
-                    {lastPoint[yKey] < 20
-                      ? format(",.1f")(lastPoint[yKey])
-                      : formatValue(lastPoint[yKey])}
-                  {/if}
+                  {formatEndLabelValue(lastPoint[yKey])}
                 </tspan>
                 <!-- bottom line: date -->
                 <tspan

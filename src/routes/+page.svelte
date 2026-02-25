@@ -337,6 +337,21 @@
     const yMinMode = meta.yMinMode ?? "auto";
     const yPadding = meta.yPadding ?? 0.1;
 
+    const customDpBoolean = normalizeBoolean(meta.custom_dp);
+    const explicitDpRaw = meta.dp;
+    const explicitDp = (() => {
+      if (explicitDpRaw === null || explicitDpRaw === undefined) return null;
+      const n = Number(String(explicitDpRaw).trim());
+      if (!Number.isFinite(n)) return null;
+      // keep it sane; chart only supports fixed decimals
+      const clamped = Math.max(0, Math.min(10, Math.trunc(n)));
+      return clamped;
+    })();
+
+    if (customDpBoolean && explicitDp !== null) {
+      return explicitDp;
+    }
+
     const series = row?.full_series;
     if (!Array.isArray(series) || series.length === 0) return null;
 
@@ -415,6 +430,26 @@
     }
     return out;
   })();
+
+  function getEndLabelDpDisplay(seriesId) {
+    const meta = metadataBySeries?.[seriesId] ?? {};
+    const customDpBoolean = normalizeBoolean(meta.custom_dp);
+    const explicitDpRaw = meta.dp;
+    const explicitDp = (() => {
+      if (explicitDpRaw === null || explicitDpRaw === undefined) return null;
+      const n = Number(String(explicitDpRaw).trim());
+      if (!Number.isFinite(n)) return null;
+      return Math.max(0, Math.min(10, Math.trunc(n)));
+    })();
+
+    if (customDpBoolean && explicitDp !== null) {
+      return `custom: ${explicitDp}`;
+    }
+
+    const dp = endLabelDpBySeries?.[seriesId];
+    if (dp === 0 || dp === 1) return String(dp);
+    return null;
+  }
 </script>
 
 <svelte:head>
@@ -594,6 +629,8 @@
                         yMinMode:
                           metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1,
+                        custom_dp: metadataBySeries[seriesId]?.custom_dp,
+                        dp: metadataBySeries[seriesId]?.dp,
                       }}
                       showYearDividersAtDomainEdges={false}
                     />
@@ -727,8 +764,8 @@
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
               <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if endLabelDpBySeries?.[seriesId] === 0 || endLabelDpBySeries?.[seriesId] === 1}
-                  {endLabelDpBySeries[seriesId]}
+                {#if getEndLabelDpDisplay(seriesId)}
+                  {getEndLabelDpDisplay(seriesId)}
                 {:else}
                   N/A
                 {/if}
