@@ -283,6 +283,7 @@
   // Line generator
   $: lineFn = line()
     .curve(curveLinear)
+    .defined((d) => !isMissingValue(d[yKey]))
     .x((d) => x(d[xKey]))
     .y((d) => y(d[yKey]));
 
@@ -290,19 +291,52 @@
     return xPos < 20 || w - xPos < 20;
   }
 
-  // Calculate if there's a significant gap at the start (no data period)
-  $: hasNoDataPeriod = (() => {
-    if (!transformedData.length || !effectiveStart) return false;
+  const NO_DATA_GAP_THRESHOLD_DAYS = 30;
 
-    const firstDataDate = transformedData[0][xKey];
-    const daysDiff = (firstDataDate - effectiveStart) / (1000 * 60 * 60 * 24);
+  function isMissingValue(val) {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string") return val.trim() === "";
+    if (typeof val === "number") return Number.isNaN(val);
+    return false;
+  }
 
-    // If first data point is more than 30 days after axis start, show no-data indicator
-    return daysDiff > 30;
+  // Grey bands:
+  // 1) Start-of-series band when the series begins well after the axis start
+  // 2) Internal bands for contiguous rows where the value is missing
+  $: dataGaps = (() => {
+    if (!transformedData.length) return [];
+
+    const sorted = [...transformedData].sort((a, b) => a[xKey] - b[xKey]);
+    const gaps = [];
+
+    const firstRowDate = sorted[0]?.[xKey];
+    if (effectiveStart && firstRowDate) {
+      const daysDiff = (firstRowDate - effectiveStart) / (1000 * 60 * 60 * 24);
+      if (daysDiff > NO_DATA_GAP_THRESHOLD_DAYS) {
+        gaps.push({ start: effectiveStart, end: firstRowDate });
+      }
+    }
+
+    let gapStart = null;
+    for (let i = 0; i < sorted.length; i++) {
+      const d = sorted[i];
+      const missing = isMissingValue(d[yKey]);
+      if (missing) {
+        if (!gapStart) gapStart = d[xKey];
+      } else {
+        if (gapStart) {
+          gaps.push({ start: gapStart, end: d[xKey] });
+          gapStart = null;
+        }
+      }
+    }
+
+    if (gapStart) {
+      gaps.push({ start: gapStart, end: sorted[sorted.length - 1][xKey] });
+    }
+
+    return gaps;
   })();
-
-  $: noDataRectEnd =
-    hasNoDataPeriod && transformedData.length ? transformedData[0][xKey] : null;
 
   // Screenreader text calculations
   $: firstDataPoint = data?.length ? data[0] : null;
@@ -467,18 +501,18 @@
             {/each}
           </g>
 
-          <!-- No data period indicator -->
-          {#if hasNoDataPeriod && noDataRectEnd}
+          <!-- No data period indicator for all gaps -->
+          {#each dataGaps as gap}
             <rect
               class="no-data-rect"
-              x={x(effectiveStart)}
+              x={x(gap.start)}
               y={margin.top}
-              width={Math.max(0, x(noDataRectEnd) - x(effectiveStart))}
+              width={Math.max(0, x(gap.end) - x(gap.start))}
               height={height - margin.bottom - margin.top}
               fill="rgba(200, 200, 200, 0.3)"
               stroke="none"
             />
-          {/if}
+          {/each}
 
           <!-- Line series -->
           <g class="plot">

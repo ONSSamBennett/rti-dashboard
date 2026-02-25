@@ -16,6 +16,7 @@
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
   import { format } from "d3-format";
+  import { scaleLinear } from "d3-scale";
   import { makeDataFile } from "$lib/dataDownload.js";
   export let data;
 
@@ -212,6 +213,208 @@
   $: noticeLines = data?.dates?.notice_text
     ? data.dates.notice_text.split(/\r?\n/)
     : [];
+
+  function getSummaryTableEntries() {
+    return ["consumer", "business", "energy", "transport"].flatMap(
+      (category) =>
+        Object.entries(latestBySeries).filter(
+          ([seriesId]) =>
+            metadataBySeries[seriesId]?.category === category &&
+            metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
+        )
+    );
+  }
+
+  function formatNumberForCsv(value) {
+    if (value === null || value === undefined) return "";
+    if (typeof value !== "number") return String(value);
+    return String(Number(value.toFixed(5)));
+  }
+
+  function formatDateForCsv(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function escapeCsv(value) {
+    const s = value === null || value === undefined ? "" : String(value);
+    if (/[\r\n",]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+    return s;
+  }
+
+  function downloadSummaryTableCsv() {
+    const headers = [
+      "Series",
+      "Unit Label",
+      "Data frequency",
+      "Latest Value",
+      "Date Last Updated",
+      "Date for Latest Change",
+      "Date for YoY",
+      "Latest Change (Raw)",
+      "Latest Change (%)",
+      "YoY Change (Raw)",
+      "YoY Change (%)",
+    ];
+
+    const rows = getSummaryTableEntries().map(([seriesId, row]) => {
+      const unitLabel = metadataBySeries[seriesId]?.units ?? "";
+      const frequency =
+        metadataBySeries[seriesId]?.data_frequency ??
+        metadataBySeries[seriesId]?.indicator_period ??
+        "";
+
+      // These columns are *relative percent changes* (not percentage-point deltas)
+      const percentSuffix = "%";
+
+      return [
+        metadataBySeries[seriesId]?.title ?? seriesId,
+        unitLabel,
+        frequency,
+        formatNumberForCsv(row.num_uk),
+        formatDateForCsv(row.date),
+        formatDateForCsv(row.period_over_period_date),
+        formatDateForCsv(row.year_over_year_date),
+        formatNumberForCsv(row.period_over_period_change),
+        row.period_over_period_percent !== null &&
+        row.period_over_period_percent !== undefined
+          ? `${formatNumberForCsv(row.period_over_period_percent)}${percentSuffix}`
+          : "",
+        formatNumberForCsv(row.year_over_year_change),
+        row.year_over_year_percent !== null && row.year_over_year_percent !== undefined
+          ? `${formatNumberForCsv(row.year_over_year_percent)}${percentSuffix}`
+          : "",
+      ];
+    });
+
+    const csv = [headers, ...rows]
+      .map((line) => line.map(escapeCsv).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rti-dashboard-summary-table-${data?.dates?.current ?? ""}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const chartStartDate = new Date(2023, 11, 31);
+
+  function normalizeBoolean(value) {
+    if (value === true) return true;
+    if (value === false) return false;
+    if (typeof value === "number") return value === 1;
+    if (typeof value === "string") {
+      const v = value.trim().toLowerCase();
+      return v === "true" || v === "1" || v === "yes";
+    }
+    return Boolean(value);
+  }
+
+  function normalizeNumber(value) {
+    if (value === null || value === undefined) return NaN;
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const cleaned = value.replace(/,/g, "").trim();
+      if (cleaned === "") return NaN;
+      return Number(cleaned);
+    }
+    return Number(value);
+  }
+
+  function getEndLabelDecimalPlaces(seriesId, row) {
+    const meta = metadataBySeries?.[seriesId] ?? {};
+    const indexBoolean = normalizeBoolean(meta.index);
+    const thousandsBoolean = normalizeBoolean(meta.thousands);
+    const unitsChart = meta.units_chart;
+    const yMinMode = meta.yMinMode ?? "auto";
+    const yPadding = meta.yPadding ?? 0.1;
+
+    const series = row?.full_series;
+    if (!Array.isArray(series) || series.length === 0) return null;
+
+    const transformedData = series
+      .map((d) => {
+        const raw = normalizeNumber(d?.num_uk);
+        const numeric = thousandsBoolean && !Number.isNaN(raw) ? raw / 1000 : raw;
+        return { ...d, num_uk: numeric };
+      })
+      .filter((d) => !chartStartDate || d?.date >= chartStartDate);
+
+    if (!transformedData.length) return null;
+
+    const numericValues = transformedData
+      .map((d) => normalizeNumber(d?.num_uk))
+      .filter((v) => typeof v === "number" && !Number.isNaN(v));
+    if (!numericValues.length) return null;
+
+    const dataYMin = Math.min(...numericValues);
+    const dataYMax = Math.max(...numericValues);
+    const topMax = dataYMax;
+
+    const computedYMin = (() => {
+      if (indexBoolean && yMinMode === "auto") return dataYMin;
+
+      let baseMin;
+      if (yMinMode === "zero") baseMin = 0;
+      else if (yMinMode === "data") baseMin = dataYMin;
+      else if (yMinMode === "above-zero") baseMin = dataYMin > 0 ? dataYMin : 0;
+      else if (yMinMode === "auto") baseMin = 0;
+      else baseMin = 0;
+
+      if (yMinMode === "auto" && dataYMin > baseMin) {
+        const range = topMax - baseMin;
+        const gap = dataYMin - baseMin;
+        if (range > 0 && gap / range > 0.5) {
+          const frac = 0.3;
+          const denom = 1 - frac;
+          if (denom > 0) {
+            const newBottom = (dataYMin - frac * topMax) / denom;
+            if (newBottom < dataYMin) return newBottom;
+          }
+        }
+      }
+      return baseMin;
+    })();
+
+    const paddedMax = indexBoolean ? topMax + 0.2 * (topMax - dataYMin) : topMax;
+    let paddedMin;
+    if (indexBoolean) {
+      const finalRange = topMax - dataYMin;
+      paddedMin = dataYMin - 0.2 * finalRange;
+    } else {
+      paddedMin = computedYMin - Math.abs(computedYMin) * yPadding;
+    }
+    if (!(paddedMin < paddedMax)) paddedMin = paddedMax - Number.EPSILON;
+
+    const yScale = scaleLinear().domain([paddedMin, paddedMax]).nice();
+    const yTicks = yScale.ticks(5);
+    const hasDecimalTicks = yTicks.some((t) => t % 1 !== 0);
+
+    const lastPoint = transformedData[transformedData.length - 1];
+    const lastVal = normalizeNumber(lastPoint?.num_uk);
+    if (Number.isNaN(lastVal)) return null;
+
+    if (unitsChart === "percentage") {
+      return lastVal < 20 ? 1 : hasDecimalTicks ? 1 : 0;
+    }
+    return lastVal < 20 ? 1 : hasDecimalTicks ? 1 : 0;
+  }
+
+  $: endLabelDpBySeries = (() => {
+    const out = {};
+    for (const [seriesId, row] of getSummaryTableEntries()) {
+      out[seriesId] = getEndLabelDecimalPlaces(seriesId, row);
+    }
+    return out;
+  })();
 </script>
 
 <svelte:head>
@@ -497,6 +700,106 @@
   {/each}
 
   <Section width="wide">
+    <h2>Year-on-Year Change Table</h2>
+    <div style="overflow-x:auto; margin-bottom: 2rem;">
+      <table style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;">
+        <thead>
+          <tr style="background: #f4f4f4;">
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Unit Label</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Data frequency</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Value</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">End label d.p.</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date Last Updated</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for Latest Change</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for YoY</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (Raw)</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (%)</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (Raw)</th>
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each getSummaryTableEntries() as [seriesId, row]}
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ccc;">{metadataBySeries[seriesId]?.title ?? seriesId}</td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{metadataBySeries[seriesId]?.units || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if endLabelDpBySeries?.[seriesId] === 0 || endLabelDpBySeries?.[seriesId] === 1}
+                  {endLabelDpBySeries[seriesId]}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.date}
+                  {new Date(row.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.period_over_period_date}
+                  {new Date(row.period_over_period_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.year_over_year_date}
+                  {new Date(row.year_over_year_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.period_over_period_change !== null && row.period_over_period_change !== undefined}
+                  {typeof row.period_over_period_change === 'number' ? row.period_over_period_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_change}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.period_over_period_percent !== null && row.period_over_period_percent !== undefined}
+                  {typeof row.period_over_period_percent === 'number' ? row.period_over_period_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_percent}
+                  %
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.year_over_year_change !== null && row.year_over_year_change !== undefined}
+                  {typeof row.year_over_year_change === 'number' ? row.year_over_year_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_change}
+                {:else}
+                  N/A
+                {/if}
+              </td>
+              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                {#if row.year_over_year_percent !== null && row.year_over_year_percent !== undefined}
+                  {typeof row.year_over_year_percent === 'number' ? row.year_over_year_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_percent}
+                  %
+                {:else}
+                  N/A
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+
+    <Button
+      type="button"
+      variant="secondary"
+      icon="download"
+      iconPosition="before"
+      small={true}
+      on:click={downloadSummaryTableCsv}
+    >
+      Download table (CSV)
+    </Button>
     <div class="download-section">
       <div class="download-content">
         <h2>Download dashboard data</h2>
@@ -543,6 +846,7 @@
 
   h2 {
     padding: 0px 0 11px 0;
+    font-weight: 700;
   }
 
   .cards {
@@ -594,7 +898,7 @@
   /* Typography inside cards */
   .card h3 {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.3;
     color: #222;
     margin: 0 0 0px 0;
@@ -714,7 +1018,7 @@
     padding: 0;
     font-size: 1.05rem;
     line-height: 1.1;
-    font-weight: 600;
+    font-weight: 700;
     flex: 1;
     color: #206095;
     text-wrap: balance;

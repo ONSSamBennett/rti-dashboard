@@ -112,7 +112,10 @@ export async function load({ fetch }) {
     const latest = entries[entries.length - 1];
 
     // Get the frequency from metadata for this series
-    const frequency = metadataBySeries[series_id]?.updated;
+    // Prefer data_frequency (actual cadence), fall back to indicator_period
+    const frequency =
+      metadataBySeries[series_id]?.data_frequency ??
+      metadataBySeries[series_id]?.indicator_period;
     const { period, year } = getLookbackPeriods(frequency);
 
     // Calculate period-over-period (adaptive based on frequency)
@@ -134,8 +137,10 @@ export async function load({ fetch }) {
       ...latest,
       period_over_period_change: pop,
       period_over_period_percent: pop_percent,
+      period_over_period_date: prevPeriod ? prevPeriod.date : null,
       year_over_year_change: yoy,
       year_over_year_percent: yoy_percent,
+      year_over_year_date: prevYear ? prevYear.date : null,
       full_series: entries,
     };
   }
