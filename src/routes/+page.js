@@ -13,7 +13,7 @@ function getLookbackPeriods(frequency) {
   switch (freq) {
     case "daily":
     case "day":
-      return { period: 7, year: 365 }; // 7 days back (weekly change), 365 days for year
+      return { period: 7, year: 364 }; // 7 days back (weekly change), 364 days for year (to same day of the week last year)
     case "weekly":
     case "week":
       return { period: 1, year: 52 }; // 1 week back, 52 weeks for year
