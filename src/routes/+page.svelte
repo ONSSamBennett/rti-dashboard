@@ -802,9 +802,9 @@
     </Section>
     <Divider hr="full" />
   {/each}
-
-  <Section width="wide">
-    <h2>Year-on-Year Change Table</h2>
+``
+   <Section width="wide">
+   <!-- <h2>Year-on-Year Change Table</h2>
     <div style="overflow-x:auto; margin-bottom: 2rem;">
       <table style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;">
         <thead>
@@ -904,6 +904,7 @@
     >
       Download table (CSV)
     </Button>
+     -->
     <div class="download-section">
       <div class="download-content">
         <h2>Download dashboard data</h2>
