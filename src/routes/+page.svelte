@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import {
     Embed,
     Notice,
@@ -27,11 +27,13 @@
   const dateNext = new Date(data.dates.next);
 
   const analyticsProps = {
-    contentTitle: "Real-time indicators dashboard",
+    product: "advanced-content",
+    pageTitle: "Real-time indicators dashboard",
+    contentType: "visualisations",
+    contentSubType: "dashboard",
+    outputSeries: "economicactivityandsocialchangeintheukrealtimeindicators",
     releaseDate: data.dates.current.replaceAll("-", ""),
     nextReleaseDate: data.dates.next.replaceAll("-", ""),
-    outputSeries: "economicactivityandsocialchangeintheukrealtimeindicators",
-    contentType: "dashboard",
   };
 
   const dateOptions2 = {
@@ -61,7 +63,7 @@
       event: "interaction",
       interactionType: "accordion",
       interactionValue: e?.detail?.open ? "open" : "close",
-      label,
+      interactionLabel: label,
       sectionTitle,
       sectionNumber,
     });
@@ -154,7 +156,7 @@
       event: "interaction",
       interactionType: "button",
       interactionValue: nextState ? "open" : "close",
-      label: nextState ? "Expand all cards" : "Close all cards",
+      interactionLabel: nextState ? "Expand all cards" : "Close all cards",
       sectionTitle: "Dashboard cards",
       sectionNumber: "all",
     });
@@ -169,35 +171,123 @@
     // Track analytics
     analyticsEvent({
       event: "interaction",
-      interactionType: "accordion",
+      interactionType: "expandableCard",
       interactionValue: expandedCards[seriesId] ? "open" : "close",
-      label: metadataBySeries[seriesId]?.title ?? seriesId,
+      interactionLabel: metadataBySeries[seriesId]?.title ?? seriesId,
       sectionTitle,
       sectionNumber,
     });
+  }
+
+  const destinationTaxonomy = {
+    clickContentGroup: "economy",
+    clickContentTheme: "economicoutputandproductivity",
+    clickContentType: "dataset",
+  };
+
+  function getDatasetTitle(seriesId) {
+    return metadataBySeries[seriesId]?.title ?? seriesId;
+  }
+
+  function getDatasetDisplayTitle(seriesId) {
+    return getDatasetTitle(seriesId).toLowerCase().replace("uk", "UK");
+  }
+
+  function getDatasetLinkText(seriesId) {
+    return `Go to the dataset for ${getDatasetDisplayTitle(seriesId)}`;
   }
 
   function trackDataLinkClick(seriesId, sectionTitle, sectionNumber) {
+    const title = getDatasetTitle(seriesId);
+    const { clickContentGroup, clickContentTheme, clickContentType } =
+      destinationTaxonomy;
+
     analyticsEvent({
-      event: "interaction",
+      event: "navigation-click",
       interactionType: "link",
       interactionValue: "click",
-      label: metadataBySeries[seriesId]?.title ?? seriesId,
+      label: title,
       sectionTitle,
       sectionNumber,
+
+      navigationType: "to-data-download",
+      linkText: getDatasetLinkText(seriesId),
+      clickContentGroup,
+      clickContentType,
+      clickContentTheme,
     });
   }
 
+  function getDownloadLinkText() {
+    return `Download data (CSV, ${fileSizeKB}KB)`;
+  }
+
+  function getLinkDomainFromUrl(urlString) {
+    if (!urlString) return "";
+    try {
+      const url = new URL(urlString);
+      if (url.protocol === "blob:") {
+        // blob URLs are of the form: blob:<origin>/<uuid>
+        try {
+          const originUrl = new URL(url.pathname);
+          return originUrl.host;
+        } catch {
+          return "";
+        }
+      }
+      return url.host;
+    } catch {
+      return "";
+    }
+  }
+
+  // Persist a Blob URL so it can be used in data-ga-link-url
+  let downloadObjectUrl = "";
+  let downloadBlob;
+
+  $: downloadFileName = `rti-dashboard-data-${dataFile?.publicationDate ?? ""}.csv`;
+
+  $: {
+    const nextBlob = dataFile?.blob;
+    if (nextBlob !== downloadBlob) {
+      if (downloadObjectUrl) URL.revokeObjectURL(downloadObjectUrl);
+      downloadBlob = nextBlob;
+      downloadObjectUrl = nextBlob ? URL.createObjectURL(nextBlob) : "";
+    }
+  }
+
+  $: downloadLinkDomain = getLinkDomainFromUrl(downloadObjectUrl);
+
+  onDestroy(() => {
+    if (downloadObjectUrl) URL.revokeObjectURL(downloadObjectUrl);
+  });
+
   function downloadData() {
-    const dataFile = makeDataFile(latestBySeries, metadataBySeries, data.dates);
+    if (!dataFile?.blob) return;
+
     const link = document.createElement("a");
-    link.href = dataFile.href;
-    link.download = `rti-dashboard-data-${dataFile.publicationDate}.csv`;
+    const fileName = downloadFileName;
+
+    // Prefer a Blob URL for a manageable `linkUrl` value
+    const objectUrl = downloadObjectUrl || URL.createObjectURL(dataFile.blob);
+    link.href = objectUrl;
+    link.download = fileName;
     link.click();
+
+    // Revoke only if we had to create a one-off URL (normally we reuse downloadObjectUrl)
+    if (!downloadObjectUrl && objectUrl) {
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    }
 
     // Track analytics
     analyticsEvent({
-      event: "interaction",
+      event: "file_download",
+      fileExtension: "csv",
+      fileName,
+      linkText: getDownloadLinkText(),
+      linkUrl: objectUrl,
+      linkDomain: getLinkDomainFromUrl(objectUrl) || undefined,
+
       interactionType: "button",
       interactionValue: "click",
       label: "Download all data",
@@ -652,6 +742,12 @@
                         href={metadataBySeries[seriesId]?.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        data-ga-event="navigation-click"
+                        data-ga-navigation-type="to-data-download"
+                        data-ga-link-text={getDatasetLinkText(seriesId)}
+                        data-ga-click-content-group={destinationTaxonomy.clickContentGroup}
+                        data-ga-click-content-type={destinationTaxonomy.clickContentType}
+                        data-ga-click-content-theme={destinationTaxonomy.clickContentTheme}
                         on:click={() =>
                           trackDataLinkClick(
                             seriesId,
@@ -659,11 +755,7 @@
                             String(sectionIndex + 1)
                           )}
                       >
-                        Go to the dataset for {(
-                          metadataBySeries[seriesId]?.title ?? seriesId
-                        )
-                          .toLowerCase()
-                          .replace("uk", "UK")}
+                        Go to the dataset for {getDatasetDisplayTitle(seriesId)}
                         <span class="screen-reader-only"
                           >(opens in new tab)</span
                         >
@@ -820,16 +912,25 @@
         </p>
       </div>
       <div class="download-button-wrapper">
-        <Button
-          type="button"
-          variant="secondary"
-          icon="download"
-          iconPosition="before"
-          small={true}
-          on:click={downloadData}
+        <span
+          data-ga-event="file_download"
+          data-ga-file-extension="csv"
+          data-ga-file-name={downloadFileName}
+          data-ga-link-text={getDownloadLinkText()}
+          data-ga-link-url={downloadObjectUrl}
+          data-ga-link-domain={downloadLinkDomain}
         >
-          Download data (CSV, {fileSizeKB}KB)
-        </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            icon="download"
+            iconPosition="before"
+            small={true}
+            on:click={downloadData}
+          >
+            Download data (CSV, {fileSizeKB}KB)
+          </Button>
+        </span>
       </div>
     </div>
   </Section>
