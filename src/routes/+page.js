@@ -44,13 +44,15 @@ export async function load({ fetch }) {
   const updatedStr = await (await fetch(updatedUrl)).text();
   const updatedArray = csvParse(updatedStr, autoType);
   
-  // Handle "auto" dates by finding the most recent date_of_update from updated.csv
+  // Handle "auto" dates by finding the most recent update date from updated.csv
   if (dates.current === "auto" || dates.next === "auto") {
     // Parse dates from updated.csv (format: YYYY-MM-DD)
     const updateDates = updatedArray
       .map((row) => {
-        if (!row.date_of_update) return null;
-        const dateStr = String(row.date_of_update);
+        // Column name in updated.csv is `date_updated` (older files used `date_of_update`)
+        const rawDate = row.date_updated ?? row.date_of_update;
+        if (!rawDate) return null;
+        const dateStr = String(rawDate);
         const parsed = new Date(dateStr);
         return isNaN(parsed.getTime()) ? null : parsed;
       })

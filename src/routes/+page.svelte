@@ -190,7 +190,13 @@
   }
 
   function getDatasetDisplayTitle(seriesId) {
-    return getDatasetTitle(seriesId).toLowerCase().replace("uk", "UK");
+    const lower = getDatasetTitle(seriesId).toLowerCase();
+
+    return lower
+      .replace(/\buk\b/g, "UK")
+      .replace(/\bdirect debit\b/g, "Direct Debit")
+      .replace(/\brevolut\b/g, "Revolut")
+      .replace(/\bvat\b/g, "VAT");
   }
 
   function getDatasetLinkText(seriesId) {
@@ -802,7 +808,6 @@
     </Section>
     <Divider hr="full" />
   {/each}
-``
    <Section width="wide">
    <!-- <h2>Year-on-Year Change Table</h2>
     <div style="overflow-x:auto; margin-bottom: 2rem;">
