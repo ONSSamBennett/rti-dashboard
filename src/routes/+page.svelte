@@ -18,6 +18,10 @@
   import { format } from "d3-format";
   import { scaleLinear } from "d3-scale";
   import { makeDataFile } from "$lib/dataDownload.js";
+  import {
+    computeTransformedData,
+    computeYDomainFromTransformedData,
+  } from "$lib/yAxisDomain.js";
   export let data;
 
   const { metadataBySeries, updatedBySeries } = data;
@@ -31,7 +35,7 @@
     pageTitle: "Real-time indicators dashboard",
     contentType: "visualisations",
     contentSubType: "dashboard",
-    outputSeries: "economicactivityandsocialchangeintheukrealtimeindicators",
+    outputSeries: "economicactivityandsocialchangerealtimeindicatorsukdashboard",
     releaseDate: data.dates.current.replaceAll("-", ""),
     nextReleaseDate: data.dates.next.replaceAll("-", ""),
   };
@@ -171,7 +175,7 @@
     // Track analytics
     analyticsEvent({
       event: "interaction",
-      interactionType: "expandableCard",
+      interactionType: "expandabl-card",
       interactionValue: expandedCards[seriesId] ? "open" : "close",
       interactionLabel: metadataBySeries[seriesId]?.title ?? seriesId,
       sectionTitle,
@@ -402,6 +406,51 @@
   }
 
   const chartStartDate = new Date(2023, 11, 31);
+
+  // QA-only: set true to render the change summary table (previously commented out)
+  const showChangeQaTable = true;
+
+  // QA-only: set true to render the y-axis debug table at the bottom of the page
+  const showYAxisQaTable = true;
+
+  function formatQaNumber(value) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
+    return value.toLocaleString(undefined, { maximumFractionDigits: 5 });
+  }
+
+  $: yAxisQaRows = showYAxisQaTable
+    ? getSummaryTableEntries().map(([seriesId, row]) => {
+          const meta = metadataBySeries?.[seriesId] ?? {};
+
+          const indexBoolean = normalizeBoolean(meta.index);
+
+          const thousandsBoolean = normalizeBoolean(meta.thousands);
+          const yMinMode = meta?.yMinMode ?? "auto";
+          const yPadding = meta?.yPadding ?? 0.1;
+
+          const transformedData = computeTransformedData(row?.full_series, {
+            xKey: "date",
+            yKey: "num_uk",
+            thousandsBoolean,
+            startDate: chartStartDate,
+          });
+
+          const stats = computeYDomainFromTransformedData({
+            transformedData,
+            yKey: "num_uk",
+            indexBoolean,
+            yMinMode,
+            yPadding,
+          });
+
+          return {
+            seriesId,
+            title: meta?.title ?? seriesId,
+            indexBoolean,
+            ...stats,
+          };
+        })
+    : [];
 
   function normalizeBoolean(value) {
     if (value === true) return true;
@@ -809,107 +858,147 @@
     <Divider hr="full" />
   {/each}
    <Section width="wide">
-   <!-- <h2>Year-on-Year Change Table</h2>
-    <div style="overflow-x:auto; margin-bottom: 2rem;">
-      <table style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;">
-        <thead>
-          <tr style="background: #f4f4f4;">
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Unit Label</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Data frequency</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Value</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">End label d.p.</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date Last Updated</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for Latest Change</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for YoY</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (Raw)</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (%)</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (Raw)</th>
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (%)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each getSummaryTableEntries() as [seriesId, row]}
-            <tr>
-              <td style="padding: 8px; border: 1px solid #ccc;">{metadataBySeries[seriesId]?.title ?? seriesId}</td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{metadataBySeries[seriesId]?.units || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if typeof endLabelDpBySeries?.[seriesId] === 'number'}
-                  {endLabelDpBySeries[seriesId]}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.date}
-                  {new Date(row.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.period_over_period_date}
-                  {new Date(row.period_over_period_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.year_over_year_date}
-                  {new Date(row.year_over_year_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.period_over_period_change !== null && row.period_over_period_change !== undefined}
-                  {typeof row.period_over_period_change === 'number' ? row.period_over_period_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_change}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.period_over_period_percent !== null && row.period_over_period_percent !== undefined}
-                  {typeof row.period_over_period_percent === 'number' ? row.period_over_period_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_percent}
-                  %
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.year_over_year_change !== null && row.year_over_year_change !== undefined}
-                  {typeof row.year_over_year_change === 'number' ? row.year_over_year_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_change}
-                {:else}
-                  N/A
-                {/if}
-              </td>
-              <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                {#if row.year_over_year_percent !== null && row.year_over_year_percent !== undefined}
-                  {typeof row.year_over_year_percent === 'number' ? row.year_over_year_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_percent}
-                  %
-                {:else}
-                  N/A
-                {/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    {#if showChangeQaTable}
+      <Twisty title="QA: Year-on-Year Change Table" open={false}>
+        <div style="overflow-x:auto; margin-bottom: 2rem;">
+          <table style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;">
+            <thead>
+              <tr style="background: #f4f4f4;">
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Unit Label</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Data frequency</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Value</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">End label d.p.</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date Last Updated</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for Latest Change</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for YoY</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (Raw)</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (%)</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (Raw)</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each getSummaryTableEntries() as [seriesId, row]}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #ccc;">{metadataBySeries[seriesId]?.title ?? seriesId}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{metadataBySeries[seriesId]?.units || 'N/A'}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if typeof endLabelDpBySeries?.[seriesId] === 'number'}
+                      {endLabelDpBySeries[seriesId]}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.date}
+                      {new Date(row.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.period_over_period_date}
+                      {new Date(row.period_over_period_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.year_over_year_date}
+                      {new Date(row.year_over_year_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.period_over_period_change !== null && row.period_over_period_change !== undefined}
+                      {typeof row.period_over_period_change === 'number' ? row.period_over_period_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_change}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.period_over_period_percent !== null && row.period_over_period_percent !== undefined}
+                      {typeof row.period_over_period_percent === 'number' ? row.period_over_period_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_percent}
+                      %
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.year_over_year_change !== null && row.year_over_year_change !== undefined}
+                      {typeof row.year_over_year_change === 'number' ? row.year_over_year_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_change}
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                    {#if row.year_over_year_percent !== null && row.year_over_year_percent !== undefined}
+                      {typeof row.year_over_year_percent === 'number' ? row.year_over_year_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_percent}
+                      %
+                    {:else}
+                      N/A
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
 
-    <Button
-      type="button"
-      variant="secondary"
-      icon="download"
-      iconPosition="before"
-      small={true}
-      on:click={downloadSummaryTableCsv}
-    >
-      Download table (CSV)
-    </Button>
-     -->
+        <Button
+          type="button"
+          variant="secondary"
+          icon="download"
+          iconPosition="before"
+          small={true}
+          on:click={downloadSummaryTableCsv}
+        >
+          Download table (CSV)
+        </Button>
+      </Twisty>
+    {/if}
+
+    {#if showYAxisQaTable}
+      <Twisty title="QA: Y-axis domain" open={false}>
+        <div style="overflow-x:auto; margin-bottom: 2rem;">
+          <table
+            style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;"
+          >
+            <thead>
+              <tr style="background: #f4f4f4;">
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Index</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Max data value</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Min data value</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Max y</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Min y</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each yAxisQaRows as r}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #ccc;">{r.title}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{r.indexBoolean ? "true" : "false"}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMax)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMin)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.niceMax)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.niceMin)}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </Twisty>
+
+        <Divider hr="full" />
+    {/if}
+
+
+
     <div class="download-section">
       <div class="download-content">
         <h2>Download dashboard data</h2>

@@ -2,10 +2,10 @@
 export const analyticsId = "GTM-MBCBVQS";
 
 export const analyticsProps = {
-	"contentTitle": "Product title", // Insert the title of the product here
-	"releaseDate": "YYYYMMDD",
-	"contentType": "content-type", // Optional: eg. scrollytelling, exploratory, edutainment?
-	"outputSeries": "url-slug-for-output-series" // Should match the slug for the release on CMS
+	"contentTitle": "Real-time Indicators dashboard", // Insert the title of the product here
+	"releaseDate": "20260305",
+	"contentType": "dashboard", // Optional: eg. scrollytelling, exploratory, edutainment?
+	"outputSeries": "economicactivityandsocialchangerealtimeindicatorsukdashboard" // Should match the slug for the release on CMS
 };
 
 // CORE CONFIG

@@ -4,6 +4,10 @@
   import { format } from "d3-format";
   import { timeYear } from "d3-time";
   import { timeFormat } from "d3-time-format";
+  import {
+    computeTransformedData,
+    computeYDomainFromTransformedData,
+  } from "$lib/yAxisDomain.js";
 
   // Props (existing)
   export let data = [];
@@ -79,26 +83,12 @@
   const xKey = "date"; // data[xKey] should be Date objects
 
   // Transform values to thousands if requested
-  $: transformedData =
-    data && Array.isArray(data)
-      ? (thousandsBoolean
-          ? data.map((d) => {
-              // Ensure numeric value (handle strings like "742,745")
-              const raw = d[yKey];
-              let val = raw;
-              if (typeof raw === "string") {
-                // remove any commas or whitespace
-                const cleaned = raw.replace(/,/g, "").trim();
-                val = cleaned === "" ? NaN : Number(cleaned);
-              }
-              // If value is not a number, leave as-is (NaN will propagate)
-              const numeric =
-                typeof val === "number" && !isNaN(val) ? val / 1000 : val;
-              return { ...d, [yKey]: numeric };
-            })
-          : data
-        ).filter((d) => !startDate || d[xKey] >= startDate)
-      : [];
+  $: transformedData = computeTransformedData(data, {
+    xKey,
+    yKey,
+    thousandsBoolean,
+    startDate,
+  });
 
   // Fallback to data extent if no start/end provided
   $: dataMinDate = transformedData.length
@@ -135,97 +125,32 @@
   $: dpOverride = normalizeDp(meta?.dp);
 
   // Data min/max
-  $: dataYMin = transformedData?.length
-    ? Math.min(...transformedData.map((d) => d[yKey]))
-    : 0;
+  let dataYMin = 0;
+  let dataYMax = 100;
+  let topMax = 100;
+  let computedYMin = 0;
+  let paddedMin = 0;
+  let paddedMax = 100;
+  let niceMin = 0;
+  let niceMax = 100;
 
-  $: dataYMax = transformedData?.length
-    ? Math.max(...transformedData.map((d) => d[yKey]))
-    : 100;
-
-  // Respect explicit yMax when provided; otherwise use data max
-  $: topMax = yMax ?? dataYMax;
-
-  // Compute bottom min based on mode
-  $: computedYMin = (() => {
-    // If this is an index chart and we're in auto mode, set the axis bottom
-    // exactly to the data minimum so there is no reserved whitespace below
-    // the lowest data point (index charts should sit flush at the bottom).
-    if (indexBoolean && yMinMode === "auto") {
-      return dataYMin;
-    }
-
-    // First, determine the baseline min based on the mode
-    let baseMin;
-    if (yMinMode === "zero") {
-      baseMin = 0;
-    } else if (yMinMode === "data") {
-      baseMin = dataYMin;
-    } else if (yMinMode === "above-zero") {
-      baseMin = dataYMin > 0 ? dataYMin : 0;
-    } else if (yMinMode === "auto") {
-      // Auto mode: start with zero, then check for wasted space
-      baseMin = 0;
-    } else {
-      baseMin = 0;
-    }
-
-    // Auto-detection: if yMinMode is "auto", check for excessive unused space
-    if (yMinMode === "auto" && dataYMin > baseMin) {
-      // Calculate what the range would be if we kept baseMin
-      const range = topMax - baseMin;
-      // Gap between data minimum and the floor
-      const gap = dataYMin - baseMin;
-      // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the lowest data point
-      if (range > 0 && gap / range > 0.5) {
-        const frac = 0.3; // fraction of final axis to reserve below the lowest data point
-        // Solve for new bottom B so that dataYMin - B = frac * (topMax - B)
-        // => B = (dataYMin - frac * topMax) / (1 - frac)
-        const denom = 1 - frac;
-        if (denom > 0) {
-          const newBottom = (dataYMin - frac * topMax) / denom;
-          // Ensure we don't accidentally pick a bottom above the data
-          if (newBottom < dataYMin) return newBottom;
-        }
-      }
-    }
-
-    return baseMin;
-  })();
-
-  // Add padding to bottom min (expand downward).
-  // For index charts: apply 10% of the final axis range as bottom gap (consistent visual spacing).
-  // For other charts: use yPadding as percentage of computed min.
-  // Avoid inverted domain when top and bottom collide.
-  $: paddedMin = (() => {
-    let min;
-    if (indexBoolean) {
-      // For index charts: reserve 10% of the final range below the data
-      // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
-      // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
-      const finalRange = topMax - dataYMin;
-      min = dataYMin - 0.2 * finalRange;
-    } else {
-      // For non-index charts: use yPadding as percentage of computedYMin
-      min = computedYMin - Math.abs(computedYMin) * yPadding;
-    }
-    return Math.min(min, paddedMax - Number.EPSILON);
-  })();
-
-  // Add padding to top max (expand upward).
-  // For index charts: apply 10% of the final axis range as top gap (symmetric with bottom).
-  // For other charts: no top padding.
-  $: paddedMax = (() => {
-    if (indexBoolean) {
-      // For index charts: reserve 10% of the final range above the data
-      // gap = 0.1 * (topMax - dataYMin)
-      // paddedMax = topMax + gap
-      const finalRange = topMax - dataYMin;
-      return topMax + 0.2 * finalRange;
-    } else {
-      return topMax;
-    }
-  })();
+  $: ({
+    dataYMin,
+    dataYMax,
+    topMax,
+    computedYMin,
+    paddedMin,
+    paddedMax,
+    niceMin,
+    niceMax,
+  } = computeYDomainFromTransformedData({
+    transformedData,
+    yKey,
+    yMax,
+    indexBoolean,
+    yMinMode,
+    yPadding,
+  }));
 
   $: y = scaleLinear()
     .domain([paddedMin, paddedMax])
