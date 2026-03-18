@@ -62,6 +62,28 @@
     )
   );
 
+  function isTrueLike(value) {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    return String(value).toLowerCase() === "true";
+  }
+
+  function isUpdatedThisWeek(seriesId) {
+    return isTrueLike(updatedBySeries?.[seriesId]);
+  }
+
+  function isNewIndicator(seriesId) {
+    return isTrueLike(metadataBySeries?.[seriesId]?.new_indicator);
+  }
+
+  function getUpdateFlagText(seriesId) {
+    return isNewIndicator(seriesId) ? "New indicator" : "Updated this week";
+  }
+
+  function getUpdateFlagSrText(seriesId) {
+    return `${getUpdateFlagText(seriesId)}.`;
+  }
+
   function toggleEvent(e, label, sectionTitle, sectionNumber) {
     analyticsEvent({
       event: "interaction",
@@ -663,13 +685,13 @@
                   </svg>
                   <h3 class="card-title">
                     <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
-                    {#if String(updatedBySeries[seriesId]).toLowerCase() === "true"}
-                      <span class="screen-reader-only">Updated this week.</span>
+                    {#if isUpdatedThisWeek(seriesId)}
+                      <span class="screen-reader-only">{getUpdateFlagSrText(seriesId)}</span>
                       <span class="updated-dot-inline" aria-hidden="true" />
                       <span class="updated-flag-top-row">
                         <span class="updated-flag-top"
-                          ><span class="updated-dot" aria-hidden />Updated this
-                          week</span
+                          class:updated-flag--new-indicator={isNewIndicator(seriesId)}
+                          ><span class="updated-dot" aria-hidden />{getUpdateFlagText(seriesId)}</span
                         >
                       </span>
                     {/if}
@@ -712,10 +734,10 @@
                     <div class="header-spacer"></div>
                   {/if}
                   <div class="updated-flag-container">
-                    {#if String(updatedBySeries[seriesId]).toLowerCase() === "true"}
+                    {#if isUpdatedThisWeek(seriesId)}
                       <span class="updated-flag"
-                        ><span class="updated-dot" aria-hidden />Updated this
-                        week</span
+                        class:updated-flag--new-indicator={isNewIndicator(seriesId)}
+                        ><span class="updated-dot" aria-hidden />{getUpdateFlagText(seriesId)}</span
                       >
                     {/if}
                   </div>
@@ -1318,6 +1340,20 @@
     font-weight: 400;
     white-space: nowrap;
     display: inline;
+  }
+
+  .updated-flag--new-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, #16a34a 40%, transparent);
+    background-color: color-mix(in srgb, #16a34a 12%, transparent);
+  }
+
+  .updated-flag--new-indicator .updated-dot {
+    margin-right: 0;
   }
 
   .indicators-row {
