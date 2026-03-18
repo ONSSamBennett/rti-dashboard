@@ -2,10 +2,10 @@
 export const analyticsId = "GTM-MBCBVQS";
 
 export const analyticsProps = {
-	"contentTitle": "Product title", // Insert the title of the product here
-	"releaseDate": "YYYYMMDD",
-	"contentType": "content-type", // Optional: eg. scrollytelling, exploratory, edutainment?
-	"outputSeries": "url-slug-for-output-series" // Should match the slug for the release on CMS
+	"contentTitle": "Real-time Indicators dashboard", // Insert the title of the product here
+	"releaseDate": "20260305",
+	"contentType": "dashboard", // Optional: eg. scrollytelling, exploratory, edutainment?
+	"outputSeries": "economicactivityandsocialchangerealtimeindicatorsukdashboard" // Should match the slug for the release on CMS
 };
 
 // CORE CONFIG
@@ -29,6 +29,12 @@ export const themes = {
     'background': 'rgb(188, 207, 222)'
   }
 }
+
+// BREAKPOINTS CONFIG
+export const breakpoints = {
+  mobile: 720, // Mobile breakpoint in pixels (max-width for mobile, min-width + 1 for desktop)
+  smallMobile: 490 // Small mobile breakpoint - below this shows only dots
+};
 
 // DEMO-SPECIFIC CONFIG
 

@@ -1,10 +1,13 @@
-
 <script>
   import { scaleLinear, scaleTime } from "d3-scale";
   import { line, curveLinear } from "d3-shape";
   import { format } from "d3-format";
   import { timeYear } from "d3-time";
   import { timeFormat } from "d3-time-format";
+  import {
+    computeTransformedData,
+    computeYDomainFromTransformedData,
+  } from "$lib/yAxisDomain.js";
 
   // Props (existing)
   export let data = [];
@@ -19,6 +22,7 @@
   export let thousands = false;
   export let series_id = null; // NEW: identifier for this series
   export let thinSeries = null; // NEW: which series_id should be thinner
+  export let indicator_period = null; // NEW: frequency for date formatting (e.g., "monthly", "weekly")
 
   // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
   $: indexBoolean = (() => {
@@ -34,14 +38,35 @@
 
   // Fixed time window
   export let startDate = null; // e.g., new Date(2022, 0, 1)
-  export let endDate = null;   // e.g., new Date(2025, 11, 31)
+  export let endDate = null; // e.g., new Date(2025, 11, 31)
 
   // NEW: metadata object to drive axis options (and anything else)
   export let meta = {};
 
+  function normalizeBoolean(value) {
+    if (value === true) return true;
+    if (value === false) return false;
+    if (typeof value === "number") return value === 1;
+    if (typeof value === "string") {
+      const v = value.trim().toLowerCase();
+      return v === "true" || v === "1" || v === "yes";
+    }
+    return Boolean(value);
+  }
+
+  function normalizeDp(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const n = typeof value === "number" ? value : Number(String(value).trim());
+    if (!Number.isFinite(n)) return null;
+    return Math.max(0, Math.trunc(n));
+  }
+
   // Internals
   // Determine stroke width based on series_id
-  $: strokeWidth = (thinSeries && series_id === thinSeries) ? 1 : 2;
+  let baseStrokeWidth;
+  $: baseStrokeWidth = thinSeries && series_id === thinSeries ? 2 : 3;
+  $: strokeWidth =
+    width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
   $: thousandsBoolean = (() => {
     if (thousands === true) return true;
     if (typeof thousands === "number") return thousands === 1;
@@ -54,37 +79,27 @@
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
-  const margin = { left: 30, top: 0, bottom: 30, right: 60 };
+  const margin = { left: 58, top: 0, bottom: 30, right: 60 };
   const xKey = "date"; // data[xKey] should be Date objects
 
   // Transform values to thousands if requested
-  $: transformedData =
-    data && Array.isArray(data)
-      ? thousandsBoolean
-        ? data.map((d) => {
-            // Ensure numeric value (handle strings like "742,745")
-            const raw = d[yKey];
-            let val = raw;
-            if (typeof raw === "string") {
-              // remove any commas or whitespace
-              const cleaned = raw.replace(/,/g, "").trim();
-              val = cleaned === "" ? NaN : Number(cleaned);
-            }
-            // If value is not a number, leave as-is (NaN will propagate)
-            const numeric = typeof val === "number" && !isNaN(val) ? val / 1000 : val;
-            return { ...d, [yKey]: numeric };
-          })
-        : data
-      : [];
+  $: transformedData = computeTransformedData(data, {
+    xKey,
+    yKey,
+    thousandsBoolean,
+    startDate,
+  });
 
   // Fallback to data extent if no start/end provided
-  $: dataMinDate =
-    transformedData.length ? new Date(Math.min(...transformedData.map((d) => +d[xKey]))) : null;
-  $: dataMaxDate =
-    transformedData.length ? new Date(Math.max(...transformedData.map((d) => +d[xKey]))) : null;
+  $: dataMinDate = transformedData.length
+    ? new Date(Math.min(...transformedData.map((d) => +d[xKey])))
+    : null;
+  $: dataMaxDate = transformedData.length
+    ? new Date(Math.max(...transformedData.map((d) => +d[xKey])))
+    : null;
 
   $: effectiveStart = startDate ?? dataMinDate ?? new Date(2000, 0, 1);
-  $: effectiveEnd   = endDate   ?? dataMaxDate ?? new Date(2000, 11, 31);
+  $: effectiveEnd = endDate ?? dataMaxDate ?? new Date(2000, 11, 31);
 
   // Avoid zero-length domain
   $: [domainStart, domainEnd] =
@@ -102,103 +117,40 @@
 
   // --- Y domain calculations driven by metadata ---
   // Pull axis settings from metadata (with sensible defaults)
-  $: yMinMode = meta?.yMinMode ?? "auto";  // "zero" | "data" | "above-zero" | "auto"
-  $: yPadding = meta?.yPadding ?? 0.1;     // 10% padding
+  $: yMinMode = meta?.yMinMode ?? "auto"; // "zero" | "data" | "above-zero" | "auto"
+  $: yPadding = meta?.yPadding ?? 0.1; // 10% padding
+
+  // Optional decimal place override for the last-point label (from metadata.csv)
+  $: customDpEnabled = normalizeBoolean(meta?.custom_dp);
+  $: dpOverride = normalizeDp(meta?.dp);
 
   // Data min/max
-  $: dataYMin =
-    transformedData?.length
-      ? Math.min(...transformedData.map((d) => d[yKey]))
-      : 0;
+  let dataYMin = 0;
+  let dataYMax = 100;
+  let topMax = 100;
+  let computedYMin = 0;
+  let paddedMin = 0;
+  let paddedMax = 100;
+  let niceMin = 0;
+  let niceMax = 100;
 
-  $: dataYMax =
-    transformedData?.length
-      ? Math.max(...transformedData.map((d) => d[yKey]))
-      : 100;
-
-  // Respect explicit yMax when provided; otherwise use data max
-  $: topMax = yMax ?? dataYMax;
-
-  // Compute bottom min based on mode
-  $: computedYMin = (() => {
-    // If this is an index chart and we're in auto mode, set the axis bottom
-    // exactly to the data minimum so there is no reserved whitespace below
-    // the lowest data point (index charts should sit flush at the bottom).
-    if (indexBoolean && yMinMode === "auto") {
-      return dataYMin;
-    }
-
-    // First, determine the baseline min based on the mode
-    let baseMin;
-    if (yMinMode === "zero") {
-      baseMin = 0;
-    } else if (yMinMode === "data") {
-      baseMin = dataYMin;
-    } else if (yMinMode === "above-zero") {
-      baseMin = dataYMin > 0 ? dataYMin : 0;
-    } else if (yMinMode === "auto") {
-      // Auto mode: start with zero, then check for wasted space
-      baseMin = 0;
-    } else {
-      baseMin = 0;
-    }
-
-    // Auto-detection: if yMinMode is "auto", check for excessive unused space
-    if (yMinMode === "auto" && dataYMin > baseMin) {
-      // Calculate what the range would be if we kept baseMin
-      const range = topMax - baseMin;
-      // Gap between data minimum and the floor
-      const gap = dataYMin - baseMin;
-      // If gap is > 50% of the range, cut the axis but keep 30% of the final axis range below the lowest data point
-      if (range > 0 && gap / range > 0.5) {
-        const frac = 0.24; // fraction of final axis to reserve below the lowest data point
-        // Solve for new bottom B so that dataYMin - B = frac * (topMax - B)
-        // => B = (dataYMin - frac * topMax) / (1 - frac)
-        const denom = 1 - frac;
-        if (denom > 0) {
-          const newBottom = (dataYMin - frac * topMax) / denom;
-          // Ensure we don't accidentally pick a bottom above the data
-          if (newBottom < dataYMin) return newBottom;
-        }
-      }
-    }
-
-    return baseMin;
-  })();
-
-  // Add padding to bottom min (expand downward).
-  // For index charts: apply 10% of the final axis range as bottom gap (consistent visual spacing).
-  // For other charts: use yPadding as percentage of computed min.
-  $: paddedMin = (() => {
-    if (indexBoolean) {
-      // For index charts: reserve 10% of the final range below the data
-      // finalRange = topMax - dataYMin, so gap = 0.1 * finalRange
-      // paddedMin = dataYMin - gap = dataYMin - 0.1 * (topMax - dataYMin)
-      const finalRange = topMax - dataYMin;
-      return dataYMin - 0.15 * finalRange;
-    } else {
-      // For non-index charts: use yPadding as percentage of computedYMin
-      return computedYMin - Math.abs(computedYMin) * yPadding;
-    }
-  })();
-
-  // Add padding to top max (expand upward).
-  // For index charts: apply 10% of the final axis range as top gap (symmetric with bottom).
-  // For other charts: no top padding.
-  $: paddedMax = (() => {
-    if (indexBoolean) {
-      // For index charts: reserve 10% of the final range above the data
-      // gap = 0.1 * (topMax - dataYMin)
-      // paddedMax = topMax + gap
-      const finalRange = topMax - dataYMin;
-      return topMax + 0.15 * finalRange;
-    } else {
-      return topMax;
-    }
-  })();
-
-  // Avoid inverted domain when top and bottom collide
-  $: paddedMin = Math.min(paddedMin, paddedMax - Number.EPSILON);
+  $: ({
+    dataYMin,
+    dataYMax,
+    topMax,
+    computedYMin,
+    paddedMin,
+    paddedMax,
+    niceMin,
+    niceMax,
+  } = computeYDomainFromTransformedData({
+    transformedData,
+    yKey,
+    yMax,
+    indexBoolean,
+    yMinMode,
+    yPadding,
+  }));
 
   $: y = scaleLinear()
     .domain([paddedMin, paddedMax])
@@ -220,7 +172,29 @@
     return format(hasDecimal ? ".1%" : ".0%");
   })();
 
+  function formatLastValue(val) {
+    if (val === null || val === undefined) return "";
+    const numeric = typeof val === "number" ? val : Number(val);
+    if (!Number.isFinite(numeric)) return "";
+
+    if (customDpEnabled && dpOverride !== null) {
+      if (units_chart === "percentage") {
+        return format(`.${dpOverride}%`)(numeric / 100);
+      }
+      return format(`,.${dpOverride}f`)(numeric);
+    }
+
+    if (units_chart === "percentage") {
+      return numeric < 20
+        ? format(".1%")(numeric / 100)
+        : formatPercent(numeric / 100);
+    }
+
+    return numeric < 20 ? format(",.1f")(numeric) : formatValue(numeric);
+  }
+
   const formatLastDate = timeFormat("%-d %b");
+  const formatLastDateMonthly = timeFormat("%B");
 
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
@@ -230,16 +204,37 @@
     return date.getMonth() === 6; // July
   }
 
+
+  // New prop: showYearDividersAtDomainEdges (default true for backward compatibility)
+  export let showYearDividersAtDomainEdges = false;
+
   function getDateChangesFromDomain(domainStart, domainEnd) {
     const changes = {
-      years: [],       // year boundary markers (Jan 1)
-      yearLabels: [],  // { date: Jul 1, year: YYYY }
+      years: [], // year boundary markers (Jan 1)
+      yearLabels: [], // { date: Jul 1, year: YYYY }
     };
     if (!domainStart || !domainEnd) return changes;
 
     // Year starts (Jan 1)
-    const yearStarts = timeYear.range(timeYear.floor(domainStart), timeYear.ceil(domainEnd));
-    for (const ys of yearStarts) {
+    // Add 1 day to domainEnd to ensure the final year boundary is included
+    const yearStarts = timeYear.range(
+      timeYear.floor(domainStart),
+      timeYear.offset(timeYear.ceil(domainEnd), 1)
+    );
+
+
+    // If not showing dividers at domain edges, remove any divider at or outside the domainStart/domainEnd
+    let filteredYearStarts = yearStarts;
+    if (!showYearDividersAtDomainEdges && yearStarts.length > 0) {
+      filteredYearStarts = yearStarts.filter((d) => {
+        // Remove if at or before domainStart, or at or after domainEnd
+        if (d <= domainStart) return false;
+        if (d >= domainEnd) return false;
+        return true;
+      });
+    }
+
+    for (const ys of filteredYearStarts) {
       changes.years.push(ys);
       // Mid-year label (Jul 1) to replicate Q3 labeling
       const mid = new Date(ys.getFullYear(), 6, 1);
@@ -256,6 +251,7 @@
   // Line generator
   $: lineFn = line()
     .curve(curveLinear)
+    .defined((d) => !isMissingValue(d[yKey]))
     .x((d) => x(d[xKey]))
     .y((d) => y(d[yKey]));
 
@@ -263,39 +259,198 @@
     return xPos < 20 || w - xPos < 20;
   }
 
-  // Calculate if there's a significant gap at the start (no data period)
-  $: hasNoDataPeriod = (() => {
-    if (!transformedData.length || !effectiveStart) return false;
-    
-    const firstDataDate = transformedData[0][xKey];
-    const daysDiff = (firstDataDate - effectiveStart) / (1000 * 60 * 60 * 24);
-    
-    // If first data point is more than 30 days after axis start, show no-data indicator
-    return daysDiff > 30;
+  const NO_DATA_GAP_THRESHOLD_DAYS = 30;
+
+  function isMissingValue(val) {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string") return val.trim() === "";
+    if (typeof val === "number") return Number.isNaN(val);
+    return false;
+  }
+
+  // Grey bands:
+  // 1) Start-of-series band when the series begins well after the axis start
+  // 2) Internal bands for contiguous rows where the value is missing
+  $: dataGaps = (() => {
+    if (!transformedData.length) return [];
+
+    const sorted = [...transformedData].sort((a, b) => a[xKey] - b[xKey]);
+    const gaps = [];
+
+    const firstRowDate = sorted[0]?.[xKey];
+    if (effectiveStart && firstRowDate) {
+      const daysDiff = (firstRowDate - effectiveStart) / (1000 * 60 * 60 * 24);
+      if (daysDiff > NO_DATA_GAP_THRESHOLD_DAYS) {
+        gaps.push({ start: effectiveStart, end: firstRowDate });
+      }
+    }
+
+    let gapStart = null;
+    for (let i = 0; i < sorted.length; i++) {
+      const d = sorted[i];
+      const missing = isMissingValue(d[yKey]);
+      if (missing) {
+        if (!gapStart) gapStart = d[xKey];
+      } else {
+        if (gapStart) {
+          gaps.push({ start: gapStart, end: d[xKey] });
+          gapStart = null;
+        }
+      }
+    }
+
+    if (gapStart) {
+      gaps.push({ start: gapStart, end: sorted[sorted.length - 1][xKey] });
+    }
+
+    return gaps;
   })();
 
-  $: noDataRectEnd = hasNoDataPeriod && transformedData.length 
-    ? transformedData[0][xKey] 
+  // Screenreader text calculations
+  $: firstDataPoint = data?.length ? data[0] : null;
+  $: lastDataPoint = data?.length ? data[data.length - 1] : null;
+  $: maxDataPoint = data?.length
+    ? data.reduce((max, d) => (d[yKey] > max[yKey] ? d : max), data[0])
     : null;
+  $: minDataPoint = data?.length
+    ? data.reduce((min, d) => (d[yKey] < min[yKey] ? d : min), data[0])
+    : null;
+
+  $: formatSRValue = (val) => {
+    const numeric = typeof val === "number" ? val : Number(val);
+
+    if (customDpEnabled && dpOverride !== null) {
+      if (units_chart === "percentage") {
+        return Number.isFinite(numeric) ? format(`.${dpOverride}%`)(numeric / 100) : "";
+      } else if (thousandsBoolean) {
+        return Number.isFinite(numeric)
+          ? format(`,.${dpOverride}f`)(numeric) + " thousand"
+          : "";
+      }
+      return Number.isFinite(numeric) ? format(`,.${dpOverride}f`)(numeric) : "";
+    }
+
+    if (units_chart === "percentage") {
+      return format(numeric < 20 ? ".1%" : ".0%" )(numeric / 100);
+    } else if (thousandsBoolean) {
+      return format(numeric < 20 ? ",.1f" : ",.0f")(numeric) + " thousand";
+    } else {
+      return format(numeric < 20 ? ",.1f" : ",.0f")(numeric);
+    }
+  };
+
+  $: firstDate = firstDataPoint
+    ? indicator_period?.toLowerCase() === "monthly"
+      ? firstDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : firstDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: lastDate = lastDataPoint
+    ? indicator_period?.toLowerCase() === "monthly"
+      ? lastDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : lastDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: maxDate = maxDataPoint
+    ? indicator_period?.toLowerCase() === "monthly"
+      ? maxDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : maxDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: minDate = minDataPoint
+    ? indicator_period?.toLowerCase() === "monthly"
+      ? minDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+        })
+      : minDataPoint.date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "";
+
+  $: formattedValue = lastDataPoint ? formatSRValue(lastDataPoint[yKey]) : "";
+  $: formattedMaxValue = maxDataPoint ? formatSRValue(maxDataPoint[yKey]) : "";
+  $: formattedMinValue = minDataPoint ? formatSRValue(minDataPoint[yKey]) : "";
+
+  $: datePreposition = indicator_period?.toLowerCase() === "monthly" ? "in" : "on";
+
+  $: latestIsHighest =
+    lastDataPoint && maxDataPoint
+      ? lastDataPoint[yKey] === maxDataPoint[yKey] &&
+        lastDataPoint.date.getTime() === maxDataPoint.date.getTime()
+      : false;
+  $: latestIsLowest =
+    lastDataPoint && minDataPoint
+      ? lastDataPoint[yKey] === minDataPoint[yKey] &&
+        lastDataPoint.date.getTime() === minDataPoint.date.getTime()
+      : false;
 </script>
 
-<div style="padding:10px; margin-top:0px; margin-bottom:10px">
-  <div class="chart-container" bind:clientWidth={width} style:height="{height}px">
+<div style="padding:0px; margin-top:0px; margin-bottom:0px">
+  <div
+    class="chart-container"
+    bind:clientWidth={width}
+    style:height="{height}px"
+  >
     {#if width}
       {#if transformedData.length > 0}
-        <svg {width} {height} class="chart">
+        <svg {width} {height} class="chart" aria-hidden="true">
+          <!-- Thousands label -->
+          {#if thousandsBoolean}
+            <text
+              x={margin.left + 5}
+              y="15"
+              class="small"
+            >
+              thousands
+            </text>
+          {/if}
+
           <!-- Y grid/ticks -->
           <g class="y-ticks">
             {#each yTicks as tick (tick)}
-                  <g class="y-tick" transform="translate(0 {y(tick)})">
+              <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                      class:tick-line-0={(zeroInDomain && tick === 0 && !indexBoolean) || (indexBoolean && tick === 100)}
+                  class:tick-line-0={(zeroInDomain &&
+                    tick === 0 &&
+                    !indexBoolean) ||
+                    (indexBoolean && tick === 100)}
                   x1={margin.left}
                   x2={width - margin.right}
                 />
-                <text style="text-anchor:end;" x={margin.left - 5} y="6" class="small">
-                  {units_chart === "percentage" ? formatPercent(tick / 100) : formatValue(tick)}
+                <text
+                  style="text-anchor:end;"
+                  x={margin.left - 5}
+                  y="6"
+                  class="small"
+                >
+                  {units_chart === "percentage"
+                    ? formatPercent(tick / 100)
+                    : formatValue(tick)}
                 </text>
               </g>
             {/each}
@@ -327,22 +482,27 @@
             {/each}
           </g>
 
-          <!-- No data period indicator -->
-          {#if hasNoDataPeriod && noDataRectEnd}
+          <!-- No data period indicator for all gaps -->
+          {#each dataGaps as gap}
             <rect
               class="no-data-rect"
-              x={x(effectiveStart)}
+              x={x(gap.start)}
               y={margin.top}
-              width={Math.max(0, x(noDataRectEnd) - x(effectiveStart))}
+              width={Math.max(0, x(gap.end) - x(gap.start))}
               height={height - margin.bottom - margin.top}
               fill="rgba(200, 200, 200, 0.3)"
               stroke="none"
             />
-          {/if}
+          {/each}
 
           <!-- Line series -->
           <g class="plot">
-            <path class="line" d={lineFn(transformedData)} stroke={lineColor} stroke-width="{strokeWidth}px" />
+            <path
+              class="line"
+              d={lineFn(transformedData)}
+              stroke={lineColor}
+              stroke-width="{strokeWidth}px"
+            />
 
             <!-- Last point marker/label: value (top) + date (bottom) -->
             {#if transformedData.length}
@@ -367,19 +527,17 @@
               >
                 <!-- top line: value -->
                 <tspan x={lastX + 8} dy="0">
-                  {#if units_chart === "percentage"}
-                    {lastPoint[yKey] < 20
-                      ? format(".1%")(lastPoint[yKey] / 100)
-                      : formatPercent(lastPoint[yKey] / 100)}
-                  {:else}
-                    {lastPoint[yKey] < 20
-                      ? format(",.1f")(lastPoint[yKey])
-                      : formatValue(lastPoint[yKey])}
-                  {/if}
+                  {formatLastValue(lastPoint[yKey])}
                 </tspan>
                 <!-- bottom line: date -->
-                <tspan x={lastX + 8} dy="1.2em" style="fill:#666; font-weight: 400;">
-                  {lastDateStr}
+                <tspan
+                  x={lastX + 8}
+                  dy="1.2em"
+                  style="fill:#666; font-weight: 400;"
+                >
+                  {indicator_period?.toLowerCase() === "monthly"
+                    ? formatLastDateMonthly(lastPoint[xKey])
+                    : lastDateStr}
                 </tspan>
               </text>
             {/if}
@@ -393,13 +551,35 @@
         </div>
       {/if}
     {/if}
+
+    {#if data?.length}
+      <p class="screen-reader-only">
+        A line chart showing the trend in {title ?? "the data"} since {firstDate}.
+        The latest value is {formattedValue}
+        {datePreposition}
+        {lastDate}{#if latestIsHighest && latestIsLowest}. This was both the
+          highest and lowest data value.{:else if latestIsHighest}. This was the
+          highest data value.{:else if latestIsLowest}. This was the lowest data
+          value.{:else}.{/if}
+        {#if !latestIsHighest && !latestIsLowest}The highest data value was {formattedMaxValue}
+          {datePreposition}
+          {maxDate}. The lowest data value was {formattedMinValue}
+          {datePreposition}
+          {minDate}.{:else if latestIsLowest}The highest data value was {formattedMaxValue}
+          {datePreposition}
+          {maxDate}.{:else if latestIsHighest}The lowest data value was {formattedMinValue}
+          {datePreposition}
+          {minDate}.{/if} The data for the charts is available to download at the
+        end of this dashboard.
+      </p>
+    {/if}
   </div>
 </div>
-
 
 <style>
   .chart-container {
     display: block;
+    min-height: 200px;
   }
 
   .chart {
@@ -421,7 +601,8 @@
   }
 
   .tick-line-0 {
-    stroke: #555;
+    stroke: #b3b3b3;
+    stroke-width: 2px;
   }
 
   .year-divider {
@@ -435,12 +616,24 @@
   }
 
   .year-label {
-    font-size: 12px;
+    font-size: 14px;
     fill: #666;
   }
 
   svg {
     padding: 0px;
     margin: 0;
+  }
+
+  .screen-reader-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 </style>
