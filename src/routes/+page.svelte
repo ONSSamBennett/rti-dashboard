@@ -687,7 +687,15 @@
                     <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
                     {#if isUpdatedThisWeek(seriesId)}
                       <span class="screen-reader-only">{getUpdateFlagSrText(seriesId)}</span>
-                      <span class="updated-dot-inline" aria-hidden="true" />
+                      {#if !isNewIndicator(seriesId)}
+                        <span class="updated-dot-inline" aria-hidden="true" />
+                      {:else}
+                        <span
+                          class="updated-new-inline updated-flag--new-indicator"
+                          aria-hidden="true"
+                          >{getUpdateFlagText(seriesId)}</span
+                        >
+                      {/if}
                       <span class="updated-flag-top-row">
                         <span class="updated-flag-top"
                           class:updated-flag--new-indicator={isNewIndicator(seriesId)}
@@ -1348,12 +1356,21 @@
     gap: 6px;
     padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid color-mix(in srgb, #16a34a 40%, transparent);
-    background-color: color-mix(in srgb, #16a34a 12%, transparent);
+    border: 1px solid #16a34a;
+    background-color: #16a34a;
+    color: #fff;
+    font-weight: 600;
   }
 
   .updated-flag--new-indicator .updated-dot {
-    margin-right: 0;
+    display: none;
+  }
+
+  .updated-new-inline {
+    display: none;
+    margin-left: 6px;
+    font-size: 0.85rem;
+    vertical-align: middle;
   }
 
   .indicators-row {
@@ -1618,6 +1635,19 @@
       margin-left: 4px;
       vertical-align: middle;
       left: -2px;
+    }
+
+    .updated-new-inline {
+      display: inline-flex;
+      margin-left: 8px;
+    }
+
+    .updated-new-inline.updated-flag--new-indicator {
+      font-size: 14px;
+      padding: 1px 5px 3px;
+      border-radius: 3px;
+      line-height: 1.1;
+      white-space: nowrap;
     }
   }
 
