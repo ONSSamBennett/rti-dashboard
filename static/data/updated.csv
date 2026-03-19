@@ -23,5 +23,5 @@ TRUE,electric_price,2026-03-12
 TRUE,epc_existing,2026-03-12
 TRUE,epc_new,2026-03-12
 FALSE,renting,2026-03-12
-FALSE,rentals_agreed,2026-03-12
-FALSE,sales_agreed,2026-03-12
+TRUE,rentals_agreed,2026-03-12
+TRUE,sales_agreed,2026-03-12

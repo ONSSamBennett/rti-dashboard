@@ -197,7 +197,7 @@
     // Track analytics
     analyticsEvent({
       event: "interaction",
-      interactionType: "expandabl-card",
+      interactionType: "expandable-card",
       interactionValue: expandedCards[seriesId] ? "open" : "close",
       interactionLabel: metadataBySeries[seriesId]?.title ?? seriesId,
       sectionTitle,
@@ -876,6 +876,11 @@
                           />
                         </svg>
                       </a>
+                      {#if metadataBySeries[seriesId]?.data_source}
+                        <span class="data-source">
+                          Source: {metadataBySeries[seriesId].data_source}
+                        </span>
+                      {/if}
                     </p>
                   </div>
                 </div>
@@ -1038,7 +1043,7 @@
       </div>
       <div class="download-button-wrapper">
         <span
-          data-ga-event="file_download"
+          data-ga-event="file-download"
           data-ga-file-extension="csv"
           data-ga-file-name={downloadFileName}
           data-ga-link-text={getDownloadLinkText()}
@@ -1410,6 +1415,14 @@
     display: inline;
     vertical-align: -2px;
     margin-left: 2px;
+  }
+
+  .card .get-data-link .data-source {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    color: #666;
   }
 
   .layout-container,
