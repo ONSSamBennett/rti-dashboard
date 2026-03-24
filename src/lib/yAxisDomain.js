@@ -46,6 +46,7 @@ export function computeYDomainFromTransformedData({
   indexBoolean = false,
   yMinMode = "auto", // "zero" | "data" | "above-zero" | "auto"
   yPadding = 0.1,
+  niceCount = 5,
 } = {}) {
   const numericValues = (Array.isArray(transformedData) ? transformedData : [])
     .map((d) => toFiniteNumberOrNaN(d?.[yKey]))
@@ -86,7 +87,7 @@ export function computeYDomainFromTransformedData({
   const paddedMax = (() => {
     if (indexBoolean) {
       const finalRange = topMax - dataYMin;
-      return topMax + 0.2 * finalRange;
+      return topMax + 0.10 * finalRange;
     }
     return topMax;
   })();
@@ -94,14 +95,17 @@ export function computeYDomainFromTransformedData({
   const paddedMinRaw = (() => {
     if (indexBoolean) {
       const finalRange = topMax - dataYMin;
-      return dataYMin - 0.2 * finalRange;
+      return dataYMin - 0.10 * finalRange;
     }
     return computedYMin - Math.abs(computedYMin) * yPadding;
   })();
 
   const paddedMin = Math.min(paddedMinRaw, paddedMax - Number.EPSILON);
 
-  const niceDomain = scaleLinear().domain([paddedMin, paddedMax]).nice().domain();
+  const niceScale = scaleLinear().domain([paddedMin, paddedMax]);
+  const niceDomain = Number.isFinite(niceCount)
+    ? niceScale.nice(niceCount).domain()
+    : niceScale.nice().domain();
   const [niceMin, niceMax] = niceDomain;
 
   return {

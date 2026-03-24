@@ -120,6 +120,8 @@
   $: yMinMode = meta?.yMinMode ?? "auto"; // "zero" | "data" | "above-zero" | "auto"
   $: yPadding = meta?.yPadding ?? 0.1; // 10% padding
 
+  const yTickCount = 5;
+
   // Optional decimal place override for the last-point label (from metadata.csv)
   $: customDpEnabled = normalizeBoolean(meta?.custom_dp);
   $: dpOverride = normalizeDp(meta?.dp);
@@ -150,14 +152,15 @@
     indexBoolean,
     yMinMode,
     yPadding,
+    niceCount: yTickCount,
   }));
 
   $: y = scaleLinear()
-    .domain([paddedMin, paddedMax])
+    .domain([niceMin, niceMax])
     .range([height - margin.bottom, margin.top])
-    .nice();
+    ;
 
-  $: yTicks = y.ticks(5);
+  $: yTicks = y.ticks(yTickCount);
 
   // For baseline styling when 0 is visible
   $: zeroInDomain = paddedMin <= 0 && 0 <= paddedMax;

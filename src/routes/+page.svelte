@@ -463,6 +463,7 @@
             indexBoolean,
             yMinMode,
             yPadding,
+            niceCount: 5,
           });
 
           return {
