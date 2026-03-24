@@ -95,7 +95,7 @@ export function computeYDomainFromTransformedData({
   const paddedMinRaw = (() => {
     if (indexBoolean) {
       const finalRange = topMax - dataYMin;
-      return dataYMin - 0.10 * finalRange;
+      return dataYMin - 0.25 * finalRange;
     }
     return computedYMin - Math.abs(computedYMin) * yPadding;
   })();

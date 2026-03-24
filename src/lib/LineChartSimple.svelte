@@ -155,15 +155,18 @@
     niceCount: yTickCount,
   }));
 
+  $: yDomainMin = paddedMin;
+  $: yDomainMax = niceMax;
+
   $: y = scaleLinear()
-    .domain([niceMin, niceMax])
+    .domain([yDomainMin, yDomainMax])
     .range([height - margin.bottom, margin.top])
     ;
 
   $: yTicks = y.ticks(yTickCount);
 
   // For baseline styling when 0 is visible
-  $: zeroInDomain = paddedMin <= 0 && 0 <= paddedMax;
+  $: zeroInDomain = yDomainMin <= 0 && 0 <= yDomainMax;
 
   $: formatValue = (() => {
     const hasDecimal = yTicks.some((t) => t % 1 !== 0);

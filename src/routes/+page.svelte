@@ -1,5 +1,6 @@
 <script>
   import { onDestroy, onMount } from "svelte";
+  import * as env from "$env/static/public";
   import {
     Embed,
     Notice,
@@ -429,11 +430,13 @@
 
   const chartStartDate = new Date(2023, 11, 31);
 
-  // QA-only: set true to render the change summary table (previously commented out)
-  const showChangeQaTable = true;
+  const isPreviewEnv = env?.PUBLIC_APP_ENV === "preview";
 
-  // QA-only: set true to render the y-axis debug table at the bottom of the page
-  const showYAxisQaTable = true;
+  // QA-only: set true to render the change summary table (preview only)
+  const showChangeQaTable = isPreviewEnv && false;
+
+  // QA-only: set true to render the y-axis debug table at the bottom of the page (preview only)
+  const showYAxisQaTable = isPreviewEnv && false;
 
   function formatQaNumber(value) {
     if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
@@ -1022,7 +1025,7 @@
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMax)}</td>
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMin)}</td>
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.niceMax)}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.niceMin)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.paddedMin)}</td>
                 </tr>
               {/each}
             </tbody>
