@@ -4,6 +4,7 @@ Metadata reference table
 |-------------------|-------------|
 | series_id         | Unique identifier used to join metadata to data |
 | show              | TRUE shows the series on the dashboard, FALSE hides |
+| new_indicator     | TRUE shows the series on the dashboard, FALSE hides |
 | category          | Section the series will appear under (energy, business, consumer, transport) |
 | title             | Card title text |
 | description       | Card subtitle text |
@@ -18,5 +19,6 @@ Metadata reference table
 | thousands         | Currently unused* |
 | thin_line         | Currently unused* |
 | yMinMode          | Currently unused* |
+| data_source       | Source to show on the card (not needed if source shown elsewhere) |
 | url               | URL for data set |
 | *Note*            | *Unused fields kept for future data vis logic* |

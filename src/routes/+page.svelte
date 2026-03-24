@@ -1359,7 +1359,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 2px 8px;
+    padding: 4px 7px;
     border-radius: 4px;
     border: 1px solid #16a34a;
     background-color: #16a34a;
@@ -1657,7 +1657,7 @@
 
     .updated-new-inline.updated-flag--new-indicator {
       font-size: 14px;
-      padding: 1px 5px 3px;
+      padding: 2px 5px 3px;
       border-radius: 3px;
       line-height: 1.1;
       white-space: nowrap;
