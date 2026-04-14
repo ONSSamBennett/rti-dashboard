@@ -27,6 +27,27 @@
   const formatValue = (val) =>
     Math.abs(val) < 10 ? format(",.1f")(val) : format(",.0f")(val);
 
+  function normalizeBoolean(value) {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    if (typeof value === "number") return value === 1;
+    const v = String(value).trim().toLowerCase();
+    return v === "true" || v === "1" || v === "yes";
+  }
+
+  function normalizeDp(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const n = typeof value === "number" ? value : Number(String(value).trim());
+    if (!Number.isFinite(n)) return null;
+    return Math.max(0, Math.trunc(n));
+  }
+
+  const indicatorMeta = metadataBySeries?.[seriesId] ?? {};
+  const customDpIndicatorEnabled = normalizeBoolean(
+    indicatorMeta?.custom_dp_indicator
+  );
+  const dpIndicatorOverride = normalizeDp(indicatorMeta?.dp_indicator);
+
   // Normalize and guard the numeric change value
   const numericChange = typeof change === "number" ? change : Number(change);
   const absChange = Math.abs(numericChange);
@@ -47,13 +68,23 @@
     isEffectivelyZero = absChange === 0;
   }
 
-  const formattedChange = isFiniteChange
-    ? units === "percentage"
-      ? formatPercent(absChange / 100)
-      : units === "percentage points"
-      ? `${formatValue(absChange)}pp`
-      : formatValue(absChange)
-    : "";
+  const formattedChange = (() => {
+    if (!isFiniteChange) return "";
+
+    if (customDpIndicatorEnabled && dpIndicatorOverride !== null) {
+      if (units === "percentage") {
+        return format(`.${dpIndicatorOverride}%`)(absChange / 100);
+      }
+      if (units === "percentage points") {
+        return `${format(`,.${dpIndicatorOverride}f`)(absChange)}pp`;
+      }
+      return format(`,.${dpIndicatorOverride}f`)(absChange);
+    }
+
+    if (units === "percentage") return formatPercent(absChange / 100);
+    if (units === "percentage points") return `${formatValue(absChange)}pp`;
+    return formatValue(absChange);
+  })();
 
   // For the "No change" display show a slightly more precise value
   // (one extra decimal for % and two for pp)

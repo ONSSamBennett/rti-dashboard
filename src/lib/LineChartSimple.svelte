@@ -123,8 +123,10 @@
   const yTickCount = 5;
 
   // Optional decimal place override for the last-point label (from metadata.csv)
-  $: customDpEnabled = normalizeBoolean(meta?.custom_dp);
-  $: dpOverride = normalizeDp(meta?.dp);
+  $: customDpEnabled = normalizeBoolean(
+    meta?.custom_dp_chart ?? meta?.custom_dp
+  );
+  $: dpOverride = normalizeDp(meta?.dp_chart ?? meta?.dp);
 
   // Data min/max
   let dataYMin = 0;

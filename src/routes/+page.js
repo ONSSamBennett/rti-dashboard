@@ -37,7 +37,11 @@ export async function load({ fetch }) {
   // Convert to a lookup object
   const metadataBySeries = {};
   for (const meta of metadataArray) {
-    metadataBySeries[meta.series_id] = meta;
+    const rawKey = meta?.series_id;
+    if (rawKey === null || rawKey === undefined) continue;
+    const key = String(rawKey).trim();
+    if (!key) continue;
+    metadataBySeries[key] = meta;
   }
 
   // Load updated_this_week separately
@@ -85,7 +89,11 @@ export async function load({ fetch }) {
   
   const updatedBySeries = {};
   for (const item of updatedArray) {
-    updatedBySeries[item.series_id] = item.updated_this_week;
+    const rawKey = item?.series_id;
+    if (rawKey === null || rawKey === undefined) continue;
+    const key = String(rawKey).trim();
+    if (!key) continue;
+    updatedBySeries[key] = item.updated_this_week;
   }
 
   const str = await (await fetch(dataUrl)).text();

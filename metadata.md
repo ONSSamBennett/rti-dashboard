@@ -14,8 +14,10 @@ Metadata reference table
 | units             | Whether indicator shows percentage change or percentage point change |
 | units_chart       | Whether the chart shows percentage or values |
 | index             | Whether the chart shows an index (zero-style line at 100) |
-| custom_dp         | Whether custom decimal places are needed on the chart data label (otherwise shows 0dp or 1dp for values under 20) |
-| dp                | If using custom decimal places for the chart data label, sets the number |
+| custom_dp_chart   | Whether custom decimal places are needed on the chart data label (otherwise shows 0dp or 1dp for values under 20) |
+| dp_chart          | If using custom decimal places for the chart data label, sets the number |
+| custom_dp_indicator | Whether custom decimal places are needed on the indicator data label (otherwise shows 0dp or 1dp for values under 20) |
+| dp_indicator          | If using custom decimal places for the indicator data label, sets the number |
 | thousands         | Currently unused* |
 | thin_line         | Currently unused* |
 | yMinMode          | Currently unused* |

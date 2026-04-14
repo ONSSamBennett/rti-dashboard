@@ -66,7 +66,8 @@
   function isTrueLike(value) {
     if (value === true) return true;
     if (value === false || value === null || value === undefined) return false;
-    return String(value).toLowerCase() === "true";
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
   }
 
   function isUpdatedThisWeek(seriesId) {
@@ -75,6 +76,9 @@
 
   function isNewIndicator(seriesId) {
     return isTrueLike(metadataBySeries?.[seriesId]?.new_indicator);
+  }
+  function shouldShowUpdateFlag(seriesId) {
+    return isUpdatedThisWeek(seriesId) || isNewIndicator(seriesId);
   }
 
   function getUpdateFlagText(seriesId) {
@@ -433,10 +437,10 @@
   const isPreviewEnv = env?.PUBLIC_APP_ENV === "preview";
 
   // QA-only: set true to render the change summary table (preview only)
-  const showChangeQaTable = isPreviewEnv && false;
+  const showChangeQaTable = isPreviewEnv && true;
 
   // QA-only: set true to render the y-axis debug table at the bottom of the page (preview only)
-  const showYAxisQaTable = isPreviewEnv && false;
+  const showYAxisQaTable = isPreviewEnv && true;
 
   function formatQaNumber(value) {
     if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
@@ -689,7 +693,7 @@
                   </svg>
                   <h3 class="card-title">
                     <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
-                    {#if isUpdatedThisWeek(seriesId)}
+                    {#if shouldShowUpdateFlag(seriesId)}
                       <span class="screen-reader-only">{getUpdateFlagSrText(seriesId)}</span>
                       {#if !isNewIndicator(seriesId)}
                         <span class="updated-dot-inline" aria-hidden="true" />
@@ -746,7 +750,7 @@
                     <div class="header-spacer"></div>
                   {/if}
                   <div class="updated-flag-container">
-                    {#if isUpdatedThisWeek(seriesId)}
+                    {#if shouldShowUpdateFlag(seriesId)}
                       <span class="updated-flag"
                         class:updated-flag--new-indicator={isNewIndicator(seriesId)}
                         ><span class="updated-dot" aria-hidden />{getUpdateFlagText(seriesId)}</span
@@ -812,10 +816,8 @@
                       {#each [{ label: undefined, getValue: (r, isP) => getChangeValue(r, isP) }, { label: "year", getValue: (r, isP) => getYearOverYearChange(r, isP) }] as indicator}
                         <div class="indicators-child">
                           <ChangeIndicator
-                            seriesId={indicator.label ? undefined : seriesId}
-                            metadataBySeries={indicator.label
-                              ? undefined
-                              : metadataBySeries}
+                            {seriesId}
+                            {metadataBySeries}
                             label={indicator.label}
                             change={indicator.getValue(
                               row,
