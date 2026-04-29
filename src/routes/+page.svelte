@@ -318,7 +318,7 @@
 
     // Track analytics
     analyticsEvent({
-      event: "file_download",
+      event: "fileDownload",
       fileExtension: "csv",
       fileName,
       linkText: getDownloadLinkText(),
@@ -861,8 +861,12 @@
                         yMinMode:
                           metadataBySeries[seriesId]?.yMinMode ?? "auto",
                         yPadding: metadataBySeries[seriesId]?.yPadding ?? 0.1,
-                        custom_dp: metadataBySeries[seriesId]?.custom_dp,
-                        dp: metadataBySeries[seriesId]?.dp,
+                        custom_dp_chart:
+                          metadataBySeries[seriesId]?.custom_dp_chart ??
+                          metadataBySeries[seriesId]?.custom_dp,
+                        dp_chart:
+                          metadataBySeries[seriesId]?.dp_chart ??
+                          metadataBySeries[seriesId]?.dp,
                       }}
                       showYearDividersAtDomainEdges={false}
                     />
@@ -1122,25 +1126,16 @@
         </p>
       </div>
       <div class="download-button-wrapper">
-        <span
-          data-ga-event="file-download"
-          data-ga-file-extension="csv"
-          data-ga-file-name={downloadFileName}
-          data-ga-link-text={getDownloadLinkText()}
-          data-ga-link-url={downloadObjectUrl}
-          data-ga-link-domain={downloadLinkDomain}
+        <Button
+          type="button"
+          variant="secondary"
+          icon="download"
+          iconPosition="before"
+          small={true}
+          on:click={downloadData}
         >
-          <Button
-            type="button"
-            variant="secondary"
-            icon="download"
-            iconPosition="before"
-            small={true}
-            on:click={downloadData}
-          >
-            Download data (CSV, {fileSizeKB}KB)
-          </Button>
-        </span>
+          Download data (CSV, {fileSizeKB}KB)
+        </Button>
       </div>
     </div>
   </Section>
