@@ -165,10 +165,17 @@
     .range([height - margin.bottom, margin.top])
     ;
 
-  $: yTicks = y.ticks(yTickCount);
+  $: baselineValue = indexBoolean ? 100 : 0;
+  $: baselineInDomain = yDomainMin <= baselineValue && baselineValue <= yDomainMax;
 
-  // For baseline styling when 0 is visible
-  $: zeroInDomain = yDomainMin <= 0 && 0 <= yDomainMax;
+  $: yTicks = (() => {
+    const ticks = y.ticks(yTickCount);
+    if (baselineInDomain && !ticks.some((t) => Math.abs(t - baselineValue) < 1e-9)) {
+      ticks.push(baselineValue);
+      ticks.sort((a, b) => a - b);
+    }
+    return ticks;
+  })();
 
   $: formatValue = (() => {
     const hasDecimal = yTicks.some((t) => t % 1 !== 0);
@@ -203,6 +210,11 @@
 
   const formatLastDate = timeFormat("%-d %b");
   const formatLastDateMonthly = timeFormat("%B");
+
+  function isMonthOrQuarterPeriod(period) {
+    const p = period?.toLowerCase?.();
+    return p === "monthly" || p === "month" || p === "quarterly" || p === "quarter";
+  }
 
   function getQuarterFromDate(date) {
     return Math.floor(date.getMonth() / 3) + 1;
@@ -293,22 +305,32 @@
       }
     }
 
+    const getGapDate = (row) => {
+      const gd = row?.gapDate;
+      if (gd instanceof Date && !Number.isNaN(gd.getTime())) return gd;
+      return row?.[xKey];
+    };
+
     let gapStart = null;
     for (let i = 0; i < sorted.length; i++) {
       const d = sorted[i];
       const missing = isMissingValue(d[yKey]);
+      const gapDate = getGapDate(d);
       if (missing) {
-        if (!gapStart) gapStart = d[xKey];
+        if (!gapStart) gapStart = gapDate;
       } else {
         if (gapStart) {
-          gaps.push({ start: gapStart, end: d[xKey] });
+          gaps.push({ start: gapStart, end: gapDate });
           gapStart = null;
         }
       }
     }
 
     if (gapStart) {
-      gaps.push({ start: gapStart, end: sorted[sorted.length - 1][xKey] });
+      gaps.push({
+        start: gapStart,
+        end: getGapDate(sorted[sorted.length - 1]),
+      });
     }
 
     return gaps;
@@ -348,7 +370,7 @@
   };
 
   $: firstDate = firstDataPoint
-    ? indicator_period?.toLowerCase() === "monthly"
+    ? isMonthOrQuarterPeriod(indicator_period)
       ? firstDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -361,7 +383,7 @@
     : "";
 
   $: lastDate = lastDataPoint
-    ? indicator_period?.toLowerCase() === "monthly"
+    ? isMonthOrQuarterPeriod(indicator_period)
       ? lastDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -374,7 +396,7 @@
     : "";
 
   $: maxDate = maxDataPoint
-    ? indicator_period?.toLowerCase() === "monthly"
+    ? isMonthOrQuarterPeriod(indicator_period)
       ? maxDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -387,7 +409,7 @@
     : "";
 
   $: minDate = minDataPoint
-    ? indicator_period?.toLowerCase() === "monthly"
+    ? isMonthOrQuarterPeriod(indicator_period)
       ? minDataPoint.date.toLocaleDateString("en-GB", {
           year: "numeric",
           month: "long",
@@ -403,7 +425,7 @@
   $: formattedMaxValue = maxDataPoint ? formatSRValue(maxDataPoint[yKey]) : "";
   $: formattedMinValue = minDataPoint ? formatSRValue(minDataPoint[yKey]) : "";
 
-  $: datePreposition = indicator_period?.toLowerCase() === "monthly" ? "in" : "on";
+  $: datePreposition = isMonthOrQuarterPeriod(indicator_period) ? "in" : "on";
 
   $: latestIsHighest =
     lastDataPoint && maxDataPoint
@@ -443,10 +465,7 @@
               <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                  class:tick-line-0={(zeroInDomain &&
-                    tick === 0 &&
-                    !indexBoolean) ||
-                    (indexBoolean && tick === 100)}
+                  class:tick-line-0={baselineInDomain && Math.abs(tick - baselineValue) < 1e-9}
                   x1={margin.left}
                   x2={width - margin.right}
                 />
@@ -543,7 +562,7 @@
                   dy="1.2em"
                   style="fill:#666; font-weight: 400;"
                 >
-                  {indicator_period?.toLowerCase() === "monthly"
+                  {isMonthOrQuarterPeriod(indicator_period)
                     ? formatLastDateMonthly(lastPoint[xKey])
                     : lastDateStr}
                 </tspan>

@@ -50,26 +50,32 @@
 
   // Normalize and guard the numeric change value
   const numericChange = typeof change === "number" ? change : Number(change);
-  const absChange = Math.abs(numericChange);
   const isFiniteChange = Number.isFinite(numericChange);
+  const isAvailable = change !== null && change !== undefined && isFiniteChange;
+  const absChange = isAvailable ? Math.abs(numericChange) : 0;
 
-  // Treat very small changes as effectively zero so they display "No change".
-  // - For percentage (e.g. 0.5%) we expect `change` in percent units, threshold 0.5
-  // - For percentage points we expect `change` in pp, threshold 0.05
+  function getIndicatorDp(units, absChange) {
+    if (customDpIndicatorEnabled && dpIndicatorOverride !== null) {
+      return dpIndicatorOverride;
+    }
+
+    // Defaults must mirror the formatting logic used below.
+    if (units === "percentage") return 0; // formatPercent = format(".0%")
+    if (units === "percentage points") return absChange < 10 ? 1 : 0; // formatValue
+    return absChange < 10 ? 1 : 0; // formatValue
+  }
+
+  // Treat a change as "No change" when it would *display* as zero
+  // at the indicator's current precision.
   let isEffectivelyZero = false;
-  if (change == null || !isFiniteChange) {
-    // null/undefined or non-finite values: show "No change"
-    isEffectivelyZero = true;
-  } else if (units === "percentage") {
-    isEffectivelyZero = absChange < 0.5; // less than 0.5%
-  } else if (units === "percentage points") {
-    isEffectivelyZero = absChange < 0.05; // less than 0.05 pp
-  } else {
-    isEffectivelyZero = absChange === 0;
+  if (isAvailable) {
+    const dpUsed = getIndicatorDp(units, absChange);
+    const displayZeroThreshold = 0.5 * Math.pow(10, -dpUsed);
+    isEffectivelyZero = absChange < displayZeroThreshold;
   }
 
   const formattedChange = (() => {
-    if (!isFiniteChange) return "";
+    if (!isAvailable) return "";
 
     if (customDpIndicatorEnabled && dpIndicatorOverride !== null) {
       if (units === "percentage") {
@@ -89,7 +95,7 @@
   // For the "No change" display show a slightly more precise value
   // (one extra decimal for % and two for pp)
   let noChangeFormatted = "";
-  if (isFiniteChange) {
+  if (isAvailable) {
     if (units === "percentage") {
       const formatPercentOne = format(".1%");
       noChangeFormatted = formatPercentOne(absChange / 100);
@@ -135,7 +141,11 @@
   </p>
 {/if}
 
-{#if isEffectivelyZero}
+{#if !isAvailable}
+  <div class="indicator-area no-change" style="background:{noChangeBackground}">
+    Not available
+  </div>
+{:else if isEffectivelyZero}
   <div class="indicator-area no-change" style="background:{noChangeBackground}">
     No change
   </div>

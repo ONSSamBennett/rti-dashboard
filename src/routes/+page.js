@@ -28,6 +28,80 @@ function getLookbackPeriods(frequency) {
   }
 }
 
+function isQuarterlyIndicator(indicatorPeriod) {
+  const p = indicatorPeriod?.toLowerCase?.();
+  return p === "quarterly" || p === "quarter";
+}
+
+// Infer underlying data cadence from the time series itself.
+// This helps when indicator_period is quarterly but the series is actually monthly (etc.).
+function inferCadenceFromEntries(entries) {
+  if (!entries || entries.length < 3) return null;
+
+  const diffsDays = [];
+  const start = Math.max(1, entries.length - 10);
+  for (let i = start; i < entries.length; i++) {
+    const prev = entries[i - 1]?.date;
+    const curr = entries[i]?.date;
+    if (!(prev instanceof Date) || !(curr instanceof Date)) continue;
+    const diff = (curr - prev) / (24 * 60 * 60 * 1000);
+    if (Number.isFinite(diff) && diff > 0) diffsDays.push(diff);
+  }
+  if (!diffsDays.length) return null;
+
+  diffsDays.sort((a, b) => a - b);
+  const mid = Math.floor(diffsDays.length / 2);
+  const median =
+    diffsDays.length % 2 === 0
+      ? (diffsDays[mid - 1] + diffsDays[mid]) / 2
+      : diffsDays[mid];
+
+  if (median <= 2) return "daily";
+  if (median <= 10) return "weekly";
+  if (median <= 45) return "monthly";
+  if (median <= 120) return "quarterly";
+  return "monthly";
+}
+
+function getQuarterlyPeriodLookbackPoints(cadence) {
+  const c = cadence?.toLowerCase?.();
+  switch (c) {
+    case "daily":
+    case "day":
+      return 91; // approx 13 weeks / 1 quarter
+    case "weekly":
+    case "week":
+      return 13;
+    case "monthly":
+    case "month":
+      return 3;
+    case "quarterly":
+    case "quarter":
+      return 1;
+    default:
+      return 3;
+  }
+}
+
+function isMonthlyCadence(cadence) {
+  const c = cadence?.toLowerCase?.();
+  return c === "monthly" || c === "month";
+}
+
+function isPreviousCalendarMonth(latestDate, prevDate) {
+  if (!(latestDate instanceof Date) || !(prevDate instanceof Date)) return false;
+  if (Number.isNaN(latestDate.getTime()) || Number.isNaN(prevDate.getTime())) return false;
+
+  const latestYear = latestDate.getFullYear();
+  const latestMonth = latestDate.getMonth();
+
+  const expectedPrev = new Date(latestYear, latestMonth - 1, 1);
+  return (
+    prevDate.getFullYear() === expectedPrev.getFullYear() &&
+    prevDate.getMonth() === expectedPrev.getMonth()
+  );
+}
+
 export async function load({ fetch }) {
   let dates = await (await fetch(datesUrl)).json();
 
@@ -111,7 +185,7 @@ export async function load({ fetch }) {
     const key = row.series_id;
 
     if (!grouped[key]) grouped[key] = [];
-    grouped[key].push({ ...row, date });
+    grouped[key].push({ ...row, date, gapDate: date });
   }
 
   const result = {};
@@ -121,16 +195,53 @@ export async function load({ fetch }) {
 
     const latest = entries[entries.length - 1];
 
-    // Get the frequency from metadata for this series
-    // Prefer data_frequency (actual cadence), fall back to indicator_period
-    const frequency =
-      metadataBySeries[series_id]?.data_frequency ??
-      metadataBySeries[series_id]?.indicator_period;
-    const { period, year } = getLookbackPeriods(frequency);
+    const meta = metadataBySeries[series_id] ?? {};
+    const dataFrequency = meta?.data_frequency;
+    const indicatorPeriod = meta?.indicator_period;
+
+    // If the underlying data is monthly, shift points from the 1st to the 15th
+    // so they plot mid-month on the chart.
+    const inferredCadence = inferCadenceFromEntries(entries);
+    const cadenceForPlot = dataFrequency ?? inferredCadence;
+    if (isMonthlyCadence(cadenceForPlot)) {
+      for (const entry of entries) {
+        const d = entry?.date;
+        if (!(d instanceof Date) || Number.isNaN(d.getTime())) continue;
+        if (d.getDate() !== 1) continue;
+
+        // Keep the original (1st-of-month) date for grey-band calculations,
+        // but plot the point at mid-month.
+        entry.gapDate = entry.gapDate instanceof Date ? entry.gapDate : d;
+        entry.date = new Date(d.getFullYear(), d.getMonth(), 15);
+      }
+    }
+
+    // Default lookback is based on the underlying data cadence (if present),
+    // otherwise we fall back to the indicator_period.
+    const frequencyForLookback = dataFrequency ?? indicatorPeriod;
+    let { period: periodLookback, year: yearLookback } =
+      getLookbackPeriods(frequencyForLookback);
+
+    // If the indicator is defined as quarterly, ensure the period-over-period change
+    // compares to the prior quarter (e.g., 3 months back for monthly data).
+    if (isQuarterlyIndicator(indicatorPeriod)) {
+      const cadenceForQuarterly = dataFrequency ?? inferredCadence ?? frequencyForLookback;
+      periodLookback = getQuarterlyPeriodLookbackPoints(cadenceForQuarterly);
+      yearLookback = getLookbackPeriods(cadenceForQuarterly).year;
+    }
 
     // Calculate period-over-period (adaptive based on frequency)
-    const prevPeriod = entries[entries.length - 1 - period];
-    const prevYear = entries[entries.length - 1 - year];
+    let prevPeriod = entries[entries.length - 1 - periodLookback];
+    const prevYear = entries[entries.length - 1 - yearLookback];
+
+    // Monthly indicators should only compare to the actual prior calendar month.
+    // If that month is missing, mark the change as unavailable.
+    const isMonthlyIndicator = isMonthlyCadence(frequencyForLookback);
+    if (isMonthlyIndicator && periodLookback === 1 && prevPeriod) {
+      if (!isPreviousCalendarMonth(latest.date, prevPeriod.date)) {
+        prevPeriod = null;
+      }
+    }
 
     const pop = prevPeriod ? latest.num_uk - prevPeriod.num_uk : null;
     const yoy = prevYear ? latest.num_uk - prevYear.num_uk : null;

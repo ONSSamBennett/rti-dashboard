@@ -445,6 +445,7 @@
       "Series",
       "Unit Label",
       "Data frequency",
+      "Indicator frequency",
       "Latest Value",
       "Date Last Updated",
       "Date for Latest Change",
@@ -457,10 +458,9 @@
 
     const rows = getSummaryTableEntries().map(([seriesId, row]) => {
       const unitLabel = metadataBySeries[seriesId]?.units ?? "";
-      const frequency =
-        metadataBySeries[seriesId]?.data_frequency ??
-        metadataBySeries[seriesId]?.indicator_period ??
-        "";
+      const dataFrequency = metadataBySeries[seriesId]?.data_frequency ?? "";
+      const indicatorFrequency =
+        metadataBySeries[seriesId]?.indicator_period ?? "";
 
       // These columns are *relative percent changes* (not percentage-point deltas)
       const percentSuffix = "%";
@@ -468,7 +468,8 @@
       return [
         metadataBySeries[seriesId]?.title ?? seriesId,
         unitLabel,
-        frequency,
+        dataFrequency,
+        indicatorFrequency,
         formatNumberForCsv(row.num_uk),
         formatDateForCsv(row.date),
         formatDateForCsv(row.period_over_period_date),
@@ -502,11 +503,28 @@
 
   const isPreviewEnv = env?.PUBLIC_APP_ENV === "preview";
 
-  // QA-only: set true to render the change summary table (preview only)
-  const showChangeQaTable = isPreviewEnv && true;
+  function shouldShowQaTable(visibility) {
+    // Back-compat: historically these flags were booleans that only rendered in preview.
+    if (visibility === true) visibility = "preview";
+    if (visibility === false || visibility === null || visibility === undefined) {
+      visibility = "off";
+    }
 
-  // QA-only: set true to render the y-axis debug table at the bottom of the page (preview only)
-  const showYAxisQaTable = isPreviewEnv && true;
+    const v = String(visibility).trim().toLowerCase();
+    if (v === "always") return true;
+    if (v === "preview") return isPreviewEnv;
+    return false; // "off" or any unrecognized value
+  }
+
+  // QA-only table visibility:
+  // - "off" (default): never render
+  // - "preview": render only when PUBLIC_APP_ENV === "preview"
+  // - "always": render in any environment
+  const changeQaTableVisibility = "preview";
+  const yAxisQaTableVisibility = "preview";
+
+  const showChangeQaTable = shouldShowQaTable(changeQaTableVisibility);
+  const showYAxisQaTable = shouldShowQaTable(yAxisQaTableVisibility);
 
   function formatQaNumber(value) {
     if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
@@ -798,7 +816,16 @@
                         >
                         up to<br />{metadataBySeries[
                           seriesId
-                        ]?.indicator_period?.toLowerCase() === "monthly"
+                        ]?.indicator_period?.toLowerCase() === "monthly" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "month" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "quarterly" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "quarter"
                           ? row.date.toLocaleDateString("en-GB", {
                               year: "numeric",
                               month: "long",
@@ -879,7 +906,16 @@
                       <p style="font-weight:normal; font-size:14px; color:#666">
                         up to {metadataBySeries[
                           seriesId
-                        ]?.indicator_period?.toLowerCase() === "monthly"
+                        ]?.indicator_period?.toLowerCase() === "monthly" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "month" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "quarterly" ||
+                        metadataBySeries[
+                          seriesId
+                        ]?.indicator_period?.toLowerCase() === "quarter"
                           ? row.date.toLocaleDateString("en-GB", {
                               year: "numeric",
                               month: "long",
@@ -980,12 +1016,13 @@
     {#if showChangeQaTable}
       <Twisty title="QA: Year-on-Year Change Table" open={false}>
         <div style="overflow-x:auto; margin-bottom: 2rem;">
-          <table style="border-collapse: collapse; width: 100%; min-width: 950px; font-size: 0.92em;">
+          <table style="border-collapse: collapse; width: 100%; min-width: 1050px; font-size: 0.92em;">
             <thead>
               <tr style="background: #f4f4f4;">
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Unit Label</th>
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Data frequency</th>
+                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Indicator frequency</th>
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Value</th>
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">End label d.p.</th>
                 <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date Last Updated</th>
@@ -1002,7 +1039,8 @@
                 <tr>
                   <td style="padding: 8px; border: 1px solid #ccc;">{metadataBySeries[seriesId]?.title ?? seriesId}</td>
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{metadataBySeries[seriesId]?.units || 'N/A'}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? 'N/A')}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
                   <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
                     {#if typeof endLabelDpBySeries?.[seriesId] === 'number'}

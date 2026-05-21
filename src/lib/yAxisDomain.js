@@ -48,6 +48,12 @@ export function computeYDomainFromTransformedData({
   yPadding = 0.1,
   niceCount = 5,
 } = {}) {
+  const baseline = indexBoolean ? 100 : 0;
+  // Extra breathing room for indexed charts when the series is above the baseline.
+  // Kept deliberately small to avoid reintroducing overly-large domains.
+  const indexExtraTopPad = 0.1;
+  const indexExtraBottomPad = 0.1;
+
   const numericValues = (Array.isArray(transformedData) ? transformedData : [])
     .map((d) => toFiniteNumberOrNaN(d?.[yKey]))
     .filter((v) => Number.isFinite(v));
@@ -56,17 +62,23 @@ export function computeYDomainFromTransformedData({
   const dataYMax = numericValues.length ? Math.max(...numericValues) : 100;
 
   const yMaxNumeric = toFiniteNumberOrNaN(yMax);
-  const topMax = Number.isFinite(yMaxNumeric) ? yMaxNumeric : dataYMax;
+  const topMaxRaw = Number.isFinite(yMaxNumeric) ? yMaxNumeric : dataYMax;
+  // For index charts, keep the 100 baseline visible even if the data sits below 100.
+  let topMax = indexBoolean ? Math.max(topMaxRaw, baseline) : topMaxRaw;
 
-  const computedYMin = (() => {
-    if (indexBoolean && yMinMode === "auto") return dataYMin;
-
+  const { computedYMin, baseMin } = (() => {
     let baseMin;
-    if (yMinMode === "zero") baseMin = 0;
+    if (yMinMode === "zero") baseMin = baseline;
     else if (yMinMode === "data") baseMin = dataYMin;
-    else if (yMinMode === "above-zero") baseMin = dataYMin > 0 ? dataYMin : 0;
-    else if (yMinMode === "auto") baseMin = 0;
-    else baseMin = 0;
+    else if (yMinMode === "above-zero") {
+      baseMin = dataYMin > baseline ? dataYMin : baseline;
+    } else if (yMinMode === "auto") {
+      // Mirror the non-index behavior (baseline is the starting point) but for index
+      // series allow dips below the baseline to remain visible.
+      baseMin = indexBoolean ? Math.min(baseline, dataYMin) : baseline;
+    } else baseMin = baseline;
+
+    let computedYMin = baseMin;
 
     if (yMinMode === "auto" && dataYMin > baseMin) {
       const range = topMax - baseMin;
@@ -76,28 +88,53 @@ export function computeYDomainFromTransformedData({
         const denom = 1 - frac;
         if (denom > 0) {
           const newBottom = (dataYMin - frac * topMax) / denom;
-          if (newBottom < dataYMin) return newBottom;
+          if (newBottom < dataYMin) computedYMin = newBottom;
         }
       }
     }
 
-    return baseMin;
+    return { computedYMin, baseMin };
   })();
 
+  // Opposite-direction heuristic (symmetric to the "raise bottom" heuristic above):
+  // if the chosen top sits far above the data, pull it down so the data max isn't
+  // squashed at the bottom of the chart.
+  if (yMinMode === "auto" && dataYMax < topMax) {
+    const range = topMax - computedYMin;
+    const gap = topMax - dataYMax;
+    if (range > 0 && gap / range > 0.5) {
+      const frac = 0.3;
+      const denom = 1 - frac;
+      if (denom > 0) {
+        // Place dataYMax at (1-frac) of the range above the bottom, leaving frac headroom.
+        const newTop = (dataYMax - frac * computedYMin) / denom;
+        const constrainedTop = indexBoolean ? Math.max(newTop, baseline) : newTop;
+        if (constrainedTop > dataYMax && constrainedTop < topMax) {
+          topMax = constrainedTop;
+        }
+      }
+    }
+  }
+
+  const rangeForPadding = Math.max(0, topMax - computedYMin);
+
   const paddedMax = (() => {
-    if (indexBoolean) {
-      const finalRange = topMax - dataYMin;
-      return topMax + 0.10 * finalRange;
+    if (indexBoolean && dataYMax > baseline) {
+      return topMax + indexExtraTopPad * rangeForPadding;
     }
     return topMax;
   })();
 
   const paddedMinRaw = (() => {
-    if (indexBoolean) {
-      const finalRange = topMax - dataYMin;
-      return dataYMin - 0.25 * finalRange;
-    }
-    return computedYMin - Math.abs(computedYMin) * yPadding;
+    // Apply padding relative to the chosen baseline so index charts (baseline=100)
+    // behave like non-index charts (baseline=0): no automatic padding when the
+    // domain minimum equals the baseline.
+    const basePad = Math.abs(computedYMin - baseline) * yPadding;
+    const extraPad =
+      indexBoolean && dataYMax > baseline
+        ? indexExtraBottomPad * rangeForPadding
+        : 0;
+    return computedYMin - basePad - extraPad;
   })();
 
   const paddedMin = Math.min(paddedMinRaw, paddedMax - Number.EPSILON);
