@@ -8,6 +8,7 @@
     computeTransformedData,
     computeYDomainFromTransformedData,
   } from "$lib/yAxisDomain.js";
+  import { toBoolean, toNonNegativeIntOrNull } from "$lib/coerce.js";
 
   // Props (existing)
   export let data = [];
@@ -15,8 +16,6 @@
   export let yMax = undefined;
   export let lineColor = "#27a0cc";
   export let title;
-  export let description;
-  export let units;
   export let units_chart; // e.g., "percentage"
   export let index = false;
   export let thousands = false;
@@ -24,17 +23,8 @@
   export let thinSeries = null; // NEW: which series_id should be thinner
   export let indicator_period = null; // NEW: frequency for date formatting (e.g., "monthly", "weekly")
 
-  // Normalize `index` prop to a boolean so strings like "false"/"0" don't evaluate truthy
-  $: indexBoolean = (() => {
-    if (index === true) return true;
-    if (index === false) return false;
-    if (typeof index === "number") return index === 1;
-    if (typeof index === "string") {
-      const v = index.trim().toLowerCase();
-      return v === "true" || v === "1" || v === "yes";
-    }
-    return Boolean(index);
-  })();
+  // Normalize `index` prop so strings like "false"/"0" don't evaluate truthy
+  $: indexBoolean = toBoolean(index);
 
   // Fixed time window
   export let startDate = null; // e.g., new Date(2022, 0, 1)
@@ -43,39 +33,13 @@
   // NEW: metadata object to drive axis options (and anything else)
   export let meta = {};
 
-  function normalizeBoolean(value) {
-    if (value === true) return true;
-    if (value === false) return false;
-    if (typeof value === "number") return value === 1;
-    if (typeof value === "string") {
-      const v = value.trim().toLowerCase();
-      return v === "true" || v === "1" || v === "yes";
-    }
-    return Boolean(value);
-  }
-
-  function normalizeDp(value) {
-    if (value === null || value === undefined || value === "") return null;
-    const n = typeof value === "number" ? value : Number(String(value).trim());
-    if (!Number.isFinite(n)) return null;
-    return Math.max(0, Math.trunc(n));
-  }
-
   // Internals
   // Determine stroke width based on series_id
   let baseStrokeWidth;
   $: baseStrokeWidth = thinSeries && series_id === thinSeries ? 2 : 3;
   $: strokeWidth =
     width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
-  $: thousandsBoolean = (() => {
-    if (thousands === true) return true;
-    if (typeof thousands === "number") return thousands === 1;
-    if (typeof thousands === "string") {
-      const v = thousands.trim().toLowerCase();
-      return v === "true" || v === "1" || v === "yes";
-    }
-    return Boolean(thousands);
-  })();
+  $: thousandsBoolean = toBoolean(thousands);
   let width;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
@@ -123,10 +87,8 @@
   const yTickCount = 5;
 
   // Optional decimal place override for the last-point label (from metadata.csv)
-  $: customDpEnabled = normalizeBoolean(
-    meta?.custom_dp_chart ?? meta?.custom_dp
-  );
-  $: dpOverride = normalizeDp(meta?.dp_chart ?? meta?.dp);
+  $: customDpEnabled = toBoolean(meta?.custom_dp_chart ?? meta?.custom_dp);
+  $: dpOverride = toNonNegativeIntOrNull(meta?.dp_chart ?? meta?.dp);
 
   // Data min/max
   let dataYMin = 0;
@@ -162,15 +124,18 @@
 
   $: y = scaleLinear()
     .domain([yDomainMin, yDomainMax])
-    .range([height - margin.bottom, margin.top])
-    ;
+    .range([height - margin.bottom, margin.top]);
 
   $: baselineValue = indexBoolean ? 100 : 0;
-  $: baselineInDomain = yDomainMin <= baselineValue && baselineValue <= yDomainMax;
+  $: baselineInDomain =
+    yDomainMin <= baselineValue && baselineValue <= yDomainMax;
 
   $: yTicks = (() => {
     const ticks = y.ticks(yTickCount);
-    if (baselineInDomain && !ticks.some((t) => Math.abs(t - baselineValue) < 1e-9)) {
+    if (
+      baselineInDomain &&
+      !ticks.some((t) => Math.abs(t - baselineValue) < 1e-9)
+    ) {
       ticks.push(baselineValue);
       ticks.sort((a, b) => a - b);
     }
@@ -213,7 +178,9 @@
 
   function isMonthOrQuarterPeriod(period) {
     const p = period?.toLowerCase?.();
-    return p === "monthly" || p === "month" || p === "quarterly" || p === "quarter";
+    return (
+      p === "monthly" || p === "month" || p === "quarterly" || p === "quarter"
+    );
   }
 
   function getQuarterFromDate(date) {
@@ -223,7 +190,6 @@
   function isQ3Start(date) {
     return date.getMonth() === 6; // July
   }
-
 
   // New prop: showYearDividersAtDomainEdges (default true for backward compatibility)
   export let showYearDividersAtDomainEdges = false;
@@ -241,7 +207,6 @@
       timeYear.floor(domainStart),
       timeYear.offset(timeYear.ceil(domainEnd), 1)
     );
-
 
     // If not showing dividers at domain edges, remove any divider at or outside the domainStart/domainEnd
     let filteredYearStarts = yearStarts;
@@ -351,17 +316,21 @@
 
     if (customDpEnabled && dpOverride !== null) {
       if (units_chart === "percentage") {
-        return Number.isFinite(numeric) ? format(`.${dpOverride}%`)(numeric / 100) : "";
+        return Number.isFinite(numeric)
+          ? format(`.${dpOverride}%`)(numeric / 100)
+          : "";
       } else if (thousandsBoolean) {
         return Number.isFinite(numeric)
           ? format(`,.${dpOverride}f`)(numeric) + " thousand"
           : "";
       }
-      return Number.isFinite(numeric) ? format(`,.${dpOverride}f`)(numeric) : "";
+      return Number.isFinite(numeric)
+        ? format(`,.${dpOverride}f`)(numeric)
+        : "";
     }
 
     if (units_chart === "percentage") {
-      return format(numeric < 20 ? ".1%" : ".0%" )(numeric / 100);
+      return format(numeric < 20 ? ".1%" : ".0%")(numeric / 100);
     } else if (thousandsBoolean) {
       return format(numeric < 20 ? ",.1f" : ",.0f")(numeric) + " thousand";
     } else {
@@ -450,13 +419,7 @@
         <svg {width} {height} class="chart" aria-hidden="true">
           <!-- Thousands label -->
           {#if thousandsBoolean}
-            <text
-              x={margin.left + 5}
-              y="15"
-              class="small"
-            >
-              thousands
-            </text>
+            <text x={margin.left + 5} y="15" class="small"> thousands </text>
           {/if}
 
           <!-- Y grid/ticks -->
@@ -465,7 +428,8 @@
               <g class="y-tick" transform="translate(0 {y(tick)})">
                 <line
                   class="tick-line"
-                  class:tick-line-0={baselineInDomain && Math.abs(tick - baselineValue) < 1e-9}
+                  class:tick-line-0={baselineInDomain &&
+                    Math.abs(tick - baselineValue) < 1e-9}
                   x1={margin.left}
                   x2={width - margin.right}
                 />

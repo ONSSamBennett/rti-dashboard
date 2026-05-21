@@ -1,5 +1,10 @@
 <script>
   import { format } from "d3-format";
+  import {
+    toBoolean,
+    toFiniteNumberOrNaN,
+    toNonNegativeIntOrNull,
+  } from "$lib/coerce.js";
 
   // Props you already pass
   export let change = null;
@@ -27,31 +32,17 @@
   const formatValue = (val) =>
     Math.abs(val) < 10 ? format(",.1f")(val) : format(",.0f")(val);
 
-  function normalizeBoolean(value) {
-    if (value === true) return true;
-    if (value === false || value === null || value === undefined) return false;
-    if (typeof value === "number") return value === 1;
-    const v = String(value).trim().toLowerCase();
-    return v === "true" || v === "1" || v === "yes";
-  }
-
-  function normalizeDp(value) {
-    if (value === null || value === undefined || value === "") return null;
-    const n = typeof value === "number" ? value : Number(String(value).trim());
-    if (!Number.isFinite(n)) return null;
-    return Math.max(0, Math.trunc(n));
-  }
-
   const indicatorMeta = metadataBySeries?.[seriesId] ?? {};
-  const customDpIndicatorEnabled = normalizeBoolean(
+  const customDpIndicatorEnabled = toBoolean(
     indicatorMeta?.custom_dp_indicator
   );
-  const dpIndicatorOverride = normalizeDp(indicatorMeta?.dp_indicator);
+  const dpIndicatorOverride = toNonNegativeIntOrNull(
+    indicatorMeta?.dp_indicator
+  );
 
   // Normalize and guard the numeric change value
-  const numericChange = typeof change === "number" ? change : Number(change);
-  const isFiniteChange = Number.isFinite(numericChange);
-  const isAvailable = change !== null && change !== undefined && isFiniteChange;
+  const numericChange = toFiniteNumberOrNaN(change);
+  const isAvailable = Number.isFinite(numericChange);
   const absChange = isAvailable ? Math.abs(numericChange) : 0;
 
   function getIndicatorDp(units, absChange) {
@@ -116,7 +107,8 @@
     changeContextLabel = "From past year";
   } else {
     // First indicator: check the frequency from metadata
-    const indicator_period = metadataBySeries?.[seriesId]?.indicator_period?.toLowerCase?.();
+    const indicator_period =
+      metadataBySeries?.[seriesId]?.indicator_period?.toLowerCase?.();
 
     if (
       indicator_period === "daily" ||
@@ -127,7 +119,10 @@
       changeContextLabel = "From past week";
     } else if (indicator_period === "monthly" || indicator_period === "month") {
       changeContextLabel = "From past month";
-    } else if (indicator_period === "quarterly" || indicator_period === "quarter") {
+    } else if (
+      indicator_period === "quarterly" ||
+      indicator_period === "quarter"
+    ) {
       changeContextLabel = "From past quarter";
     } else {
       changeContextLabel = "From past period";

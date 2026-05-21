@@ -16,9 +16,22 @@
   import LineChartSimple from "$lib/LineChartSimple.svelte";
   import ChangeIndicator from "$lib/ChangeIndicator.svelte";
   import insertHeader from "$lib/insert-header.js";
-  import { format } from "d3-format";
   import { scaleLinear } from "d3-scale";
   import { makeDataFile } from "$lib/dataDownload.js";
+  import { toBoolean, toNumberOrNaN } from "$lib/coerce.js";
+  import { formatDateForCsv, formatNumberForCsv, escapeCsv } from "$lib/csv.js";
+  import {
+    getDatasetTitle,
+    getDatasetDisplayTitle,
+    getDatasetLinkText,
+  } from "$lib/datasetText.js";
+  import { parseNoticeLine } from "$lib/noticeLinks.js";
+  import {
+    getSeriesEntriesByCategory,
+    getSummaryTableEntries as getSummaryTableEntriesForCategories,
+    getVisibleSeriesIds,
+  } from "$lib/seriesSelectors.js";
+  import { getLinkDomainFromUrl } from "$lib/url.js";
   import {
     computeTransformedData,
     computeYDomainFromTransformedData,
@@ -36,7 +49,8 @@
     pageTitle: "Real-time indicators dashboard",
     contentType: "visualisations",
     contentSubType: "dashboard",
-    outputSeries: "economicactivityandsocialchangerealtimeindicatorsukdashboard",
+    outputSeries:
+      "economicactivityandsocialchangerealtimeindicatorsukdashboard",
     releaseDate: data.dates.current.replaceAll("-", ""),
     nextReleaseDate: data.dates.next.replaceAll("-", ""),
   };
@@ -63,19 +77,12 @@
     )
   );
 
-  function isTrueLike(value) {
-    if (value === true) return true;
-    if (value === false || value === null || value === undefined) return false;
-    const normalized = String(value).trim().toLowerCase();
-    return normalized === "true" || normalized === "1" || normalized === "yes";
-  }
-
   function isUpdatedThisWeek(seriesId) {
-    return isTrueLike(updatedBySeries?.[seriesId]);
+    return toBoolean(updatedBySeries?.[seriesId]);
   }
 
   function isNewIndicator(seriesId) {
-    return isTrueLike(metadataBySeries?.[seriesId]?.new_indicator);
+    return toBoolean(metadataBySeries?.[seriesId]?.new_indicator);
   }
   function shouldShowUpdateFlag(seriesId) {
     return isUpdatedThisWeek(seriesId) || isNewIndicator(seriesId);
@@ -98,20 +105,16 @@
       sectionTitle,
       sectionNumber,
     });
-  
   }
-
-
-
 
   // Compute the global max date across all series
   function getGlobalMaxDate() {
     let maxDate = null;
-    Object.values(latestBySeries).forEach(row => {
+    Object.values(latestBySeries).forEach((row) => {
       if (row.full_series && Array.isArray(row.full_series)) {
-        row.full_series.forEach(d => {
+        row.full_series.forEach((d) => {
           const date = new Date(d.date);
-          if (!isNaN(date)) {
+          if (!Number.isNaN(date.getTime())) {
             if (!maxDate || date > maxDate) maxDate = date;
           }
         });
@@ -122,10 +125,10 @@
   const globalMaxDate = getGlobalMaxDate();
 
   function renderCards(category) {
-    return Object.entries(latestBySeries).filter(
-      ([seriesId]) =>
-        metadataBySeries[seriesId]?.category === category &&
-        metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
+    return getSeriesEntriesByCategory(
+      latestBySeries,
+      metadataBySeries,
+      category
     );
   }
 
@@ -152,7 +155,10 @@
       return "week";
     } else if (indicator_period === "monthly" || indicator_period === "month") {
       return "month";
-    } else if (indicator_period === "quarterly" || indicator_period === "quarter") {
+    } else if (
+      indicator_period === "quarterly" ||
+      indicator_period === "quarter"
+    ) {
       return "quarter";
     } else {
       return "period";
@@ -162,12 +168,7 @@
   // Track expanded state for each card
   let expandedCards = {};
 
-  $: visibleSeriesIds = Object.entries(latestBySeries)
-    .filter(
-      ([seriesId]) =>
-        metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
-    )
-    .map(([seriesId]) => seriesId);
+  $: visibleSeriesIds = getVisibleSeriesIds(latestBySeries, metadataBySeries);
 
   $: anyCardsExpanded = visibleSeriesIds.some(
     (seriesId) => expandedCards[seriesId]
@@ -216,26 +217,15 @@
     clickContentType: "dataset",
   };
 
-  function getDatasetTitle(seriesId) {
-    return metadataBySeries[seriesId]?.title ?? seriesId;
-  }
-
-  function getDatasetDisplayTitle(seriesId) {
-    const lower = getDatasetTitle(seriesId).toLowerCase();
-
-    return lower
-      .replace(/\buk\b/g, "UK")
-      .replace(/\bdirect debit\b/g, "Direct Debit")
-      .replace(/\brevolut\b/g, "Revolut")
-      .replace(/\bvat\b/g, "VAT");
-  }
-
-  function getDatasetLinkText(seriesId) {
-    return `Go to the dataset for ${getDatasetDisplayTitle(seriesId)}`;
-  }
+  const getDatasetTitleById = (seriesId) =>
+    getDatasetTitle(metadataBySeries, seriesId);
+  const getDatasetDisplayTitleById = (seriesId) =>
+    getDatasetDisplayTitle(metadataBySeries, seriesId);
+  const getDatasetLinkTextById = (seriesId) =>
+    getDatasetLinkText(metadataBySeries, seriesId);
 
   function trackDataLinkClick(seriesId, sectionTitle, sectionNumber) {
-    const title = getDatasetTitle(seriesId);
+    const title = getDatasetTitleById(seriesId);
     const { clickContentGroup, clickContentTheme, clickContentType } =
       destinationTaxonomy;
 
@@ -248,7 +238,7 @@
       sectionNumber,
 
       navigationType: "to-data-download",
-      linkText: getDatasetLinkText(seriesId),
+      linkText: getDatasetLinkTextById(seriesId),
       clickContentGroup,
       clickContentType,
       clickContentTheme,
@@ -259,30 +249,13 @@
     return `Download data (CSV, ${fileSizeKB}KB)`;
   }
 
-  function getLinkDomainFromUrl(urlString) {
-    if (!urlString) return "";
-    try {
-      const url = new URL(urlString);
-      if (url.protocol === "blob:") {
-        // blob URLs are of the form: blob:<origin>/<uuid>
-        try {
-          const originUrl = new URL(url.pathname);
-          return originUrl.host;
-        } catch {
-          return "";
-        }
-      }
-      return url.host;
-    } catch {
-      return "";
-    }
-  }
-
   // Persist a Blob URL so it can be used in data-ga-link-url
   let downloadObjectUrl = "";
   let downloadBlob;
 
-  $: downloadFileName = `rti-dashboard-data-${dataFile?.publicationDate ?? ""}.csv`;
+  $: downloadFileName = `rti-dashboard-data-${
+    dataFile?.publicationDate ?? ""
+  }.csv`;
 
   $: {
     const nextBlob = dataFile?.blob;
@@ -341,103 +314,11 @@
     ? data.dates.notice_text.split(/\r?\n/)
     : [];
 
-  function toSafeHref(rawHref) {
-    if (!rawHref) return null;
-    const href = String(rawHref).trim();
-    if (!href) return null;
-
-    // Allow simple relative links
-    if (href.startsWith("/") || href.startsWith("#")) return href;
-
-    // Allow a small set of safe absolute schemes
-    try {
-      const url = new URL(href);
-      const protocol = url.protocol?.toLowerCase();
-      if (protocol === "http:" || protocol === "https:" || protocol === "mailto:") return href;
-    } catch {
-      // Not a valid absolute URL
-    }
-    return null;
-  }
-
-  function trimTrailingPunctuation(value) {
-    // Common punctuation that tends to get stuck to the end of URLs in prose
-    return String(value).replace(/[\]\)\}\>,.;:!?]+$/g, "");
-  }
-
-  function parseNoticeLine(line) {
-    const input = line ?? "";
-    const tokenRe = /\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s<]+|mailto:[^\s<]+)/g;
-    const parts = [];
-
-    let lastIndex = 0;
-    for (const match of input.matchAll(tokenRe)) {
-      const start = match.index ?? 0;
-      if (start > lastIndex) {
-        parts.push({ type: "text", value: input.slice(lastIndex, start) });
-      }
-
-      const mdText = match[1];
-      const mdHref = match[2];
-      const rawUrl = match[3];
-
-      if (mdText !== undefined && mdHref !== undefined) {
-        const cleanedHref = toSafeHref(trimTrailingPunctuation(mdHref));
-        if (cleanedHref) {
-          parts.push({ type: "link", href: cleanedHref, text: mdText });
-        } else {
-          parts.push({ type: "text", value: match[0] });
-        }
-      } else if (rawUrl) {
-        const cleanedHref = toSafeHref(trimTrailingPunctuation(rawUrl));
-        if (cleanedHref) {
-          parts.push({ type: "link", href: cleanedHref, text: cleanedHref });
-        } else {
-          parts.push({ type: "text", value: match[0] });
-        }
-      }
-
-      lastIndex = start + match[0].length;
-    }
-
-    if (lastIndex < input.length) {
-      parts.push({ type: "text", value: input.slice(lastIndex) });
-    }
-
-    return parts.length ? parts : [{ type: "text", value: input }];
-  }
-
   function getSummaryTableEntries() {
-    return ["consumer", "business", "energy", "transport"].flatMap(
-      (category) =>
-        Object.entries(latestBySeries).filter(
-          ([seriesId]) =>
-            metadataBySeries[seriesId]?.category === category &&
-            metadataBySeries[seriesId]?.show?.toLowerCase() === "true"
-        )
+    return getSummaryTableEntriesForCategories(
+      latestBySeries,
+      metadataBySeries
     );
-  }
-
-  function formatNumberForCsv(value) {
-    if (value === null || value === undefined) return "";
-    if (typeof value !== "number") return String(value);
-    return String(Number(value.toFixed(5)));
-  }
-
-  function formatDateForCsv(value) {
-    if (!value) return "";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "";
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  function escapeCsv(value) {
-    const s = value === null || value === undefined ? "" : String(value);
-    if (/[\r\n",]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-    return s;
   }
 
   function downloadSummaryTableCsv() {
@@ -477,10 +358,13 @@
         formatNumberForCsv(row.period_over_period_change),
         row.period_over_period_percent !== null &&
         row.period_over_period_percent !== undefined
-          ? `${formatNumberForCsv(row.period_over_period_percent)}${percentSuffix}`
+          ? `${formatNumberForCsv(
+              row.period_over_period_percent
+            )}${percentSuffix}`
           : "",
         formatNumberForCsv(row.year_over_year_change),
-        row.year_over_year_percent !== null && row.year_over_year_percent !== undefined
+        row.year_over_year_percent !== null &&
+        row.year_over_year_percent !== undefined
           ? `${formatNumberForCsv(row.year_over_year_percent)}${percentSuffix}`
           : "",
       ];
@@ -494,7 +378,9 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `rti-dashboard-summary-table-${data?.dates?.current ?? ""}.csv`;
+    link.download = `rti-dashboard-summary-table-${
+      data?.dates?.current ?? ""
+    }.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -506,7 +392,11 @@
   function shouldShowQaTable(visibility) {
     // Back-compat: historically these flags were booleans that only rendered in preview.
     if (visibility === true) visibility = "preview";
-    if (visibility === false || visibility === null || visibility === undefined) {
+    if (
+      visibility === false ||
+      visibility === null ||
+      visibility === undefined
+    ) {
       visibility = "off";
     }
 
@@ -533,65 +423,43 @@
 
   $: yAxisQaRows = showYAxisQaTable
     ? getSummaryTableEntries().map(([seriesId, row]) => {
-          const meta = metadataBySeries?.[seriesId] ?? {};
+        const meta = metadataBySeries?.[seriesId] ?? {};
 
-          const indexBoolean = normalizeBoolean(meta.index);
+        const indexBoolean = toBoolean(meta.index);
 
-          const thousandsBoolean = normalizeBoolean(meta.thousands);
-          const yMinMode = meta?.yMinMode ?? "auto";
-          const yPadding = meta?.yPadding ?? 0.1;
+        const thousandsBoolean = toBoolean(meta.thousands);
+        const yMinMode = meta?.yMinMode ?? "auto";
+        const yPadding = meta?.yPadding ?? 0.1;
 
-          const transformedData = computeTransformedData(row?.full_series, {
-            xKey: "date",
-            yKey: "num_uk",
-            thousandsBoolean,
-            startDate: chartStartDate,
-          });
+        const transformedData = computeTransformedData(row?.full_series, {
+          xKey: "date",
+          yKey: "num_uk",
+          thousandsBoolean,
+          startDate: chartStartDate,
+        });
 
-          const stats = computeYDomainFromTransformedData({
-            transformedData,
-            yKey: "num_uk",
-            indexBoolean,
-            yMinMode,
-            yPadding,
-            niceCount: 5,
-          });
+        const stats = computeYDomainFromTransformedData({
+          transformedData,
+          yKey: "num_uk",
+          indexBoolean,
+          yMinMode,
+          yPadding,
+          niceCount: 5,
+        });
 
-          return {
-            seriesId,
-            title: meta?.title ?? seriesId,
-            indexBoolean,
-            ...stats,
-          };
-        })
+        return {
+          seriesId,
+          title: meta?.title ?? seriesId,
+          indexBoolean,
+          ...stats,
+        };
+      })
     : [];
-
-  function normalizeBoolean(value) {
-    if (value === true) return true;
-    if (value === false) return false;
-    if (typeof value === "number") return value === 1;
-    if (typeof value === "string") {
-      const v = value.trim().toLowerCase();
-      return v === "true" || v === "1" || v === "yes";
-    }
-    return Boolean(value);
-  }
-
-  function normalizeNumber(value) {
-    if (value === null || value === undefined) return NaN;
-    if (typeof value === "number") return value;
-    if (typeof value === "string") {
-      const cleaned = value.replace(/,/g, "").trim();
-      if (cleaned === "") return NaN;
-      return Number(cleaned);
-    }
-    return Number(value);
-  }
 
   function getEndLabelDecimalPlaces(seriesId, row) {
     const meta = metadataBySeries?.[seriesId] ?? {};
-    const hasCustomDp = normalizeBoolean(meta.custom_dp);
-    const customDpValue = normalizeNumber(meta.dp);
+    const hasCustomDp = toBoolean(meta.custom_dp);
+    const customDpValue = toNumberOrNaN(meta.dp);
     if (
       hasCustomDp &&
       typeof customDpValue === "number" &&
@@ -600,8 +468,8 @@
     ) {
       return Math.max(0, Math.trunc(customDpValue));
     }
-    const indexBoolean = normalizeBoolean(meta.index);
-    const thousandsBoolean = normalizeBoolean(meta.thousands);
+    const indexBoolean = toBoolean(meta.index);
+    const thousandsBoolean = toBoolean(meta.thousands);
     const unitsChart = meta.units_chart;
     const yMinMode = meta.yMinMode ?? "auto";
     const yPadding = meta.yPadding ?? 0.1;
@@ -611,8 +479,9 @@
 
     const transformedData = series
       .map((d) => {
-        const raw = normalizeNumber(d?.num_uk);
-        const numeric = thousandsBoolean && !Number.isNaN(raw) ? raw / 1000 : raw;
+        const raw = toNumberOrNaN(d?.num_uk);
+        const numeric =
+          thousandsBoolean && !Number.isNaN(raw) ? raw / 1000 : raw;
         return { ...d, num_uk: numeric };
       })
       .filter((d) => !chartStartDate || d?.date >= chartStartDate);
@@ -620,7 +489,7 @@
     if (!transformedData.length) return null;
 
     const numericValues = transformedData
-      .map((d) => normalizeNumber(d?.num_uk))
+      .map((d) => toNumberOrNaN(d?.num_uk))
       .filter((v) => typeof v === "number" && !Number.isNaN(v));
     if (!numericValues.length) return null;
 
@@ -653,7 +522,9 @@
       return baseMin;
     })();
 
-    const paddedMax = indexBoolean ? topMax + 0.2 * (topMax - dataYMin) : topMax;
+    const paddedMax = indexBoolean
+      ? topMax + 0.2 * (topMax - dataYMin)
+      : topMax;
     let paddedMin;
     if (indexBoolean) {
       const finalRange = topMax - dataYMin;
@@ -668,7 +539,7 @@
     const hasDecimalTicks = yTicks.some((t) => t % 1 !== 0);
 
     const lastPoint = transformedData[transformedData.length - 1];
-    const lastVal = normalizeNumber(lastPoint?.num_uk);
+    const lastVal = toNumberOrNaN(lastPoint?.num_uk);
     if (Number.isNaN(lastVal)) return null;
 
     if (unitsChart === "percentage") {
@@ -711,7 +582,6 @@
     </Section>
   {/if}
 
-
   <Section width="wide">
     <div class="intro-row">
       <p class="intro-text">
@@ -736,7 +606,6 @@
       <span class="updated-dot" aria-hidden="true" />
       <span class="legend-text">Updated this week</span>
     </div>
-
   </Section>
 
   <div class="first-divider">
@@ -784,22 +653,31 @@
                     />
                   </svg>
                   <h3 class="card-title">
-                    <span class="card-title-text">{metadataBySeries[seriesId]?.title ?? seriesId}</span>
+                    <span class="card-title-text"
+                      >{metadataBySeries[seriesId]?.title ?? seriesId}</span
+                    >
                     {#if shouldShowUpdateFlag(seriesId)}
-                      <span class="screen-reader-only">{getUpdateFlagSrText(seriesId)}</span>
+                      <span class="screen-reader-only"
+                        >{getUpdateFlagSrText(seriesId)}</span
+                      >
                       {#if !isNewIndicator(seriesId)}
                         <span class="updated-dot-inline" aria-hidden="true" />
                       {:else}
                         <span
                           class="updated-new-inline updated-flag--new-indicator"
-                          aria-hidden="true"
-                          >{getUpdateFlagText(seriesId)}</span
+                          aria-hidden="true">{getUpdateFlagText(seriesId)}</span
                         >
                       {/if}
                       <span class="updated-flag-top-row">
-                        <span class="updated-flag-top"
-                          class:updated-flag--new-indicator={isNewIndicator(seriesId)}
-                          ><span class="updated-dot" aria-hidden />{getUpdateFlagText(seriesId)}</span
+                        <span
+                          class="updated-flag-top"
+                          class:updated-flag--new-indicator={isNewIndicator(
+                            seriesId
+                          )}
+                          ><span
+                            class="updated-dot"
+                            aria-hidden
+                          />{getUpdateFlagText(seriesId)}</span
                         >
                       </span>
                     {/if}
@@ -848,19 +726,28 @@
                       />
                     </div>
                   {:else}
-                    <div class="header-spacer"></div>
+                    <div class="header-spacer" />
                   {/if}
                   <div class="updated-flag-container">
                     {#if shouldShowUpdateFlag(seriesId)}
-                      <span class="updated-flag"
-                        class:updated-flag--new-indicator={isNewIndicator(seriesId)}
-                        ><span class="updated-dot" aria-hidden />{getUpdateFlagText(seriesId)}</span
+                      <span
+                        class="updated-flag"
+                        class:updated-flag--new-indicator={isNewIndicator(
+                          seriesId
+                        )}
+                        ><span
+                          class="updated-dot"
+                          aria-hidden
+                        />{getUpdateFlagText(seriesId)}</span
                       >
                     {/if}
                   </div>
                 </div>
               </div>
-              <div class="card-expanded-content" class:hidden={!expandedCards[seriesId]}>
+              <div
+                class="card-expanded-content"
+                class:hidden={!expandedCards[seriesId]}
+              >
                 <p class="subtitle">
                   {metadataBySeries[seriesId]?.description}
                 </p>
@@ -873,17 +760,16 @@
                       startDate={new Date(2023, 11, 31)}
                       endDate={globalMaxDate}
                       title={metadataBySeries[seriesId]?.title}
-                      description={metadataBySeries[seriesId]?.description}
-                      units={metadataBySeries[seriesId]?.units}
                       units_chart={metadataBySeries[seriesId]?.units_chart}
                       index={metadataBySeries[seriesId]?.index}
                       thousands={metadataBySeries[seriesId]?.thousands}
                       series_id={seriesId}
                       thinSeries={metadataBySeries[seriesId]?.thin_line ===
-                        "TRUE"
+                      "TRUE"
                         ? seriesId
                         : null}
-                      indicator_period={metadataBySeries[seriesId]?.indicator_period}
+                      indicator_period={metadataBySeries[seriesId]
+                        ?.indicator_period}
                       meta={{
                         yMinMode:
                           metadataBySeries[seriesId]?.yMinMode ?? "auto",
@@ -949,7 +835,7 @@
                         rel="noopener noreferrer"
                         data-ga-event="navigation-click"
                         data-ga-navigation-type="to-data-download"
-                        data-ga-link-text={getDatasetLinkText(seriesId)}
+                        data-ga-link-text={getDatasetLinkTextById(seriesId)}
                         data-ga-click-content-group={destinationTaxonomy.clickContentGroup}
                         data-ga-click-content-type={destinationTaxonomy.clickContentType}
                         data-ga-click-content-theme={destinationTaxonomy.clickContentTheme}
@@ -960,7 +846,9 @@
                             String(sectionIndex + 1)
                           )}
                       >
-                        Go to the dataset for {getDatasetDisplayTitle(seriesId)}
+                        Go to the dataset for {getDatasetDisplayTitleById(
+                          seriesId
+                        )}
                         <span class="screen-reader-only"
                           >(opens in new tab)</span
                         >
@@ -1012,89 +900,192 @@
     </Section>
     <Divider hr="full" />
   {/each}
-   <Section width="wide">
+  <Section width="wide">
     {#if showChangeQaTable}
       <Twisty title="QA: Year-on-Year Change Table" open={false}>
         <div style="overflow-x:auto; margin-bottom: 2rem;">
-          <table style="border-collapse: collapse; width: 100%; min-width: 1050px; font-size: 0.92em;">
+          <table
+            style="border-collapse: collapse; width: 100%; min-width: 1050px; font-size: 0.92em;"
+          >
             <thead>
               <tr style="background: #f4f4f4;">
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Unit Label</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Data frequency</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Indicator frequency</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Value</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">End label d.p.</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date Last Updated</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for Latest Change</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Date for YoY</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (Raw)</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Latest Change (%)</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (Raw)</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">YoY Change (%)</th>
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: left;"
+                  >Series</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Unit Label</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Data frequency</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Indicator frequency</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Latest Value</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >End label d.p.</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Date Last Updated</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Date for Latest Change</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Date for YoY</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Latest Change (Raw)</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Latest Change (%)</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >YoY Change (Raw)</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >YoY Change (%)</th
+                >
               </tr>
             </thead>
             <tbody>
               {#each getSummaryTableEntries() as [seriesId, row]}
                 <tr>
-                  <td style="padding: 8px; border: 1px solid #ccc;">{metadataBySeries[seriesId]?.title ?? seriesId}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{metadataBySeries[seriesId]?.units || 'N/A'}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.data_frequency ?? 'N/A')}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{(metadataBySeries[seriesId]?.indicator_period ?? 'N/A')}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{typeof row.num_uk === 'number' ? row.num_uk.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.num_uk}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
-                    {#if typeof endLabelDpBySeries?.[seriesId] === 'number'}
+                  <td style="padding: 8px; border: 1px solid #ccc;"
+                    >{metadataBySeries[seriesId]?.title ?? seriesId}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{metadataBySeries[seriesId]?.units || "N/A"}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{metadataBySeries[seriesId]?.data_frequency ?? "N/A"}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{metadataBySeries[seriesId]?.indicator_period ?? "N/A"}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{typeof row.num_uk === "number"
+                      ? row.num_uk.toLocaleString(undefined, {
+                          maximumFractionDigits: 5,
+                        })
+                      : row.num_uk}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
+                    {#if typeof endLabelDpBySeries?.[seriesId] === "number"}
                       {endLabelDpBySeries[seriesId]}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.date}
-                      {new Date(row.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(row.date).toLocaleDateString("en-GB", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.period_over_period_date}
-                      {new Date(row.period_over_period_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(row.period_over_period_date).toLocaleDateString(
+                        "en-GB",
+                        { year: "numeric", month: "long", day: "numeric" }
+                      )}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.year_over_year_date}
-                      {new Date(row.year_over_year_date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(row.year_over_year_date).toLocaleDateString(
+                        "en-GB",
+                        { year: "numeric", month: "long", day: "numeric" }
+                      )}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.period_over_period_change !== null && row.period_over_period_change !== undefined}
-                      {typeof row.period_over_period_change === 'number' ? row.period_over_period_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_change}
+                      {typeof row.period_over_period_change === "number"
+                        ? row.period_over_period_change.toLocaleString(
+                            undefined,
+                            { maximumFractionDigits: 5 }
+                          )
+                        : row.period_over_period_change}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.period_over_period_percent !== null && row.period_over_period_percent !== undefined}
-                      {typeof row.period_over_period_percent === 'number' ? row.period_over_period_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.period_over_period_percent}
+                      {typeof row.period_over_period_percent === "number"
+                        ? row.period_over_period_percent.toLocaleString(
+                            undefined,
+                            { maximumFractionDigits: 5 }
+                          )
+                        : row.period_over_period_percent}
                       %
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.year_over_year_change !== null && row.year_over_year_change !== undefined}
-                      {typeof row.year_over_year_change === 'number' ? row.year_over_year_change.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_change}
+                      {typeof row.year_over_year_change === "number"
+                        ? row.year_over_year_change.toLocaleString(undefined, {
+                            maximumFractionDigits: 5,
+                          })
+                        : row.year_over_year_change}
                     {:else}
                       N/A
                     {/if}
                   </td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >
                     {#if row.year_over_year_percent !== null && row.year_over_year_percent !== undefined}
-                      {typeof row.year_over_year_percent === 'number' ? row.year_over_year_percent.toLocaleString(undefined, { maximumFractionDigits: 5 }) : row.year_over_year_percent}
+                      {typeof row.year_over_year_percent === "number"
+                        ? row.year_over_year_percent.toLocaleString(undefined, {
+                            maximumFractionDigits: 5,
+                          })
+                        : row.year_over_year_percent}
                       %
                     {:else}
                       N/A
@@ -1127,23 +1118,58 @@
           >
             <thead>
               <tr style="background: #f4f4f4;">
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Series</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Index</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Max data value</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Min data value</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Max y</th>
-                <th style="padding: 8px; border: 1px solid #ccc; text-align: right;">Min y</th>
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: left;"
+                  >Series</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Index</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Max data value</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Min data value</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Max y</th
+                >
+                <th
+                  style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                  >Min y</th
+                >
               </tr>
             </thead>
             <tbody>
               {#each yAxisQaRows as r}
                 <tr>
-                  <td style="padding: 8px; border: 1px solid #ccc;">{r.title}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{r.indexBoolean ? "true" : "false"}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMax)}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.dataYMin)}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.niceMax)}</td>
-                  <td style="padding: 8px; border: 1px solid #ccc; text-align: right;">{formatQaNumber(r.paddedMin)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;"
+                    >{r.title}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{r.indexBoolean ? "true" : "false"}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{formatQaNumber(r.dataYMax)}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{formatQaNumber(r.dataYMin)}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{formatQaNumber(r.niceMax)}</td
+                  >
+                  <td
+                    style="padding: 8px; border: 1px solid #ccc; text-align: right;"
+                    >{formatQaNumber(r.paddedMin)}</td
+                  >
                 </tr>
               {/each}
             </tbody>
@@ -1151,10 +1177,8 @@
         </div>
       </Twisty>
 
-        <Divider hr="full" />
+      <Divider hr="full" />
     {/if}
-
-
 
     <div class="download-section">
       <div class="download-content">
@@ -1279,11 +1303,6 @@
     padding-top: 10px;
     font-size: 18px !important;
     text-wrap: balance;
-  }
-
-  .card-full-width {
-    width: 100% !important;
-    grid-column: 1 / -1;
   }
 
   .layout-container {
@@ -1550,7 +1569,7 @@
     border: 1px solid #666;
   }
 
-  /* Breakpoint defined in src/lib/config.js */
+  /* Breakpoint: 720px (mobile/desktop split) */
   @media screen and (min-width: 721px) {
     .chart {
       flex: 1 1 30%;

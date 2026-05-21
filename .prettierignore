@@ -1,0 +1,14 @@
+# Keep Prettier focused on source files
+node_modules/
+.svelte-kit/
+build/
+
+# Data/assets that are generated or not meant to be formatted
+static/data/json/
+static/data/places.csv
+
+# This is copied HTML and isn't valid enough for Prettier's parser
+static/iframe.html
+
+# Lockfiles
+package-lock.json

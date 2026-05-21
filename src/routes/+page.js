@@ -89,8 +89,10 @@ function isMonthlyCadence(cadence) {
 }
 
 function isPreviousCalendarMonth(latestDate, prevDate) {
-  if (!(latestDate instanceof Date) || !(prevDate instanceof Date)) return false;
-  if (Number.isNaN(latestDate.getTime()) || Number.isNaN(prevDate.getTime())) return false;
+  if (!(latestDate instanceof Date) || !(prevDate instanceof Date))
+    return false;
+  if (Number.isNaN(latestDate.getTime()) || Number.isNaN(prevDate.getTime()))
+    return false;
 
   const latestYear = latestDate.getFullYear();
   const latestMonth = latestDate.getMonth();
@@ -121,7 +123,7 @@ export async function load({ fetch }) {
   // Load updated_this_week separately
   const updatedStr = await (await fetch(updatedUrl)).text();
   const updatedArray = csvParse(updatedStr, autoType);
-  
+
   // Handle "auto" dates by finding the most recent update date from updated.csv
   if (dates.current === "auto" || dates.next === "auto") {
     // Parse dates from updated.csv (format: YYYY-MM-DD)
@@ -135,16 +137,15 @@ export async function load({ fetch }) {
         return isNaN(parsed.getTime()) ? null : parsed;
       })
       .filter((d) => d !== null);
-    
+
     // Find the most recent date
-    const mostRecentDate = updateDates.length > 0 
-      ? new Date(Math.max(...updateDates))
-      : new Date();
-    
+    const mostRecentDate =
+      updateDates.length > 0 ? new Date(Math.max(...updateDates)) : new Date();
+
     // Calculate next update date (7 days later)
     const nextUpdateDate = new Date(mostRecentDate);
     nextUpdateDate.setDate(nextUpdateDate.getDate() + 7);
-    
+
     // Format dates as YYYY-MM-DD
     const formatDate = (d) => {
       const year = d.getFullYear();
@@ -152,7 +153,7 @@ export async function load({ fetch }) {
       const day = String(d.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
-    
+
     if (dates.current === "auto") {
       dates.current = formatDate(mostRecentDate);
     }
@@ -160,7 +161,7 @@ export async function load({ fetch }) {
       dates.next = formatDate(nextUpdateDate);
     }
   }
-  
+
   const updatedBySeries = {};
   for (const item of updatedArray) {
     const rawKey = item?.series_id;
@@ -225,7 +226,8 @@ export async function load({ fetch }) {
     // If the indicator is defined as quarterly, ensure the period-over-period change
     // compares to the prior quarter (e.g., 3 months back for monthly data).
     if (isQuarterlyIndicator(indicatorPeriod)) {
-      const cadenceForQuarterly = dataFrequency ?? inferredCadence ?? frequencyForLookback;
+      const cadenceForQuarterly =
+        dataFrequency ?? inferredCadence ?? frequencyForLookback;
       periodLookback = getQuarterlyPeriodLookbackPoints(cadenceForQuarterly);
       yearLookback = getLookbackPeriods(cadenceForQuarterly).year;
     }

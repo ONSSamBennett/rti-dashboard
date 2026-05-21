@@ -108,7 +108,9 @@ export function computeYDomainFromTransformedData({
       if (denom > 0) {
         // Place dataYMax at (1-frac) of the range above the bottom, leaving frac headroom.
         const newTop = (dataYMax - frac * computedYMin) / denom;
-        const constrainedTop = indexBoolean ? Math.max(newTop, baseline) : newTop;
+        const constrainedTop = indexBoolean
+          ? Math.max(newTop, baseline)
+          : newTop;
         if (constrainedTop > dataYMax && constrainedTop < topMax) {
           topMax = constrainedTop;
         }
