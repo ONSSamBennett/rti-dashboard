@@ -73,9 +73,9 @@ export function computeYDomainFromTransformedData({
     else if (yMinMode === "above-zero") {
       baseMin = dataYMin > baseline ? dataYMin : baseline;
     } else if (yMinMode === "auto") {
-      // Mirror the non-index behavior (baseline is the starting point) but for index
-      // series allow dips below the baseline to remain visible.
-      baseMin = indexBoolean ? Math.min(baseline, dataYMin) : baseline;
+      // Start from the baseline, but if the data dips below it (e.g. negative values
+      // on non-index charts, or <100 on index charts) keep that visible.
+      baseMin = Math.min(baseline, dataYMin);
     } else baseMin = baseline;
 
     let computedYMin = baseMin;
@@ -120,7 +120,7 @@ export function computeYDomainFromTransformedData({
 
   const rangeForPadding = Math.max(0, topMax - computedYMin);
 
-  const paddedMax = (() => {
+  let paddedMax = (() => {
     if (indexBoolean && dataYMax > baseline) {
       return topMax + indexExtraTopPad * rangeForPadding;
     }
@@ -138,6 +138,17 @@ export function computeYDomainFromTransformedData({
         : 0;
     return computedYMin - basePad - extraPad;
   })();
+
+  // If the whole domain is below zero, add symmetric headroom at the top so the
+  // series isn't squashed against the top edge.
+  if (!indexBoolean && topMax < 0) {
+    const bottomPadAmount = computedYMin - paddedMinRaw;
+    if (bottomPadAmount > 0) {
+      // Keep the max just below 0 to avoid introducing a positive region when
+      // the data is entirely negative.
+      paddedMax = Math.min(topMax + bottomPadAmount, -Number.EPSILON);
+    }
+  }
 
   const paddedMin = Math.min(paddedMinRaw, paddedMax - Number.EPSILON);
 
