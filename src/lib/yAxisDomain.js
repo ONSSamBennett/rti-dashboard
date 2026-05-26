@@ -53,6 +53,7 @@ export function computeYDomainFromTransformedData({
   // Kept deliberately small to avoid reintroducing overly-large domains.
   const indexExtraTopPad = 0.1;
   const indexExtraBottomPad = 0.1;
+  const belowBaselineExtraBottomPad = 0.1;
 
   const numericValues = (Array.isArray(transformedData) ? transformedData : [])
     .map((d) => toFiniteNumberOrNaN(d?.[yKey]))
@@ -120,7 +121,7 @@ export function computeYDomainFromTransformedData({
 
   const rangeForPadding = Math.max(0, topMax - computedYMin);
 
-  let paddedMax = (() => {
+  const paddedMax = (() => {
     if (indexBoolean && dataYMax > baseline) {
       return topMax + indexExtraTopPad * rangeForPadding;
     }
@@ -136,19 +137,12 @@ export function computeYDomainFromTransformedData({
       indexBoolean && dataYMax > baseline
         ? indexExtraBottomPad * rangeForPadding
         : 0;
-    return computedYMin - basePad - extraPad;
+    const extraPadBelowBaseline =
+      computedYMin < baseline
+        ? belowBaselineExtraBottomPad * rangeForPadding
+        : 0;
+    return computedYMin - basePad - extraPad - extraPadBelowBaseline;
   })();
-
-  // If the whole domain is below zero, add symmetric headroom at the top so the
-  // series isn't squashed against the top edge.
-  if (!indexBoolean && topMax < 0) {
-    const bottomPadAmount = computedYMin - paddedMinRaw;
-    if (bottomPadAmount > 0) {
-      // Keep the max just below 0 to avoid introducing a positive region when
-      // the data is entirely negative.
-      paddedMax = Math.min(topMax + bottomPadAmount, -Number.EPSILON);
-    }
-  }
 
   const paddedMin = Math.min(paddedMinRaw, paddedMax - Number.EPSILON);
 
