@@ -6,11 +6,10 @@
     toNonNegativeIntOrNull,
   } from "$lib/coerce.js";
 
-  // Props you already pass
   export let change = null;
   export let units = "";
 
-  // NEW: identify the series and provide the metadata lookup
+  //  identify the series and provide the metadata lookup
   export let seriesId = "";
   export let metadataBySeries = {}; // passed from +page.svelte via data.metadataBySeries
 
@@ -20,7 +19,7 @@
   // Control whether to show the label text
   export let showLabel = true;
 
-  // Colors (your existing values)
+  // Colours
   export let noChangeBackground = "#D9D9D9";
   export let decreaseBackground = "#D6D3E8";
   export let increaseBackground = "#F7DFCF";
@@ -56,8 +55,7 @@
     return absChange < 10 ? 1 : 0; // formatValue
   }
 
-  // Treat a change as "No change" when it would *display* as zero
-  // at the indicator's current precision.
+  // Treat a change as "No change" when it would display as zero at the indicator's current precision.
   let isEffectivelyZero = false;
   if (isAvailable) {
     const dpUsed = getIndicatorDp(units, absChange);
@@ -82,22 +80,6 @@
     if (units === "percentage points") return `${formatValue(absChange)}pp`;
     return formatValue(absChange);
   })();
-
-  // For the "No change" display show a slightly more precise value
-  // (one extra decimal for % and two for pp)
-  let noChangeFormatted = "";
-  if (isAvailable) {
-    if (units === "percentage") {
-      const formatPercentOne = format(".1%");
-      noChangeFormatted = formatPercentOne(absChange / 100);
-    } else if (units === "percentage points") {
-      const formatPpTwo = format(".2f");
-      noChangeFormatted = `${formatPpTwo(absChange)}pp`;
-    } else {
-      // fallback: one decimal place for other numeric units
-      noChangeFormatted = format(",.1f")(absChange);
-    }
-  }
 
   // 🔎 Determine the label text
   let changeContextLabel;

@@ -19,9 +19,9 @@
   export let units_chart; // e.g., "percentage"
   export let index = false;
   export let thousands = false;
-  export let series_id = null; // NEW: identifier for this series
-  export let thinSeries = null; // NEW: which series_id should be thinner
-  export let indicator_period = null; // NEW: frequency for date formatting (e.g., "monthly", "weekly")
+  export let series_id = null; // identifier for this series
+  export let thinSeries = null; // which series_id should be thinner
+  export let indicator_period = null; // frequency for date formatting (e.g., "monthly", "weekly")
 
   // Normalize `index` prop so strings like "false"/"0" don't evaluate truthy
   $: indexBoolean = toBoolean(index);
