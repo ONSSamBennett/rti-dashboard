@@ -222,7 +222,7 @@
     for (const ys of filteredYearStarts) {
       changes.years.push(ys);
       // Mid-year label (Jul 1) to replicate Q3 labeling
-      const mid = new Date(ys.getFullYear(), 6, 1);
+      const mid = new Date(ys.getFullYear(), 5, 1);
       if (mid >= domainStart && mid <= domainEnd) {
         changes.yearLabels.push({ date: mid, year: mid.getFullYear() });
       }
