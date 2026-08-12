@@ -159,15 +159,18 @@
 
     if (customDpEnabled && dpOverride !== null) {
       if (units_chart === "percentage") {
-        return format(`.${dpOverride}%`)(numeric / 100);
+        const dp = dpOverride;
+        const rounded = Math.round(numeric * 10 ** dp) / 10 ** dp;
+        return format(`.${dp}%`)(rounded / 100);
       }
       return format(`,.${dpOverride}f`)(numeric);
     }
 
     if (units_chart === "percentage") {
-      return numeric < 20
-        ? format(".1%")(numeric / 100)
-        : formatPercent(numeric / 100);
+      const hasDecimal = yTicks.some((t) => t % 1 !== 0);
+      const dp = numeric < 20 ? 1 : hasDecimal ? 1 : 0;
+      const rounded = Math.round(numeric * 10 ** dp) / 10 ** dp;
+      return format(`.${dp}%`)(rounded / 100);
     }
 
     return numeric < 20 ? format(",.1f")(numeric) : formatValue(numeric);

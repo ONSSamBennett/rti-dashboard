@@ -43,6 +43,12 @@ metadata_sheet_name <- NULL
 metadata_sheet_index <- 1
 metadata_csv_path   <- "metadata.csv"
 
+# Maximum decimal places present in source data (used to snap float noise first)
+source_max_dp <- 3L
+
+# Fallback decimal places when a series has no custom dp in metadata
+default_dp <- source_max_dp
+
 # Read without column names to avoid "New names: ...2 ...3 ..." noise
 col_names_at_read <- FALSE
 
@@ -269,10 +275,40 @@ long_df <- purrr::pmap_dfr(
 ) %>%
   filter(!is.na(date))
 
+# Per-series dp from metadata (indicator dp preferred, then chart dp, then fallback)
+series_dp <- metadata_df %>%
+  transmute(
+    series_id = str_trim(as.character(series_id)),
+    dp = dplyr::coalesce(
+      if_else(
+        as.logical(as.character(custom_dp_indicator)),
+        suppressWarnings(as.integer(dp_indicator)),
+        NA_integer_
+      ),
+      if_else(
+        as.logical(as.character(custom_dp_chart)),
+        suppressWarnings(as.integer(dp_chart)),
+        NA_integer_
+      ),
+      default_dp
+    )
+  ) %>%
+  mutate(dp = pmax(dp, 0L) + 1L) %>%
+  distinct(series_id, .keep_all = TRUE)
+
 # Final formatting and write CSV
 long_df_out <- long_df %>%
+  left_join(series_dp, by = "series_id") %>%
   rename(num_uk = value) %>%
-  mutate(date = format(date, "%d/%m/%Y"))
+  mutate(
+    num_uk = purrr::map2_dbl(
+      num_uk,
+      dp,
+      ~ round(round(.x, source_max_dp), .y)
+    ),
+    date   = format(date, "%d/%m/%Y")
+  ) %>%
+  select(-dp)
 
 readr::write_csv(long_df_out, data_csv_path, na = "")
 
