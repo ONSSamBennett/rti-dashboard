@@ -84,7 +84,7 @@ export function computeYDomainFromTransformedData({
     if (yMinMode === "auto" && dataYMin > baseMin) {
       const range = topMax - baseMin;
       const gap = dataYMin - baseMin;
-      if (range > 0 && gap / range > 0.5) {
+      if (range > 0 && gap / range > 0.4) {
         const frac = 0.3;
         const denom = 1 - frac;
         if (denom > 0) {
