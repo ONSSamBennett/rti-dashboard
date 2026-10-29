@@ -40,7 +40,8 @@
   $: strokeWidth =
     width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
   $: thousandsBoolean = toBoolean(thousands);
-  let width;
+  let measuredWidth;
+  $: width = measuredWidth > 0 ? measuredWidth : 600;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
 
   const margin = { left: 58, top: 0, bottom: 30, right: 60 };
@@ -414,12 +415,18 @@
 <div style="padding:0px; margin-top:0px; margin-bottom:0px">
   <div
     class="chart-container"
-    bind:clientWidth={width}
-    style:height="{height}px"
+    bind:clientWidth={measuredWidth}
+    style:aspect-ratio="{width} / {height}"
   >
     {#if width}
       {#if transformedData.length > 0}
-        <svg {width} {height} class="chart" aria-hidden="true">
+        <svg
+          {width}
+          {height}
+          viewBox="0 0 {width} {height}"
+          class="chart"
+          aria-hidden="true"
+        >
           <!-- Thousands label -->
           {#if thousandsBoolean}
             <text x={margin.left + 5} y="15" class="small"> thousands </text>
@@ -573,6 +580,7 @@
 <style>
   .chart-container {
     display: block;
+    width: 100%;
     min-height: 200px;
   }
 
@@ -580,7 +588,7 @@
     display: block;
     overflow: visible;
     width: 100%;
-    height: 100%;
+    height: auto;
   }
 
   .line {
