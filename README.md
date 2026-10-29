@@ -46,9 +46,11 @@ npm run build:preview
 ## Prerendered dashboard content
 
 Both builds prerender the dashboard into `build/index.html`, including indicator
-values, dates, descriptions and chart SVGs. The CSV and JSON files in `static/data`
-are read during the build. Rebuild and redeploy after updating these files; the
-HTML is a snapshot of the data at build time.
+values, dates, descriptions and chart text summaries. Chart SVGs are created only
+in the browser after the component mounts and its container has a positive
+measured width. Charts in collapsed cards wait until the card is opened. The CSV
+and JSON files in `static/data` are read during the build. Rebuild and redeploy
+after updating these files; the HTML is a snapshot of the data at build time.
 
 Client-side JavaScript remains enabled to hydrate the page for expanding cards,
 responsive chart measurements, downloads and analytics. Collapsed details are
@@ -56,9 +58,10 @@ included in the HTML but remain hidden until expanded. This is not a
 JavaScript-free version of the dashboard. The dates and contact details inserted
 into the external parent page still require JavaScript.
 
-The build has no SPA fallback and fails if a prerendered data request fails.
-Check the generated HTML for indicator values and chart paths outside script
-blocks when verifying static output. Do not edit the generated HTML directly.
+Check the generated HTML for indicator values and chart text summaries outside
+script blocks when verifying static output. Chart SVGs should appear only after
+JavaScript runs and the chart containers become visible. Do not edit the
+generated HTML directly.
 
 ## Additional templates
 

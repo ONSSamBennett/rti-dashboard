@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import { scaleLinear, scaleTime } from "d3-scale";
   import { line, curveLinear } from "d3-shape";
   import { format } from "d3-format";
@@ -40,9 +41,14 @@
   $: strokeWidth =
     width && +width < 500 ? baseStrokeWidth - 0.5 : baseStrokeWidth;
   $: thousandsBoolean = toBoolean(thousands);
+  let hasMounted = false;
   let measuredWidth;
   $: width = measuredWidth > 0 ? measuredWidth : 600;
   $: height = +width < 500 ? width * 0.5 : width * 0.4;
+
+  onMount(() => {
+    hasMounted = true;
+  });
 
   const margin = { left: 58, top: 0, bottom: 30, right: 60 };
   const xKey = "date"; // data[xKey] should be Date objects
@@ -418,7 +424,7 @@
     bind:clientWidth={measuredWidth}
     style:aspect-ratio="{width} / {height}"
   >
-    {#if width}
+    {#if hasMounted && measuredWidth > 0}
       {#if transformedData.length > 0}
         <svg
           {width}

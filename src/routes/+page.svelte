@@ -1317,6 +1317,10 @@
     flex: 1 1 100%;
   }
 
+  .chart {
+    min-width: 0;
+  }
+
   .indicators-container {
     display: flex;
     flex-direction: column;
