@@ -211,6 +211,52 @@
     });
   }
 
+  function cardClick(node, onToggle) {
+    let toggle = onToggle;
+
+    function handleClick(event) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (
+        target.closest(
+          'a, button, input, select, textarea, label, summary, audio, video, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="link"], [tabindex], [data-card-interactive]'
+        )
+      )
+        return;
+
+      const selection = node.ownerDocument.getSelection();
+      if (
+        selection &&
+        !selection.isCollapsed &&
+        selection.containsNode(node, true)
+      )
+        return;
+
+      toggle();
+    }
+
+    node.addEventListener("click", handleClick);
+
+    return {
+      update(nextToggle) {
+        toggle = nextToggle;
+      },
+      destroy() {
+        node.removeEventListener("click", handleClick);
+      },
+    };
+  }
+
   const destinationTaxonomy = {
     clickContentGroup: "economy",
     clickContentTheme: "economicoutputandproductivity",
@@ -618,41 +664,57 @@
         <h2>{section.title}</h2>
         <div class="cards">
           {#each renderCards(section.category) as [seriesId, row]}
-            <button
+            <article
               class="card {expandedCards[seriesId] ? 'expanded' : 'collapsed'}"
-              on:click={() =>
+              use:cardClick={() =>
                 toggleCard(seriesId, section.title, String(sectionIndex + 1))}
-              aria-expanded={expandedCards[seriesId] ? "true" : "false"}
-              aria-label="{expandedCards[seriesId]
-                ? 'Collapse'
-                : 'Expand'} {metadataBySeries[seriesId]?.title ??
-                seriesId} details"
+              aria-labelledby="indicator-title-{seriesId}"
             >
               <div class="card-header">
                 <div class="title-with-arrow">
-                  <svg
-                    class="expand-icon {expandedCards[seriesId]
-                      ? 'expanded'
-                      : ''}"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    class="card-toggle"
+                    aria-expanded={expandedCards[seriesId] ? "true" : "false"}
+                    aria-controls="indicator-details-{seriesId}"
+                    aria-label="{expandedCards[seriesId]
+                      ? 'Collapse'
+                      : 'Expand'} {metadataBySeries[seriesId]?.title ??
+                      seriesId} details"
+                    title="{expandedCards[seriesId]
+                      ? 'Collapse'
+                      : 'Expand'} details"
+                    on:click={() =>
+                      toggleCard(
+                        seriesId,
+                        section.title,
+                        String(sectionIndex + 1)
+                      )}
                   >
-                    <path
-                      class="icon-vertical"
-                      d="M12 5 L12 19"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    />
-                    <path
-                      class="icon-horizontal"
-                      d="M5 12 L19 12"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                  <h3 class="card-title">
+                    <svg
+                      class="expand-icon {expandedCards[seriesId]
+                        ? 'expanded'
+                        : ''}"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        class="icon-vertical"
+                        d="M12 5 L12 19"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        class="icon-horizontal"
+                        d="M5 12 L19 12"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </button>
+                  <h3 class="card-title" id="indicator-title-{seriesId}">
                     <span class="card-title-text"
                       >{metadataBySeries[seriesId]?.title ?? seriesId}</span
                     >
@@ -745,6 +807,7 @@
                 </div>
               </div>
               <div
+                id="indicator-details-{seriesId}"
                 class="card-expanded-content"
                 class:hidden={!expandedCards[seriesId]}
               >
@@ -893,7 +956,7 @@
                   </div>
                 </div>
               </div>
-            </button>
+            </article>
           {/each}
         </div>
       </section>
@@ -1237,7 +1300,7 @@
   }
 
   .card {
-    /* Button reset */
+    box-sizing: border-box;
     border: none;
     font-family: inherit;
     font-size: inherit;
@@ -1266,11 +1329,21 @@
     }
   }
 
-  .card:focus {
-    outline: none;
+  .card-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
   }
 
-  .card:focus-visible {
+  .card-toggle:focus-visible {
     outline: 3px solid #222;
     outline-offset: 1px;
   }
@@ -1414,7 +1487,7 @@
     z-index: -1;
   }
 
-  .card:focus-visible .card-title-text {
+  .card:has(.card-toggle:focus-visible) .card-title-text {
     background-color: #fbc900;
     text-decoration: underline;
     text-decoration-color: #000;
