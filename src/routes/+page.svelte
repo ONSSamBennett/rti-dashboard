@@ -848,49 +848,69 @@
                     />
                   </div>
                   <div class="indicators-container">
-                    <div class="indicators-header">
-                      <h4>
-                        Change in {metadataBySeries[seriesId]?.units}
-                      </h4>
-                      <p style="font-weight:normal; font-size:14px; color:#666">
-                        up to {metadataBySeries[
-                          seriesId
-                        ]?.indicator_period?.toLowerCase() === "monthly" ||
-                        metadataBySeries[
-                          seriesId
-                        ]?.indicator_period?.toLowerCase() === "month" ||
-                        metadataBySeries[
-                          seriesId
-                        ]?.indicator_period?.toLowerCase() === "quarterly" ||
-                        metadataBySeries[
-                          seriesId
-                        ]?.indicator_period?.toLowerCase() === "quarter"
-                          ? row.date.toLocaleDateString("en-GB", {
-                              year: "numeric",
-                              month: "long",
-                            })
-                          : row.date.toLocaleDateString("en-GB", {
-                              month: "long",
-                              day: "numeric",
-                            })}
-                      </p>
-                    </div>
-                    <div class="indicators-row">
-                      {#each [{ label: undefined, getValue: (r, isP) => getChangeValue(r, isP) }, { label: "year", getValue: (r, isP) => getYearOverYearChange(r, isP) }] as indicator}
-                        <div class="indicators-child">
-                          <ChangeIndicator
-                            {seriesId}
-                            {metadataBySeries}
-                            label={indicator.label}
-                            change={indicator.getValue(
-                              row,
-                              metadataBySeries[seriesId]?.units === "percentage"
-                            )}
-                            units={metadataBySeries[seriesId]?.units}
-                          />
-                        </div>
-                      {/each}
-                    </div>
+                    <table
+                      class="data-table"
+                      data-state={expandedCards[seriesId]
+                        ? "expanded"
+                        : "collapsed"}
+                    >
+                      <caption>
+                        <span class="indicator-caption-title">
+                          Change in {metadataBySeries[seriesId]?.units}
+                        </span>
+                        <span class="indicator-subcaption">
+                          up to {metadataBySeries[
+                            seriesId
+                          ]?.indicator_period?.toLowerCase() === "monthly" ||
+                          metadataBySeries[
+                            seriesId
+                          ]?.indicator_period?.toLowerCase() === "month" ||
+                          metadataBySeries[
+                            seriesId
+                          ]?.indicator_period?.toLowerCase() === "quarterly" ||
+                          metadataBySeries[
+                            seriesId
+                          ]?.indicator_period?.toLowerCase() === "quarter"
+                            ? row.date.toLocaleDateString("en-GB", {
+                                year: "numeric",
+                                month: "long",
+                              })
+                            : row.date.toLocaleDateString("en-GB", {
+                                month: "long",
+                                day: "numeric",
+                              })}
+                        </span>
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col"
+                            >From past {getTimePeriod(
+                              metadataBySeries[seriesId]
+                            )}</th
+                          >
+                          <th scope="col">From past year</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          {#each [{ label: undefined, getValue: (r, isP) => getChangeValue(r, isP) }, { label: "year", getValue: (r, isP) => getYearOverYearChange(r, isP) }] as indicator}
+                            <td>
+                              <ChangeIndicator
+                                {seriesId}
+                                {metadataBySeries}
+                                showLabel={false}
+                                change={indicator.getValue(
+                                  row,
+                                  metadataBySeries[seriesId]?.units ===
+                                    "percentage"
+                                )}
+                                units={metadataBySeries[seriesId]?.units}
+                              />
+                            </td>
+                          {/each}
+                        </tr>
+                      </tbody>
+                    </table>
                     <p class="get-data-link">
                       <a
                         href={metadataBySeries[seriesId]?.url}
@@ -1357,14 +1377,6 @@
     margin: 0 0 0px 0;
   }
 
-  .card h4 {
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.3;
-    color: #222;
-    margin: 0;
-  }
-
   .card p {
     font-size: 1rem;
     color: #222;
@@ -1399,14 +1411,73 @@
     flex-direction: column;
   }
 
-  .indicators-header {
-    font-weight: bold;
+  .data-table {
+    --indicator-gap: 16px;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 0;
+    margin: 0;
     padding: 0;
   }
 
-  .indicators-header p {
-    margin: 0;
+  .data-table caption {
+    padding: 0;
+    text-align: left;
+    color: #222;
+  }
+
+  .indicator-caption-title {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .indicator-subcaption {
+    display: block;
     margin-top: 4px;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.4;
+    color: #666;
+  }
+
+  .data-table th,
+  .data-table td {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: break-word;
+  }
+
+  .data-table th {
+    padding-top: 18px;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.4;
+  }
+
+  .data-table td {
+    line-height: 28px;
+  }
+
+  .data-table th:first-child,
+  .data-table td:first-child {
+    padding-right: calc(var(--indicator-gap) / 2);
+  }
+
+  .data-table th:last-child,
+  .data-table td:last-child {
+    padding-left: calc(var(--indicator-gap) / 2);
+  }
+
+  .data-table :global(.indicator-area) {
+    margin: 0;
+    margin-top: 6px;
   }
 
   .card-header {
@@ -1587,17 +1658,6 @@
     vertical-align: middle;
   }
 
-  .indicators-row {
-    display: flex;
-    gap: 16px;
-  }
-
-  .indicators-child {
-    flex: 1;
-    padding-top: 8px;
-    overflow-wrap: break-word;
-  }
-
   .card .get-data-link {
     padding-top: 15px;
     margin-top: 8px;
@@ -1635,9 +1695,6 @@
   }
 
   .layout-container,
-  .indicators-header,
-  .indicators-row,
-  .indicators-child,
   .chart {
     border: 0px solid #666;
   }
@@ -1789,16 +1846,9 @@
       margin-top: 20px;
     }
 
-    .indicators-header {
+    .data-table {
+      --indicator-gap: 12px;
       margin-top: 2px;
-    }
-
-    .indicators-header p {
-      margin-top: 4px;
-    }
-
-    .indicators-row {
-      gap: 12px;
     }
   }
 
